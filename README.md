@@ -5,6 +5,7 @@ The multi-time-scale LSTM model is constructed following the methodology describ
 
 ### Dynamic data: 
 - CAMELSH timeseries (15 stations)
+- Forcings: Precipitation, Temperature, Potential evaporation
 
 ### Static attributes
 - Mean precipitation  
