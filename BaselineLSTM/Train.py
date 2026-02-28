@@ -169,8 +169,21 @@ def main():
     wandb.init(
         project=config.PROJECT_NAME,
         name=f"{config.RUN_NAME}_{int(time.time())}",
-        config=vars(config)
     )
+
+    wandb.config.update({
+        "DATA_PATH": config.DATA_PATH,
+        "STATIC_PATH": config.STATIC_PATH,
+        "LOOKBACK": config.LOOKBACK,
+        "BATCH_SIZE": config.BATCH_SIZE,
+        "NUM_WORKERS": config.NUM_WORKERS,
+        "HIDDEN_SIZE": config.HIDDEN_SIZE,
+        "NUM_LAYERS": config.NUM_LAYERS,
+        "DROPOUT": config.DROPOUT,
+        "LEARNING_RATE": config.LEARNING_RATE,
+        "NUM_EPOCHS": config.NUM_EPOCHS,
+        "SEED": config.SEED,
+    })
 
     wandb.watch(model, log="gradients", log_freq=200)
 

@@ -11,7 +11,8 @@ def train_model(model,
                 device,
                 num_epochs,
                 patience=10,
-                best_model_path="best_model.pth"):
+                best_model_path="best_model.pth",
+                early_stopping=False):
 
     history = {
         "train_loss": [],
@@ -142,19 +143,19 @@ def train_model(model,
         # ======================
         # 4️⃣ Early Stopping
         # ======================
+        if early_stopping:
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                patience_counter = 0
 
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            patience_counter = 0
+                # save the best model
+                torch.save(model.state_dict(), best_model_path)
 
-            # save the best model
-            torch.save(model.state_dict(), best_model_path)
+            else:
+                patience_counter += 1
 
-        else:
-            patience_counter += 1
-
-        if patience_counter >= patience:
-            print(f"Early stopping triggered at epoch {epoch}")
-            break
+            if patience_counter >= patience:
+                print(f"Early stopping triggered at epoch {epoch}")
+                break
 
     return history
