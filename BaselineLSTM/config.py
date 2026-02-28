@@ -48,6 +48,8 @@ NUM_LAYERS   = 1
 DROPOUT      = 0.4
 OUTPUT_SIZE  = 1
 INPUT_SIZE = 3+27
+DYN_INPUT_SIZE = 3
+STATIC_INPUT_SIZE = 27
 
 # ====================================================
 # 6. Training Settings
