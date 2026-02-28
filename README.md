@@ -34,7 +34,7 @@ The multi-time-scale LSTM model is constructed following the methodology describ
 
 ### Model Performance
 
-| Metric               | MTS-LSTM | LSTM |
+| Metric (hourly)               | MTS-LSTM | LSTM |
 |----------------------|:--------:|:----:|
 | Fitting Median KGE   | 0.871    |      |
 | Fitting Median NSE   | 0.941    |      |
