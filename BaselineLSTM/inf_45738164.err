@@ -1,9 +1,0 @@
-wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
-wandb: setting up run 8ypgan8n
-wandb: Tracking run with wandb version 0.22.3
-wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/hourly_streamflow_dl/BaselineLSTM/wandb/run-20260228_115944-8ypgan8n
-wandb: Run `wandb offline` to turn off syncing.
-wandb: Syncing run experiment_1772269183
-wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/LSTM_Streamflow
-wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/LSTM_Streamflow/runs/8ypgan8n
-slurmstepd: error: *** JOB 45738164 ON gpu502-22 CANCELLED AT 2026-02-28T14:59:50 DUE TO TIME LIMIT ***
