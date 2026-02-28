@@ -1,6 +1,8 @@
 # hourly_streamflow_dl
 Deep learning for hourly streamflow forecasting
 
+Following the paper from: https://hess.copernicus.org/articles/25/2045/2021/
+
 ### Dynamic data: 
 - CAMELSH timeseries (15 stations)
 
@@ -26,9 +28,9 @@ Deep learning for hourly streamflow forecasting
 
 | Metric                  | MTS-LSTM | LSTM |
 |--------------------------|:---------:|:----:|
-| Training time range      | 1990-10-01—2003-09-30 |      |
-| Validation time range    | 2003-10-01—2008-09-30 |      |
-| Test time range          | 2008-10-01—2015-09-30 |      |
+| Training time range      | 1990-10-01—2003-09-30       |
+| Validation time range    | 2003-10-01—2008-09-30       |
+| Test time range          | 2008-10-01—2015-09-30       |
 | Fitting median KGE       | 0.871 |      |
 | Fitting median NSE       | 0.941 |      |
 | Validate Median KGE      | 0.523 |      |
