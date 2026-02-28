@@ -18,7 +18,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # =====================================================
 # 1️⃣  dataloader & scaler
 # =====================================================
-_, val_loader, train_scalers = get_dataloaders()
+_, _, test_loader, train_scalers = get_dataloaders()
 
 
 # =====================================================
@@ -91,7 +91,7 @@ preds_by_station = {}
 trues_by_station = {}
 
 with torch.no_grad():
-    for x_dyn_batch, x_static_batch, y_batch, stn_batch in val_loader:
+    for x_dyn_batch, x_static_batch, y_batch, stn_batch in test_loader:
 
         x_dyn_batch = x_dyn_batch.to(device)
         x_static_batch = x_static_batch.to(device)
