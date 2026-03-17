@@ -38,9 +38,9 @@ The multi-time-scale LSTM model is constructed following the methodology describ
 
 | Metric (hourly)               | MTS-LSTM | LSTM |
 |----------------------|:--------:|:----:|
-| Fitting Median KGE   | 0.871    |0.890 |
-| Fitting Median NSE   | 0.941    |0.897 |
-| Validate Median KGE  | 0.523    |0.226 |
-| Validate Median NSE  | 0.298    |0.229 |
-| Test Median KGE      | 0.511    |0.160 |
-| Test Median NSE      | 0.295    |0.195 |
+| Fitting Median KGE   | 0.926    | |
+| Fitting Median NSE   | 0.912    | |
+| Validate Median KGE  | 0.744    |0.704 |
+| Validate Median NSE  | 0.621    |0.548 |
+| Test Median KGE      | 0.628    |0.600 |
+| Test Median NSE      | 0.565    |0.538 |
