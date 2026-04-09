@@ -4,29 +4,70 @@ Deep learning for hourly streamflow forecasting
 The multi-time-scale LSTM model is constructed following the methodology described in the paper (Gauch et al., 2021): https://hess.copernicus.org/articles/25/2045/2021/
 
 ### Dynamic data: 
-- CAMELSH timeseries (15 stations)
+- CAMELSH timeseries
+  - BaselineLSTM & MTSLSTM comparison (15 stations)
+  - MTSLSTM (100 stations)
 - Forcings: Precipitation, Temperature, Potential evaporation
 - Target: Streamflow
 
+---
+
 ### Static attributes
-- Mean precipitation  
-- Mean potential evapotranspiration  
-- Aridity index  
-- Fraction of snow precipitation  
-- High precipitation frequency  
-- High precipitation duration  
-- Low precipitation frequency  
-- Low precipitation duration  
-- Average silt content  
-- Average sand content  
-- Average available water capacity  
-- Average permeability  
-- Average bulk density  
-- Forest percentage of land use  
-- Cropland percentage of land use  
-- Urban percentage of land use  
-- Average Baseflow Index  
-- Annual water balance (WB5100_ANN_MM, mm)
+### 15-Station Experiment
+| Category | Variable | Description |
+|----------|--------|------------|
+| Climate | Mean precipitation | Long-term average precipitation |
+| Climate | Mean potential evapotranspiration | Long-term average PET |
+| Climate | Aridity index | Ratio of PET to precipitation |
+| Climate | Fraction of snow precipitation | Fraction of precipitation falling as snow |
+| Precipitation | High precipitation frequency | Frequency of high-intensity precipitation events |
+| Precipitation | High precipitation duration | Duration of high-intensity precipitation events |
+| Precipitation | Low precipitation frequency | Frequency of low-intensity precipitation events |
+| Precipitation | Low precipitation duration | Duration of low-intensity precipitation events |
+| Soil | Average silt content | Mean silt fraction |
+| Soil | Average sand content | Mean sand fraction |
+| Soil | Available water capacity | Soil water holding capacity |
+| Soil | Permeability | Soil permeability |
+| Soil | Bulk density | Soil bulk density |
+| Land use | Forest percentage | Fraction of forest land |
+| Land use | Cropland percentage | Fraction of cropland |
+| Land use | Urban percentage | Fraction of urban land |
+| Hydrology | Baseflow Index (BFI) | Ratio of baseflow to total streamflow |
+| Hydrology | Annual water balance (WB5100_ANN_MM) | Long-term annual water balance |
+
+---
+
+### 100-Station Experiment
+| Category | Variable | Description |
+|----------|--------|------------|
+| ID | STAID | Station identifier |
+| Climate | p_mean | Mean precipitation |
+| Climate | pet_mean | Mean potential evapotranspiration |
+| Climate | aridity_index | Aridity index |
+| Climate | p_seasonality | Precipitation seasonality |
+| Climate | frac_snow | Fraction of snowfall |
+| Precipitation | high_prec_freq | High precipitation frequency |
+| Precipitation | high_prec_dur | High precipitation duration |
+| Precipitation | low_prec_freq | Low precipitation frequency |
+| Precipitation | low_prec_dur | Low precipitation duration |
+| Topography | DRAIN_SQKM | Drainage area (km²) |
+| Topography | ELEV_MEAN_M_BASIN | Mean elevation |
+| Topography | ELEV_STD_M_BASIN | Elevation variability |
+| Topography | SLOPE_PCT | Mean slope (%) |
+| Hydrology | RRMEAN | Mean runoff ratio |
+| Hydrology | RRMEDIAN | Median runoff ratio |
+| Basin | BAS_COMPACTNESS | Basin compactness |
+| River network | STREAMS_KM_SQ_KM | Stream density |
+| River network | STRAHLER_MAX | Maximum Strahler order |
+| Soil / Wetness | TOPWET | Topographic wetness index |
+| Soil | CLAYAVE | Clay fraction |
+| Soil | SANDAVE | Sand fraction |
+| Soil | AWCAVE | Available water capacity |
+| Soil | PERMAVE | Permeability |
+| Soil | BDAVE | Bulk density |
+| Land use | for_pc_use | Forest land fraction |
+| Land use | crp_pc_use | Cropland fraction |
+| Land use | urb_pc_use | Urban land fraction |
 
 ### Data Split
 
@@ -35,7 +76,7 @@ The multi-time-scale LSTM model is constructed following the methodology describ
 - Test: 2008-10-01 — 2015-09-30  
 
 ### Model Performance
-
+### 15-Station Experiment
 | Metric (hourly)               | MTS-LSTM | LSTM |
 |----------------------|:--------:|:----:|
 | Fitting Median KGE   | 0.926    |0.853 |
@@ -44,3 +85,13 @@ The multi-time-scale LSTM model is constructed following the methodology describ
 | Validate Median NSE  | 0.621    |0.548 |
 | Test Median KGE      | 0.628    |0.600 |
 | Test Median NSE      | 0.565    |0.538 |
+
+### 100-Station Experiment
+| Metric (hourly)               | MTS-LSTM |
+|----------------------|:--------:|
+| Fitting Median KGE   | 0.921    |
+| Fitting Median NSE   | 0.917    |
+| Validate Median KGE  | 0.783    |
+| Validate Median NSE  | 0.718    |
+| Test Median KGE      | 0.721    |
+| Test Median NSE      | 0.694    |
