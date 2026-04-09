@@ -8,27 +8,59 @@
 #SBATCH --gres=gpu:v100:1
 #SBATCH --array=1-12%3
 #SBATCH -J mts100_tune
-#SBATCH -o /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/logs/mts100_tune_%A_%a.out
-#SBATCH -e /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/logs/mts100_tune_%A_%a.err
-#SBATCH --chdir=/home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM
+#SBATCH -o slurm-mts100_tune_%A_%a.out
+#SBATCH -e slurm-mts100_tune_%A_%a.err
 
 set -eo pipefail
 
-HYDROENV=/ibex/user/kongw0a/conda-environments/hydroenv/bin
-"$HYDROENV/wandb" online || true
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+EXPERIMENT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$EXPERIMENT_DIR/.." && pwd)"
+CODE_DIR="$EXPERIMENT_DIR/code"
 
-export WANDB_DIR=/ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/wandb
+cd "$CODE_DIR"
+
+PYTHON_BIN="${PYTHON_BIN:-$(command -v python)}"
+if [[ -z "${PYTHON_BIN}" ]]; then
+  echo "python is not available in PATH. Set PYTHON_BIN to your interpreter." >&2
+  exit 2
+fi
+
+WANDB_BIN="${WANDB_BIN:-$(command -v wandb || true)}"
+if [[ -n "${WANDB_BIN}" ]]; then
+  "${WANDB_BIN}" online || true
+fi
+
+export WANDB_DIR="${WANDB_DIR:-$EXPERIMENT_DIR/wandb}"
 mkdir -p "$WANDB_DIR"
-BASE_OUT=/ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100
+BASE_OUT="${BASE_OUT:-$EXPERIMENT_DIR/training_runs/reproduced_100stations_tuning}"
 mkdir -p "$BASE_OUT"
 
-CONFIG=/home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/tuning_500stations_prevbest.tsv
+CONFIG="${CONFIG:-$SCRIPT_DIR/tuning_500stations_prevbest.tsv}"
+DATA_PATH="${DATA_PATH:-$REPO_ROOT/data/selected_stn_data_100stations_west10_east90_proposal_boxes_part*.nc}"
+STATIC_PATH="${STATIC_PATH:-$REPO_ROOT/data/static_h_topo_priority27.csv}"
+
+if ! compgen -G "$DATA_PATH" > /dev/null; then
+  echo "No dataset files matched DATA_PATH=$DATA_PATH" >&2
+  exit 2
+fi
+
+if [[ ! -f "$STATIC_PATH" ]]; then
+  echo "Static attribute file not found: $STATIC_PATH" >&2
+  exit 2
+fi
+
+if [[ ! -f "$CONFIG" ]]; then
+  echo "Tuning config file not found: $CONFIG" >&2
+  exit 2
+fi
+
 if [[ -z "${SLURM_ARRAY_TASK_ID:-}" ]]; then
   echo "SLURM_ARRAY_TASK_ID is required" >&2
   exit 2
 fi
 
-line=$(awk -F '\t' -v idx="$SLURM_ARRAY_TASK_ID" 'NR>1 && $1==idx {print $0}' "$CONFIG")
+line=$(awk -F $'\t' -v idx="$SLURM_ARRAY_TASK_ID" 'NR>1 && $1==idx {print $0}' "$CONFIG")
 if [[ -z "$line" ]]; then
   echo "No config for idx=$SLURM_ARRAY_TASK_ID" >&2
   exit 3
@@ -39,9 +71,9 @@ run_tag="idx${idx}_bs${batch_size}_do${dropout}_hs${hidden_size}_H${lookback_hou
 out_dir="$BASE_OUT/$run_tag"
 mkdir -p "$out_dir"
 
-"$HYDROENV/python" -u Train.py \
-  --data-path '/ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_subsets/selected_stn_data_100stations_west10_east90_proposal_boxes_part*.nc' \
-  --static-path /home/kongw0a/MTS_LSTM/experiment_withcursor/data/static_h_topo_priority27.csv \
+"$PYTHON_BIN" -u Train.py \
+  --data-path "$DATA_PATH" \
+  --static-path "$STATIC_PATH" \
   --batch-size "$batch_size" \
   --num-workers 3 \
   --dropout "$dropout" \

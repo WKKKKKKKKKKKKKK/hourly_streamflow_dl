@@ -4,18 +4,26 @@ Configuration File for sMTSLSTM Streamflow Experiments
 ====================================================
 """
 
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
+REPO_ROOT = BASE_DIR.parents[1]
+DEFAULT_DATA_DIR = REPO_ROOT / "data"
 
 
 # ====================================================
 # 1️⃣ Data Paths
 # ====================================================
 
-DATA_PATH = str((BASE_DIR.parent / "data" / "selected_stn_data.nc").resolve())
-#DATA_PATH = "/ibex/project/c2266/wkkong/data/CAEMLSH/all_stations.nc"
-STATIC_PATH = str((BASE_DIR.parent / "data" / "static_h.csv").resolve())
+DATA_PATH = os.environ.get(
+    "MTS100_DATA_PATH",
+    str(DEFAULT_DATA_DIR / "selected_stn_data_100stations_west10_east90_proposal_boxes_part*.nc"),
+)
+STATIC_PATH = os.environ.get(
+    "MTS100_STATIC_PATH",
+    str(DEFAULT_DATA_DIR / "static_h_topo_priority27.csv"),
+)
 MODEL_SAVE_PATH = str((BASE_DIR / "checkpoints" / "best_model_mtslstm.pth").resolve())
 #MODEL_SAVE_PATH = "/home/kongw0a/MTS_LSTM/experiment/save_model/MTSLSTM/best_model_mtslstm.pth"
 
