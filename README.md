@@ -131,6 +131,39 @@ Notes:
 - These shared files are for the 100-station MTSLSTM experiments. The 15-station BaselineLSTM/MTSLSTM experiments use a different dataset and are not reproduced from this archive.
 
 
+### Running the 100-Station Experiment
+
+The commands below assume that:
+- you have already created the Python environment described above
+- the shared 100-station data files are placed under `repo_root/data/`
+- you are running from the repository root
+
+Train the archived best 100-station configuration (`idx2`):
+
+```bash
+cd MTSLSTM_100stations/code
+python Train.py   --output-dir ../training_runs/manual_best_idx2   --batch-size 128   --num-workers 3   --dropout 0.4   --hidden-size-daily 64   --hidden-size-hourly 64   --lookback-hourly 168   --lookback-daily 365   --lr 5e-4   --lr-schedule "1:5e-4,10:1e-4,25:5e-5"   --epochs 100   --early-stopping   --patience 10   --loss nse_loss   --reg-lambda 1.0   --seed 42   --no-wandb
+```
+
+Evaluate a saved model on the validation or test split:
+
+```bash
+cd MTSLSTM_100stations/code
+python inference.py   --split test   --model-path ../training_runs/manual_best_idx2/best_model.pth   --batch-size 128   --dropout 0.4   --hidden-size-daily 64   --hidden-size-hourly 64   --lookback-hourly 168   --lookback-daily 365
+```
+
+Run the archived 100-station tuning array on a SLURM cluster:
+
+```bash
+cd MTSLSTM_100stations/tuning
+sbatch submit_mtslstm_100stations_tuning_array_v100.sbatch
+```
+
+Notes:
+- The updated `config.py` and `submit_mtslstm_100stations_tuning_array_v100.sbatch` already point to `repo_root/data/` by default.
+- If you want W&B logging, remove `--no-wandb` in the manual training command and make sure you have logged in with `wandb login`.
+- The 15-station experiments in this repository use a different dataset; the shared `data_100stations_share.tar.gz` archive is only for the 100-station MTSLSTM setup.
+
 ### Model Performance
 ### 15-Station Experiment
 | Metric (hourly)               | MTS-LSTM | LSTM |
