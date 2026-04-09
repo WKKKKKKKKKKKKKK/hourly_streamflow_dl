@@ -1,0 +1,206 @@
+wandb: Starting wandb agent 🕵️
+2026-03-14 21:45:09,945 - wandb.wandb_agent - INFO - Running runs: []
+2026-03-14 21:45:10,989 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-14 21:45:10,990 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.4
+	epochs: 55
+	hidden_size: 256
+	lookback: 8760
+	lr: 0.0001
+2026-03-14 21:45:10,993 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/Train.py --wandb --wandb-project=LSTM_Streamflow --wandb-run-name=BaselineLSTM_sweep --wandb-mode=online --early-stopping --patience=10 --output-dir=runs/20260314/BaselineLSTM/WANDB_RUN_ID --batch_size=256 --dropout=0.4 --epochs=55 --hidden_size=256 --lookback=8760 --lr=0.0001
+2026-03-14 21:45:16,005 - wandb.wandb_agent - INFO - Running runs: ['6bz7arav']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'LSTM_Streamflow' when running a sweep.
+wandb: setting up run 6bz7arav
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/wandb/run-20260314_214531-6bz7arav
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run BaselineLSTM_sweep_1773513929
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/6eco58ws
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/6bz7arav
+wandb: updating run metadata
+wandb: uploading wandb-summary.json; uploading output.log
+wandb: uploading wandb-summary.json; uploading output.log; uploading config.yaml
+wandb: uploading history steps 31-31, summary, console lines 64-65
+wandb: 
+wandb: Run history:
+wandb:           epoch ▁▁▁▂▂▂▂▃▃▃▃▄▄▄▄▅▅▅▅▅▆▆▆▆▇▇▇▇███
+wandb:              lr ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▄▃▂▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss █▂▃▅▃▂▂▂▁▁▂▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: 
+wandb: Run summary:
+wandb:           epoch 31
+wandb:              lr 0.0001
+wandb: test/median_kge 0.60013
+wandb: test/median_nse 0.53807
+wandb:      train_loss 0.14948
+wandb:  val/median_kge 0.70423
+wandb:  val/median_nse 0.54793
+wandb:        val_loss 0.43891
+wandb: 
+wandb: 🚀 View run BaselineLSTM_sweep_1773513929 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/6bz7arav
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260314_214531-6bz7arav/logs
+2026-03-16 02:03:59,678 - wandb.wandb_agent - INFO - Cleaning up finished run: 6bz7arav
+2026-03-16 02:04:00,594 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-16 02:04:00,594 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 512
+	dropout: 0.4
+	epochs: 55
+	hidden_size: 256
+	lookback: 8760
+	lr: 0.0005
+2026-03-16 02:04:00,597 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/Train.py --wandb --wandb-project=LSTM_Streamflow --wandb-run-name=BaselineLSTM_sweep --wandb-mode=online --early-stopping --patience=10 --output-dir=runs/20260314/BaselineLSTM/WANDB_RUN_ID --batch_size=512 --dropout=0.4 --epochs=55 --hidden_size=256 --lookback=8760 --lr=0.0005
+2026-03-16 02:04:05,607 - wandb.wandb_agent - INFO - Running runs: ['k2flns9x']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'LSTM_Streamflow' when running a sweep.
+wandb: setting up run k2flns9x
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/wandb/run-20260316_020412-k2flns9x
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run BaselineLSTM_sweep_1773615851
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/6eco58ws
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/k2flns9x
+wandb: updating run metadata
+wandb: uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 20-20, summary, console lines 42-43
+wandb: 
+wandb: Run history:
+wandb:           epoch ▁▁▂▂▂▃▃▄▄▄▅▅▅▆▆▇▇▇██
+wandb:              lr ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▃▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss █▅▃▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: 
+wandb: Run summary:
+wandb:           epoch 20
+wandb:              lr 0.0005
+wandb: test/median_kge 0.57741
+wandb: test/median_nse 0.64702
+wandb:      train_loss 0.16316
+wandb:  val/median_kge 0.70412
+wandb:  val/median_nse 0.62626
+wandb:        val_loss 0.31557
+wandb: 
+wandb: 🚀 View run BaselineLSTM_sweep_1773615851 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/k2flns9x
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260316_020412-k2flns9x/logs
+2026-03-16 14:48:57,172 - wandb.wandb_agent - INFO - Cleaning up finished run: k2flns9x
+2026-03-16 14:48:57,894 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-16 14:48:57,894 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 512
+	dropout: 0.4
+	epochs: 55
+	hidden_size: 256
+	lookback: 4320
+	lr: 0.0005
+2026-03-16 14:48:57,899 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/Train.py --wandb --wandb-project=LSTM_Streamflow --wandb-run-name=BaselineLSTM_sweep --wandb-mode=online --early-stopping --patience=10 --output-dir=runs/20260314/BaselineLSTM/WANDB_RUN_ID --batch_size=512 --dropout=0.4 --epochs=55 --hidden_size=256 --lookback=4320 --lr=0.0005
+2026-03-16 14:49:02,908 - wandb.wandb_agent - INFO - Running runs: ['psviv6ub']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'LSTM_Streamflow' when running a sweep.
+wandb: setting up run psviv6ub
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/wandb/run-20260316_144910-psviv6ub
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run BaselineLSTM_sweep_1773661748
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/6eco58ws
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/psviv6ub
+wandb: updating run metadata
+wandb: uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 20-20, summary, console lines 42-43
+wandb: 
+wandb: Run history:
+wandb:           epoch ▁▁▂▂▂▃▃▄▄▄▅▅▅▆▆▇▇▇██
+wandb:              lr ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▃▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss █▂▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: 
+wandb: Run summary:
+wandb:           epoch 20
+wandb:              lr 0.0005
+wandb: test/median_kge 0.49016
+wandb: test/median_nse 0.60014
+wandb:      train_loss 0.15646
+wandb:  val/median_kge 0.58571
+wandb:  val/median_nse 0.60308
+wandb:        val_loss 0.43932
+wandb: 
+wandb: 🚀 View run BaselineLSTM_sweep_1773661748 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/psviv6ub
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260316_144910-psviv6ub/logs
+2026-03-16 21:29:57,711 - wandb.wandb_agent - INFO - Cleaning up finished run: psviv6ub
+2026-03-16 21:29:59,280 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-16 21:29:59,280 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 512
+	dropout: 0.4
+	epochs: 55
+	hidden_size: 256
+	lookback: 4320
+	lr: 0.0001
+2026-03-16 21:29:59,283 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/Train.py --wandb --wandb-project=LSTM_Streamflow --wandb-run-name=BaselineLSTM_sweep --wandb-mode=online --early-stopping --patience=10 --output-dir=runs/20260314/BaselineLSTM/WANDB_RUN_ID --batch_size=512 --dropout=0.4 --epochs=55 --hidden_size=256 --lookback=4320 --lr=0.0001
+2026-03-16 21:30:04,292 - wandb.wandb_agent - INFO - Running runs: ['i9ocvwca']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'LSTM_Streamflow' when running a sweep.
+wandb: setting up run i9ocvwca
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/wandb/run-20260316_213012-i9ocvwca
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run BaselineLSTM_sweep_1773685810
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/6eco58ws
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/i9ocvwca
+wandb: ERROR Error while calling W&B API: An internal error occurred. Please contact support. (<Response [500]>)
+wandb: updating run metadata
+wandb: uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 38-38, summary, console lines 78-79
+wandb: 
+wandb: Run history:
+wandb:           epoch ▁▁▁▂▂▂▂▂▃▃▃▃▃▃▄▄▄▄▄▅▅▅▅▅▆▆▆▆▆▆▇▇▇▇▇███
+wandb:              lr ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▄▃▃▂▂▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss █▄▂▂▁▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: 
+wandb: Run summary:
+wandb:           epoch 38
+wandb:              lr 0.0001
+wandb: test/median_kge 0.59353
+wandb: test/median_nse 0.63931
+wandb:      train_loss 0.16026
+wandb:  val/median_kge 0.67497
+wandb:  val/median_nse 0.61106
+wandb:        val_loss 0.48264
+wandb: 
+wandb: 🚀 View run BaselineLSTM_sweep_1773685810 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/i9ocvwca
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260316_213012-i9ocvwca/logs
+2026-03-17 09:56:25,676 - wandb.wandb_agent - INFO - Cleaning up finished run: i9ocvwca
+2026-03-17 09:56:26,827 - wandb.wandb_agent - INFO - Agent received command: exit
+2026-03-17 09:56:26,827 - wandb.wandb_agent - INFO - Received exit command. Killing runs and quitting.
+wandb: Terminating and syncing runs. Press ctrl-c to kill.

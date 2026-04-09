@@ -1,0 +1,4 @@
+  File "/home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/Train.py", line 447
+    f.write('ok
+            ^
+SyntaxError: unterminated string literal (detected at line 447)

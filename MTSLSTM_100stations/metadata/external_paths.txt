@@ -1,0 +1,16 @@
+External paths referenced by the 100-station MTSLSTM archive
+
+Original local experiment root:
+- /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM
+
+100-station training subset used by the sbatch script:
+- /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_subsets/selected_stn_data_100stations_west10_east90_proposal_boxes_part*.nc
+
+Centralized output base used by the sbatch script:
+- /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100
+
+Best run model path:
+- /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx2_bs128_do0.4_hs64_H168_D365/best_model.pth
+
+Best run scaler path:
+- /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx2_bs128_do0.4_hs64_H168_D365/scalers.pkl

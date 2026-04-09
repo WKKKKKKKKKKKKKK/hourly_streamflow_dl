@@ -1,0 +1,10 @@
+[2026-04-06 17:53:57] loading 57 stations
+  loaded 10/57 stations
+  loaded 20/57 stations
+  loaded 30/57 stations
+  loaded 40/57 stations
+  loaded 50/57 stations
+  loaded 57/57 stations
+[2026-04-06 17:54:00] device=cuda
+[2026-04-06 17:54:00] preparing validation split
+[2026-04-06 17:54:01] preparing test split

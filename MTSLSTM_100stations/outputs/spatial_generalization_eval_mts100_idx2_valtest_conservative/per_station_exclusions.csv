@@ -1,0 +1,1 @@
+scheme_code,scheme_label,koppen_class,selection_order,target_count,station_id,lat,lon,min_dist_to_training_km,min_dist_to_selected_km,val_samples,val_score_status,val_exclusion_reason,val_nse,val_kge,test_samples,test_score_status,test_exclusion_reason,test_nse,test_kge

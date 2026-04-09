@@ -1,0 +1,23 @@
+wandb: Starting wandb agent 🕵️
+2026-03-14 17:27:57,338 - wandb.wandb_agent - INFO - Running runs: []
+2026-03-14 17:27:58,180 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-14 17:27:58,181 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.4
+	epochs: 62
+	hidden_size: 256
+	lookback: 8760
+	lr: 0.0001
+2026-03-14 17:27:58,185 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/Train.py --wandb --wandb-project=LSTM_Streamflow --wandb-run-name=BaselineLSTM_sweep --wandb-mode=online --early-stopping --patience=10 --output-dir=runs/20260314/BaselineLSTM/WANDB_RUN_ID --batch_size=256 --dropout=0.4 --epochs=62 --hidden_size=256 --lookback=8760 --lr=0.0001
+2026-03-14 17:28:03,194 - wandb.wandb_agent - INFO - Running runs: ['xchzd3sx']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'LSTM_Streamflow' when running a sweep.
+wandb: setting up run xchzd3sx
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/wandb/run-20260314_172813-xchzd3sx
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run BaselineLSTM_sweep_1773498491
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/LSTM_Streamflow
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/LSTM_Streamflow/sweeps/cocfmgtz
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/LSTM_Streamflow/runs/xchzd3sx
+slurmstepd: error: *** JOB 46020668 ON gpu201-16-l CANCELLED AT 2026-03-14T17:32:13 ***

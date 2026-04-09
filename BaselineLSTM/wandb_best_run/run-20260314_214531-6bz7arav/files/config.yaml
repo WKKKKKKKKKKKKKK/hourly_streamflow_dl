@@ -1,0 +1,187 @@
+_wandb:
+    value:
+        cli_version: 0.22.3
+        e:
+            f247bxe0l3t8wefg50w1ndguyn2uxla4:
+                args:
+                    - --wandb
+                    - --wandb-project=LSTM_Streamflow
+                    - --wandb-run-name=BaselineLSTM_sweep
+                    - --wandb-mode=online
+                    - --early-stopping
+                    - --patience=10
+                    - --output-dir=runs/20260314/BaselineLSTM/WANDB_RUN_ID
+                    - --batch_size=256
+                    - --dropout=0.4
+                    - --epochs=55
+                    - --hidden_size=256
+                    - --lookback=8760
+                    - --lr=0.0001
+                codePath: Train.py
+                codePathLocal: Train.py
+                cpu_count: 48
+                cpu_count_logical: 48
+                cudaVersion: "12.8"
+                disk:
+                    /:
+                        total: "401237422080"
+                        used: "11361796096"
+                email: weikang.kong@kaust.edu.sa
+                executable: /ibex/user/kongw0a/conda-environments/hydroenv/bin/python
+                gpu: Tesla V100-SXM2-32GB
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Volta
+                      cudaCores: 5120
+                      memoryTotal: "34359738368"
+                      name: Tesla V100-SXM2-32GB
+                      uuid: GPU-2061c92a-6976-6bf3-926a-40d514a7704f
+                host: gpu214-06
+                memory:
+                    total: "810203795456"
+                os: Linux-5.14.0-427.20.1.el9_4.0.1.x86_64-x86_64-with-glibc2.34
+                program: /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/Train.py
+                python: CPython 3.10.19
+                root: /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM
+                slurm:
+                    array_job_id: "46021664"
+                    array_task_count: "2"
+                    array_task_id: "2"
+                    array_task_max: "2"
+                    array_task_min: "1"
+                    array_task_step: "1"
+                    cluster_name: dragon
+                    conf: /opt/slurm/cluster/ibex/slurm/slurm.conf
+                    cpus_on_node: "4"
+                    cpus_per_task: "4"
+                    gpus_on_node: "1"
+                    gtids: "0"
+                    job_account: pi-beckhe
+                    job_cpus_per_node: "4"
+                    job_end_time: "1774377898"
+                    job_gid: "1217655"
+                    job_gpus: "5"
+                    job_id: "46021664"
+                    job_name: baseline_sweep
+                    job_nodelist: gpu214-06
+                    job_num_nodes: "1"
+                    job_partition: gpu
+                    job_qos: normal
+                    job_start_time: "1773513898"
+                    job_uid: "217655"
+                    job_user: kongw0a
+                    jobid: "46021664"
+                    localid: "0"
+                    mem_per_node: "32768"
+                    nnodes: "1"
+                    nodeid: "0"
+                    nodelist: gpu214-06
+                    oom_kill_step: "0"
+                    prio_process: "0"
+                    procid: "0"
+                    script_context: prolog_task
+                    submit_dir: /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM
+                    submit_host: vsc509-29-r
+                    task_pid: "254979"
+                    tasks_per_node: "1"
+                    topology_addr: main-intel.ibsw-intel-01-2.gpu214-06
+                    topology_addr_pattern: switch.switch.node
+                    tres_per_task: cpu=4
+                startedAt: "2026-03-14T18:45:31.012940Z"
+                writerId: f247bxe0l3t8wefg50w1ndguyn2uxla4
+        m: []
+        python_version: 3.10.19
+        t:
+            "1":
+                - 1
+            "2":
+                - 1
+            "3":
+                - 1
+                - 2
+                - 13
+                - 14
+                - 19
+            "4": 3.10.19
+            "5": 0.22.3
+            "12": 0.22.3
+            "13": linux-x86_64
+batch_size:
+    value: 256
+best_model_path:
+    value: /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/checkpoints/best_model.pth
+checkpoint_path:
+    value: null
+data_path:
+    value: /home/kongw0a/MTS_LSTM/experiment_withcursor/data/selected_stn_data.nc
+dropout:
+    value: 0.4
+dynamic_vars:
+    value:
+        - Rainf
+        - Tair
+        - PotEvap
+early_stopping:
+    value: true
+epochs:
+    value: 55
+hidden_size:
+    value: 256
+lookback:
+    value: 8760
+loss:
+    value: nse_loss
+lr:
+    value: 0.0001
+lr_schedule:
+    value: ""
+model_save_path:
+    value: /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/hist_model/best_model.pth
+nse_eps:
+    value: 1e-06
+num_layers:
+    value: 1
+num_workers:
+    value: 4
+output_dir:
+    value: runs/20260314/BaselineLSTM/WANDB_RUN_ID
+patience:
+    value: 10
+pin_memory:
+    value: true
+resume:
+    value: true
+save_every:
+    value: 1
+scaler_save_path:
+    value: /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/hist_model/scalers.pkl
+seed:
+    value: 42
+static_path:
+    value: /home/kongw0a/MTS_LSTM/experiment_withcursor/data/static_h.csv
+streamflow_max:
+    value: 1000
+streamflow_min:
+    value: 0
+target_var:
+    value: Streamflow
+test_end:
+    value: "2015-09-30"
+test_start:
+    value: "2008-10-01"
+train_end:
+    value: "2003-09-30"
+train_start:
+    value: "1990-10-01"
+val_end:
+    value: "2008-09-30"
+val_start:
+    value: "2003-10-01"
+wandb:
+    value: true
+wandb_mode:
+    value: online
+wandb_project:
+    value: LSTM_Streamflow
+wandb_run_name:
+    value: BaselineLSTM_sweep

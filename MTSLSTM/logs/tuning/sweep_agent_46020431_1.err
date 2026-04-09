@@ -1,0 +1,14 @@
+wandb: Starting wandb agent 🕵️
+2026-03-14 17:13:57,767 - wandb.wandb_agent - INFO - Running runs: []
+2026-03-14 17:13:58,787 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-14 17:13:58,787 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 64
+	lookback_daily: 365
+	lookback_hourly: 72
+	lr_schedule: 1:5e-4,10:1e-4,25:5e-5
+	patience: 10
+2026-03-14 17:13:58,791 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.4 --epochs=100 --hidden_size=64 --lookback_daily=365 --lookback_hourly=72 --lr_schedule=1:5e-4,10:1e-4,25:5e-5 --patience=10
+slurmstepd: error: *** JOB 46020614 ON gpu201-23-r CANCELLED AT 2026-03-14T17:14:01 ***

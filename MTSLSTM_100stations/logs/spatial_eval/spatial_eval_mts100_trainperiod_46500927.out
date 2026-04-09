@@ -1,0 +1,85 @@
+[2026-04-09 11:35:05] loading 57 stations
+  loaded 10/57 stations
+  loaded 20/57 stations
+  loaded 30/57 stations
+  loaded 40/57 stations
+  loaded 50/57 stations
+  loaded 57/57 stations
+[2026-04-09 11:35:08] device=cuda
+[2026-04-09 11:35:08] preparing training split
+[2026-04-09 11:35:09] building training loader
+Total valid samples: 2761623
+[2026-04-09 11:41:12] evaluating training split
+[01/57] 11073300 trainKGE=-804.9695 trainNSE=-28326.5351 train_samples=37718
+[02/57] 11449500 train_status=excluded:no_valid_windows train_samples=0
+[03/57] 11154700 trainKGE=-248.6558 trainNSE=-7747.7311 train_samples=79974
+[04/57] 10293500 trainKGE=-37.3366 trainNSE=-1465.5297 train_samples=87297
+[05/57] 11140000 trainKGE=-55.5655 trainNSE=-88.5337 train_samples=57563
+[06/57] 11203580 trainKGE=-192.8361 trainNSE=-6892.8763 train_samples=32006
+[07/57] 11113000 trainKGE=-48.8201 trainNSE=-69.5101 train_samples=88684
+[08/57] 11105510 train_status=excluded:no_valid_windows train_samples=0
+[09/57] 07381450 train_status=excluded:no_valid_windows train_samples=0
+[10/57] 0204382800 trainKGE=0.9583 trainNSE=0.9511 train_samples=12583
+[11/57] 02231600 trainKGE=-8.3663 trainNSE=-26.4189 train_samples=58290
+[12/57] 07071500 trainKGE=0.1743 trainNSE=-0.0315 train_samples=74346
+[13/57] 02203700 trainKGE=-0.5643 trainNSE=0.1152 train_samples=4098
+[14/57] 02374950 trainKGE=0.4865 trainNSE=0.1598 train_samples=29200
+[15/57] 0728875070 trainKGE=-2.0918 trainNSE=-11.4701 train_samples=15474
+[16/57] 02325000 trainKGE=-1.6072 trainNSE=-16.3272 train_samples=97404
+[17/57] 02171700 train_status=excluded:no_valid_windows train_samples=0
+[18/57] 03601990 trainKGE=0.3108 trainNSE=0.4512 train_samples=20282
+[19/57] 02307359 trainKGE=-33.8345 trainNSE=-235.1567 train_samples=85874
+[20/57] 02444160 train_status=excluded:no_valid_windows train_samples=0
+[21/57] 03508050 train_status=excluded:no_valid_windows train_samples=0
+[22/57] 03165000 trainKGE=-0.4830 trainNSE=-1.5973 train_samples=98749
+[23/57] 03456100 trainKGE=0.0096 trainNSE=-0.1770 train_samples=102373
+[24/57] 03510577 train_status=excluded:no_valid_windows train_samples=0
+[25/57] 03473000 trainKGE=0.9578 trainNSE=0.9445 train_samples=102374
+[26/57] 06475000 trainKGE=-13.4012 trainNSE=-228.7085 train_samples=34721
+[27/57] 03118500 trainKGE=0.4102 trainNSE=0.3751 train_samples=100714
+[28/57] 05508805 trainKGE=0.1282 trainNSE=0.1976 train_samples=68740
+[29/57] 06853800 trainKGE=-20.1747 trainNSE=-83.9728 train_samples=98459
+[30/57] 05342000 trainKGE=0.3564 trainNSE=-0.5784 train_samples=17009
+[31/57] 06606600 trainKGE=-0.9082 trainNSE=-3.6046 train_samples=82030
+[32/57] 06797500 train_status=excluded:no_valid_windows train_samples=0
+[33/57] 05311000 trainKGE=-6.8304 trainNSE=-27.4095 train_samples=60978
+[34/57] 06820500 trainKGE=-0.0866 trainNSE=-0.5799 train_samples=64063
+[35/57] 05438283 trainKGE=-27.9151 trainNSE=-53.6585 train_samples=96627
+[36/57] 04015330 trainKGE=-0.0059 trainNSE=-0.9178 train_samples=40883
+[37/57] 01021200 trainKGE=0.5919 trainNSE=0.2274 train_samples=61502
+[38/57] 03021350 trainKGE=0.3897 trainNSE=0.4468 train_samples=91736
+[39/57] 05432927 train_status=excluded:no_valid_windows train_samples=0
+[40/57] 01187300 trainKGE=0.3102 trainNSE=0.1152 train_samples=79776
+[41/57] 01011000 trainKGE=0.2421 trainNSE=-0.2007 train_samples=59710
+[42/57] 04296500 trainKGE=0.3626 trainNSE=-0.4748 train_samples=63159
+[43/57] 05393500 trainKGE=-1.7633 trainNSE=-2.9035 train_samples=64672
+[44/57] 01018009 train_status=excluded:no_valid_windows train_samples=0
+[45/57] 01048220 train_status=excluded:no_valid_windows train_samples=0
+[46/57] 06207500 trainKGE=-8.3988 trainNSE=-39.6299 train_samples=82356
+[47/57] 06133500 trainKGE=-168.6654 trainNSE=-18595.6901 train_samples=36950
+[48/57] 13310199 trainKGE=-0.5816 trainNSE=-0.7716 train_samples=68601
+[49/57] 06066500 trainKGE=0.1402 trainNSE=-0.9123 train_samples=78866
+[50/57] 06119600 trainKGE=-41.7496 trainNSE=-1514.3080 train_samples=3834
+[51/57] 06012500 trainKGE=-36.0092 trainNSE=-2039.1023 train_samples=37657
+[52/57] 08401900 trainKGE=-1185.6553 trainNSE=-3325.4118 train_samples=28696
+[53/57] 06827500 trainKGE=-583.4952 trainNSE=-282144.3881 train_samples=35909
+[54/57] 09372000 trainKGE=-41.4123 trainNSE=-1841.8977 train_samples=80484
+[55/57] 06447230 trainKGE=-25.8887 trainNSE=-626.1207 train_samples=40520
+[56/57] 06331000 trainKGE=-128.3794 trainNSE=-1157.5280 train_samples=27998
+[57/57] 06647500 trainKGE=-34.2233 trainNSE=-348.0803 train_samples=70684
+
+Regional medians:
+scheme_code scheme_label  n_total_stations  n_valid_stations  median_train_kge  median_train_nse  n_excluded_stations
+         S1    S1 Csb-CA                 8                 6       -124.200774      -4179.202990                    2
+         S2    S2 Cfa-SE                17                12         -0.236703         -0.104209                    5
+         U1    U1 Dfa-MW                10                 9         -0.908246         -3.604577                    1
+         U2 U2 Dfb(E)-GL                10                 7          0.310209         -0.200661                    3
+         U3 U3 Dfb(W)-RK                 6                 6        -22.204010       -776.968970                    0
+         U4    U4 BSk-SW                 3                 3       -583.495212      -3325.411762                    0
+         U5    U5 BSk-NP                 3                 3        -34.223280       -626.120698                    0
+
+Saved per station metrics to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/outputs/spatial_generalization_eval_mts100_idx2_trainperiod_conservative/per_station_metrics.csv
+Saved per station exclusions to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/outputs/spatial_generalization_eval_mts100_idx2_trainperiod_conservative/per_station_exclusions.csv
+Saved per region medians to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/outputs/spatial_generalization_eval_mts100_idx2_trainperiod_conservative/per_region_medians.csv
+Saved per region climate medians to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/outputs/spatial_generalization_eval_mts100_idx2_trainperiod_conservative/per_region_climate_medians.csv
+Saved summary to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/outputs/spatial_generalization_eval_mts100_idx2_trainperiod_conservative/summary.md

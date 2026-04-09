@@ -1,0 +1,89 @@
+[2026-04-06 20:25:35] loading 57 stations
+  loaded 10/57 stations
+  loaded 20/57 stations
+  loaded 30/57 stations
+  loaded 40/57 stations
+  loaded 50/57 stations
+  loaded 57/57 stations
+[2026-04-06 20:25:38] device=cuda
+[2026-04-06 20:25:39] preparing validation split
+[2026-04-06 20:25:39] building validation loader
+Total valid samples: 1530711
+[2026-04-06 20:27:53] evaluating validation split
+[2026-04-06 20:29:15] preparing test split
+[2026-04-06 20:29:15] building test loader
+Total valid samples: 2449897
+[2026-04-06 20:32:34] evaluating test split
+[01/57] 11073300 valKGE=-1381.6768 valNSE=-31509.0172 testKGE=-2196.4315 testNSE=-108330.0794 val_samples=34703 test_samples=51406
+[02/57] 11449500 valKGE=-12.5744 valNSE=-9.5466 testKGE=-8.2380 testNSE=-4.3036 val_samples=8656 test_samples=52454
+[03/57] 11154700 valKGE=-207.8890 valNSE=-10092.5245 testKGE=-291.9786 testNSE=-16199.0758 val_samples=33259 test_samples=41610
+[04/57] 10293500 valKGE=-78.7956 valNSE=-4522.1219 testKGE=-132.8464 testNSE=-9385.0757 val_samples=33144 test_samples=45693
+[05/57] 11140000 valKGE=-22.2704 valNSE=-20.0637 testKGE=-62.6163 testNSE=-62.4646 val_samples=34026 test_samples=46959
+[06/57] 11203580 valKGE=-557.6756 valNSE=-214918.0615 testKGE=-841.5083 testNSE=-239567.7821 val_samples=26088 test_samples=52584
+[07/57] 11113000 valKGE=-5.0451 valNSE=-1.4644 testKGE=-23.3292 testNSE=-13.9809 val_samples=34004 test_samples=52100
+[08/57] 11105510 valKGE=-38.1032 valNSE=-47.9217 testKGE=-71.6682 testNSE=-132.6784 val_samples=7192 test_samples=26959
+[09/57] 07381450 valKGE=-0.4577 valNSE=-0.6564 testKGE=-0.4163 testNSE=-0.5241 val_samples=8137 test_samples=33044
+[10/57] 0204382800 valKGE=-1.2943 valNSE=-7.7081 testKGE=-0.8734 testNSE=-4.8112 val_samples=29948 test_samples=47889
+[11/57] 02231600 valKGE=-0.8547 valNSE=-0.6978 testKGE=-1.4945 testNSE=-1.0038 val_samples=34131 test_samples=52244
+[12/57] 07071500 valKGE=-0.5729 valNSE=-0.4465 testKGE=-0.4821 testNSE=-0.4629 val_samples=34844 test_samples=52429
+[13/57] 02203700 valKGE=-6.3676 valNSE=-3.7900 testKGE=-7.2145 testNSE=-13.7893 val_samples=34319 test_samples=49313
+[14/57] 02374950 valKGE=0.1969 valNSE=0.0829 testKGE=0.0849 testNSE=0.1441 val_samples=35063 test_samples=52364
+[15/57] 0728875070 valKGE=-6.3166 valNSE=-26.0069 testKGE=-3.8380 testNSE=-14.0829 val_samples=32675 test_samples=8693
+[16/57] 02325000 valKGE=-0.9978 valNSE=-6.8134 testKGE=-0.8403 testNSE=-6.8391 val_samples=25531 test_samples=51286
+[17/57] 02171700 valKGE=-19.2300 valNSE=-2083.3882 testKGE=-1.4602 testNSE=-4.2952 val_samples=6862 test_samples=46070
+[18/57] 03601990 valKGE=-0.5613 valNSE=-0.2689 testKGE=-0.5995 testNSE=-0.5490 val_samples=34261 test_samples=51629
+[19/57] 02307359 valKGE=-46.0150 valNSE=-241.4886 testKGE=-14.0881 testNSE=-63.8658 val_samples=34751 test_samples=50136
+[20/57] 02444160 valKGE=-0.5704 valNSE=-0.5251 testKGE=-0.5978 testNSE=-0.6232 val_samples=8766 test_samples=41924
+[21/57] 03508050 valKGE=0.3817 valNSE=-0.2089 testKGE=0.3777 testNSE=-0.2511 val_samples=35088 test_samples=52456
+[22/57] 03165000 valKGE=0.4145 valNSE=0.4390 testKGE=0.5120 testNSE=0.5126 val_samples=34415 test_samples=49536
+[23/57] 03456100 valKGE=-8.5856 valNSE=-76.4609 testKGE=-6.7812 testNSE=-37.5368 val_samples=34584 test_samples=51961
+[24/57] 03510577 valKGE=0.5254 valNSE=-0.0008 testKGE=0.4698 testNSE=0.2008 val_samples=35088 test_samples=52584
+[25/57] 03473000 valKGE=-0.3758 valNSE=-1.0609 testKGE=-0.3042 testNSE=-0.5031 val_samples=34460 test_samples=50631
+[26/57] 06475000 valKGE=-3.8379 valNSE=-18.0056 testKGE=-1.4109 testNSE=-2.3359 val_samples=22056 test_samples=32166
+[27/57] 03118500 valKGE=0.1357 valNSE=0.1908 testKGE=-0.0132 testNSE=0.0622 val_samples=34686 test_samples=51974
+[28/57] 05508805 valKGE=-0.6827 valNSE=0.0149 testKGE=-0.3749 testNSE=0.0490 val_samples=29739 test_samples=51100
+[29/57] 06853800 valKGE=-28.6666 valNSE=-21.6091 testKGE=-12.5893 testNSE=-3.6044 val_samples=33129 test_samples=45046
+[30/57] 05342000 valKGE=-4.0112 valNSE=-39.6196 testKGE=-2.9702 testNSE=-26.0948 val_samples=31344 test_samples=45168
+[31/57] 06606600 valKGE=-0.6056 valNSE=-0.6542 testKGE=-0.6218 testNSE=-0.3180 val_samples=29231 test_samples=40485
+[32/57] 06797500 valKGE=-2.4574 valNSE=-8.1592 testKGE=-2.0305 testNSE=-1.4169 val_samples=13684 test_samples=37102
+[33/57] 05311000 valKGE=-1.1541 valNSE=-3.8036 testKGE=-1.0182 testNSE=-1.5819 val_samples=25059 test_samples=37195
+[34/57] 06820500 valKGE=-0.5106 valNSE=-0.0930 testKGE=-0.5112 testNSE=-0.1080 val_samples=32536 test_samples=50169
+[35/57] 05438283 valKGE=-178.1039 valNSE=-2791.3207 testKGE=-199.3393 testNSE=-5433.0710 val_samples=35039 test_samples=51672
+[36/57] 04015330 valKGE=-1.1532 valNSE=-0.8366 testKGE=-1.0921 testNSE=-0.3871 val_samples=22259 test_samples=33004
+[37/57] 01021200 valKGE=0.1708 valNSE=0.2366 testKGE=0.2349 testNSE=0.3122 val_samples=28244 test_samples=23956
+[38/57] 03021350 valKGE=-0.5955 valNSE=-0.3244 testKGE=-0.5952 testNSE=-0.4186 val_samples=31262 test_samples=45115
+[39/57] 05432927 valKGE=-8.3880 valNSE=-155.3893 testKGE=-12.1460 testNSE=-360.6020 val_samples=7674 test_samples=51215
+[40/57] 01187300 valKGE=-4.9046 valNSE=-9.2894 testKGE=-4.4982 testNSE=-5.7058 val_samples=28320 test_samples=46295
+[41/57] 01011000 valKGE=-0.4694 valNSE=-0.5183 testKGE=-0.4588 testNSE=-0.6664 val_samples=21410 test_samples=33649
+[42/57] 04296500 valKGE=0.4562 valNSE=0.0651 testKGE=0.4512 testNSE=0.0069 val_samples=29758 test_samples=47231
+[43/57] 05393500 valKGE=-2.1460 valNSE=-2.1305 testKGE=-0.7808 testNSE=-0.5587 val_samples=22994 test_samples=34590
+[44/57] 01018009 valKGE=-22.1593 valNSE=-186.9907 testKGE=-13.6568 testNSE=-61.6750 val_samples=2924 test_samples=27964
+[45/57] 01048220 valKGE=-1.8807 valNSE=-5.2819 testKGE=-1.1785 testNSE=-1.4949 val_samples=2924 test_samples=33029
+[46/57] 06207500 valKGE=-12.6484 valNSE=-72.5878 testKGE=-10.2448 testNSE=-48.7855 val_samples=30983 test_samples=49248
+[47/57] 06133500 valKGE=-40.0483 valNSE=-2382.7020 testKGE=-19.7369 testNSE=-491.3325 val_samples=22221 test_samples=30743
+[48/57] 13310199 valKGE=-1.4434 valNSE=-3.5152 testKGE=-0.9604 testNSE=-2.6211 val_samples=31622 test_samples=45358
+[49/57] 06066500 valKGE=-1.8896 valNSE=-46.1638 testKGE=-1.3296 testNSE=-12.2492 val_samples=35081 test_samples=52584
+[50/57] 06119600 valKGE=-65.9989 valNSE=-2400.4449 testKGE=-30.2374 testNSE=-224.0309 val_samples=21598 test_samples=33496
+[51/57] 06012500 valKGE=-15.1575 valNSE=-399.3380 testKGE=-16.8411 testNSE=-342.4191 val_samples=20160 test_samples=28828
+[52/57] 08401900 valKGE=-10573.3730 valNSE=-76348.7135 testKGE=-648.9716 testNSE=-335.7030 val_samples=33118 test_samples=51384
+[53/57] 06827500 valKGE=-1645.9495 valNSE=-257293.6896 testKGE=-77.9259 testNSE=-5973.6532 val_samples=28517 test_samples=20712
+[54/57] 09372000 valKGE=-5.7128 valNSE=-52.5806 testKGE=-10.7192 testNSE=-140.6518 val_samples=30366 test_samples=44319
+[55/57] 06447230 valKGE=-6.3762 valNSE=-1.8294 testKGE=-7.3723 testNSE=-10.6180 val_samples=30142 test_samples=33887
+[56/57] 06331000 valKGE=-44.1904 valNSE=-1902.5796 testKGE=-5.9585 testNSE=-5.1136 val_samples=29609 test_samples=35764
+[57/57] 06647500 valKGE=-128.1989 valNSE=-2528.6553 testKGE=-89.6642 testNSE=-1700.2381 val_samples=29027 test_samples=41495
+
+Regional medians:
+scheme_code scheme_label  n_total_stations  n_valid_stations  median_val_kge  median_val_nse  median_test_kge  median_test_nse  n_excluded_stations
+         S1    S1 Csb-CA                 8                 8      -58.449408    -2285.021786      -102.257268     -4758.877067                    0
+         S2    S2 Cfa-SE                17                17       -0.572881       -0.697804        -0.599533        -0.623219                    0
+         U1    U1 Dfa-MW                10                10       -1.805751       -5.981371        -1.214555        -1.499396                    0
+         U2 U2 Dfb(E)-GL                10                10       -1.516913       -1.483555        -0.936484        -0.612546                    0
+         U3 U3 Dfb(W)-RK                 6                 6      -13.902955     -235.962930       -13.542980      -136.408198                    0
+         U4    U4 BSk-SW                 3                 3    -1645.949527   -76348.713522       -77.925934      -335.703000                    0
+         U5    U5 BSk-NP                 3                 3      -44.190386    -1902.579641        -7.372296       -10.617989                    0
+
+Saved per-station metrics to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/outputs/spatial_generalization_eval_2augfge8_conservative/per_station_metrics.csv
+Saved per-station exclusions to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/outputs/spatial_generalization_eval_2augfge8_conservative/per_station_exclusions.csv
+Saved per-region medians to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/outputs/spatial_generalization_eval_2augfge8_conservative/per_region_medians.csv
+Saved per-region climate medians to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/outputs/spatial_generalization_eval_2augfge8_conservative/per_region_climate_medians.csv
+Saved markdown summary to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/outputs/spatial_generalization_eval_2augfge8_conservative/summary.md

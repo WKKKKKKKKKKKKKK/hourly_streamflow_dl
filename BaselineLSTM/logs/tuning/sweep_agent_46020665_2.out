@@ -1,0 +1,3 @@
+Starting W&B agent on host gpu201-09-l, task 2, sweep weikang-kong-kaust/LSTM_Streamflow/cocfmgtz
+Using device: cuda
+Run hparams: {'lookback': 8760, 'batch_size': 256, 'hidden_size': 256, 'num_layers': 1, 'dropout': 0.4, 'lr': 0.0005, 'epochs': 62, 'loss': 'nse_loss', 'early_stopping': True, 'patience': 10}

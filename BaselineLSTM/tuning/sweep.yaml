@@ -1,0 +1,39 @@
+program: /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/Train.py
+method: grid
+metric:
+  name: val/median_nse
+  goal: maximize
+parameters:
+  lr:
+    values:
+    - 0.0005
+    - 0.0001
+  dropout:
+    values:
+    - 0.4
+  hidden_size:
+    values:
+    - 256
+  batch_size:
+    values:
+    - 256
+    - 512
+  lookback:
+    values:
+    - 8760
+    - 4320
+  epochs:
+    values:
+    - 55
+command:
+- ${env}
+- python
+- ${program}
+- --wandb
+- --wandb-project=LSTM_Streamflow
+- --wandb-run-name=BaselineLSTM_sweep
+- --wandb-mode=online
+- --early-stopping
+- --patience=10
+- --output-dir=runs/${envvar:RUN_DATE}/BaselineLSTM/${envvar:WANDB_RUN_ID}
+- ${args}

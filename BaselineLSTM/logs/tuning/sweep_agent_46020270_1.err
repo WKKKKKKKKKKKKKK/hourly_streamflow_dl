@@ -1,0 +1,97 @@
+wandb: Starting wandb agent 🕵️
+2026-03-14 16:38:34,003 - wandb.wandb_agent - INFO - Running runs: []
+2026-03-14 16:38:34,838 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-14 16:38:34,838 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.4
+	epochs: 62
+	hidden_size: 256
+	lookback: 8760
+	lr: 0.0005
+2026-03-14 16:38:34,843 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python Train.py --wandb --wandb-project=LSTM_Streamflow --wandb-run-name=BaselineLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/BaselineLSTM/WANDB_RUN_ID --batch_size=256 --dropout=0.4 --epochs=62 --hidden_size=256 --lookback=8760 --lr=0.0005
+usage: Train.py [-h] [--data-path DATA_PATH] [--static-path STATIC_PATH]
+                [--streamflow-min STREAMFLOW_MIN]
+                [--streamflow-max STREAMFLOW_MAX] [--train-start TRAIN_START]
+                [--train-end TRAIN_END] [--val-start VAL_START]
+                [--val-end VAL_END] [--test-start TEST_START]
+                [--test-end TEST_END]
+                [--dynamic-vars DYNAMIC_VARS [DYNAMIC_VARS ...]]
+                [--target-var TARGET_VAR] [--lookback LOOKBACK]
+                [--batch-size BATCH_SIZE] [--num-workers NUM_WORKERS]
+                [--pin-memory [PIN_MEMORY]] [--no-pin-memory]
+                [--hidden-size HIDDEN_SIZE] [--num-layers NUM_LAYERS]
+                [--dropout DROPOUT] [--lr LR] [--lr-schedule LR_SCHEDULE]
+                [--epochs EPOCHS] [--loss {mse,nse_loss}] [--nse-eps NSE_EPS]
+                [--early-stopping] [--patience PATIENCE] [--seed SEED]
+                [--output-dir OUTPUT_DIR] [--model-save-path MODEL_SAVE_PATH]
+                [--best-model-path BEST_MODEL_PATH]
+                [--scaler-save-path SCALER_SAVE_PATH] [--wandb [WANDB]]
+                [--no-wandb] [--wandb-project WANDB_PROJECT]
+                [--wandb-run-name WANDB_RUN_NAME] [--wandb-mode WANDB_MODE]
+Train.py: error: unrecognized arguments: --batch_size=256 --hidden_size=256
+2026-03-14 16:38:39,852 - wandb.wandb_agent - INFO - Running runs: ['sizfubxy']
+2026-03-14 16:38:45,241 - wandb.wandb_agent - INFO - Cleaning up finished run: sizfubxy
+2026-03-14 16:38:46,036 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-14 16:38:46,036 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.4
+	epochs: 62
+	hidden_size: 256
+	lookback: 4320
+	lr: 0.0005
+2026-03-14 16:38:46,041 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python Train.py --wandb --wandb-project=LSTM_Streamflow --wandb-run-name=BaselineLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/BaselineLSTM/WANDB_RUN_ID --batch_size=256 --dropout=0.4 --epochs=62 --hidden_size=256 --lookback=4320 --lr=0.0005
+usage: Train.py [-h] [--data-path DATA_PATH] [--static-path STATIC_PATH]
+                [--streamflow-min STREAMFLOW_MIN]
+                [--streamflow-max STREAMFLOW_MAX] [--train-start TRAIN_START]
+                [--train-end TRAIN_END] [--val-start VAL_START]
+                [--val-end VAL_END] [--test-start TEST_START]
+                [--test-end TEST_END]
+                [--dynamic-vars DYNAMIC_VARS [DYNAMIC_VARS ...]]
+                [--target-var TARGET_VAR] [--lookback LOOKBACK]
+                [--batch-size BATCH_SIZE] [--num-workers NUM_WORKERS]
+                [--pin-memory [PIN_MEMORY]] [--no-pin-memory]
+                [--hidden-size HIDDEN_SIZE] [--num-layers NUM_LAYERS]
+                [--dropout DROPOUT] [--lr LR] [--lr-schedule LR_SCHEDULE]
+                [--epochs EPOCHS] [--loss {mse,nse_loss}] [--nse-eps NSE_EPS]
+                [--early-stopping] [--patience PATIENCE] [--seed SEED]
+                [--output-dir OUTPUT_DIR] [--model-save-path MODEL_SAVE_PATH]
+                [--best-model-path BEST_MODEL_PATH]
+                [--scaler-save-path SCALER_SAVE_PATH] [--wandb [WANDB]]
+                [--no-wandb] [--wandb-project WANDB_PROJECT]
+                [--wandb-run-name WANDB_RUN_NAME] [--wandb-mode WANDB_MODE]
+Train.py: error: unrecognized arguments: --batch_size=256 --hidden_size=256
+2026-03-14 16:38:51,050 - wandb.wandb_agent - INFO - Running runs: ['0clt9vjg']
+2026-03-14 16:38:56,460 - wandb.wandb_agent - INFO - Cleaning up finished run: 0clt9vjg
+2026-03-14 16:38:57,255 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-14 16:38:57,255 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 512
+	dropout: 0.4
+	epochs: 62
+	hidden_size: 256
+	lookback: 8760
+	lr: 0.0005
+2026-03-14 16:38:57,258 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python Train.py --wandb --wandb-project=LSTM_Streamflow --wandb-run-name=BaselineLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/BaselineLSTM/WANDB_RUN_ID --batch_size=512 --dropout=0.4 --epochs=62 --hidden_size=256 --lookback=8760 --lr=0.0005
+usage: Train.py [-h] [--data-path DATA_PATH] [--static-path STATIC_PATH]
+                [--streamflow-min STREAMFLOW_MIN]
+                [--streamflow-max STREAMFLOW_MAX] [--train-start TRAIN_START]
+                [--train-end TRAIN_END] [--val-start VAL_START]
+                [--val-end VAL_END] [--test-start TEST_START]
+                [--test-end TEST_END]
+                [--dynamic-vars DYNAMIC_VARS [DYNAMIC_VARS ...]]
+                [--target-var TARGET_VAR] [--lookback LOOKBACK]
+                [--batch-size BATCH_SIZE] [--num-workers NUM_WORKERS]
+                [--pin-memory [PIN_MEMORY]] [--no-pin-memory]
+                [--hidden-size HIDDEN_SIZE] [--num-layers NUM_LAYERS]
+                [--dropout DROPOUT] [--lr LR] [--lr-schedule LR_SCHEDULE]
+                [--epochs EPOCHS] [--loss {mse,nse_loss}] [--nse-eps NSE_EPS]
+                [--early-stopping] [--patience PATIENCE] [--seed SEED]
+                [--output-dir OUTPUT_DIR] [--model-save-path MODEL_SAVE_PATH]
+                [--best-model-path BEST_MODEL_PATH]
+                [--scaler-save-path SCALER_SAVE_PATH] [--wandb [WANDB]]
+                [--no-wandb] [--wandb-project WANDB_PROJECT]
+                [--wandb-run-name WANDB_RUN_NAME] [--wandb-mode WANDB_MODE]
+Train.py: error: unrecognized arguments: --batch_size=512 --hidden_size=256
+2026-03-14 16:39:02,268 - wandb.wandb_agent - INFO - Running runs: ['efjfmenx']
+2026-03-14 16:39:07,672 - wandb.wandb_agent - ERROR - Detected 3 failed runs in the first 60 seconds, shutting down.
+2026-03-14 16:39:07,672 - wandb.wandb_agent - INFO - To disable this check set WANDB_AGENT_DISABLE_FLAPPING=true
+wandb: Terminating and syncing runs. Press ctrl-c to kill.

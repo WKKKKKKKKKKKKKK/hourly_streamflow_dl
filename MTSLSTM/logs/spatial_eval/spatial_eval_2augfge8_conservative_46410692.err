@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/outputs/spatial_generalization_eval_2augfge8_conservative/evaluate_selected_stations_gpu.py", line 283, in <module>
+    main()
+  File "/home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/outputs/spatial_generalization_eval_2augfge8_conservative/evaluate_selected_stations_gpu.py", line 165, in main
+    f'val_samples={row.val_samples} test_samples={row.test_samples}',
+AttributeError: 'Pandas' object has no attribute 'val_samples'. Did you mean: 'val_samples_x'?

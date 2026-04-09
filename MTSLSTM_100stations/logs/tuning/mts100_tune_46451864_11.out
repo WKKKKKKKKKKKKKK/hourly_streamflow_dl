@@ -1,0 +1,4 @@
+W&B online. Running your script from this directory will now sync to the cloud.
+Using device: cuda
+Run hparams: {'lookback_hourly': 168, 'lookback_daily': 365, 'batch_size': 128, 'hidden_size_daily': 256, 'hidden_size_hourly': 256, 'num_layers': 1, 'dropout': 0.4, 'lr': 0.0005, 'lr_schedule': '1:5e-4,10:1e-4,25:5e-5', 'epochs': 100, 'loss': 'nse_loss', 'reg_lambda': 1.0, 'early_stopping': True, 'patience': 10}
+Aliased 90 station IDs in static features: 03535400, 01409000, 03262700, 0204382800, 01605500, 03288200, 03168000, 01486500, 01613050, 03201980 ...

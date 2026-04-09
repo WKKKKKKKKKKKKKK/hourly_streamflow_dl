@@ -1,0 +1,56 @@
+Epoch 1/100 | Train Loss: 1.869891 | Val Loss: 0.375618
+Best model saved.
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 2/100 | Train Loss: 0.366181 | Val Loss: 0.292773
+Best model saved.
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 3/100 | Train Loss: 0.217061 | Val Loss: 0.256261
+Best model saved.
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 4/100 | Train Loss: 0.176605 | Val Loss: 0.292215
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 5/100 | Train Loss: 0.151073 | Val Loss: 0.311554
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 6/100 | Train Loss: 0.135850 | Val Loss: 0.278845
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 7/100 | Train Loss: 0.121776 | Val Loss: 0.259185
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 8/100 | Train Loss: 0.111384 | Val Loss: 0.264610
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 9/100 | Train Loss: 0.103005 | Val Loss: 0.299221
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 10/100 | Train Loss: 0.073260 | Val Loss: 0.245739
+Best model saved.
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 11/100 | Train Loss: 0.067063 | Val Loss: 0.249191
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 12/100 | Train Loss: 0.064161 | Val Loss: 0.249241
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 13/100 | Train Loss: 0.063897 | Val Loss: 0.236505
+Best model saved.
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 14/100 | Train Loss: 0.061777 | Val Loss: 0.254134
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 15/100 | Train Loss: 0.059396 | Val Loss: 0.259532
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 16/100 | Train Loss: 0.058853 | Val Loss: 0.257639
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 17/100 | Train Loss: 0.059850 | Val Loss: 0.260041
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 18/100 | Train Loss: 0.054933 | Val Loss: 0.255093
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 19/100 | Train Loss: 0.054071 | Val Loss: 0.273488
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 20/100 | Train Loss: 0.054705 | Val Loss: 0.267397
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 21/100 | Train Loss: 0.054448 | Val Loss: 0.302962
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 22/100 | Train Loss: 0.053547 | Val Loss: 0.282118
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Epoch 23/100 | Train Loss: 0.050482 | Val Loss: 0.269748
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/checkpoint.pth
+Early stopping triggered.
+Training finished.
+Model saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/model.pth
+VAL  median NSE: 0.6209325772349156 median KGE: 0.7442275154967299
+TEST median NSE: 0.5652028945833508 median KGE: 0.6284684169971972

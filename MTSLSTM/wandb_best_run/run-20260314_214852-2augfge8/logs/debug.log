@@ -1,0 +1,97 @@
+2026-03-14 21:48:52,939 INFO    MainThread:255346 [wandb_setup.py:_flush():81] Current SDK version is 0.22.3
+2026-03-14 21:48:52,939 INFO    MainThread:255346 [wandb_setup.py:_flush():81] Configure stats pid to 255346
+2026-03-14 21:48:52,939 INFO    MainThread:255346 [wandb_setup.py:_flush():81] Loading settings from /home/kongw0a/.config/wandb/settings
+2026-03-14 21:48:52,939 INFO    MainThread:255346 [wandb_setup.py:_flush():81] Loading settings from /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/settings
+2026-03-14 21:48:52,939 INFO    MainThread:255346 [wandb_setup.py:_flush():81] Loading settings from environment variables
+2026-03-14 21:48:52,939 INFO    MainThread:255346 [wandb_init.py:setup_run_log_directory():706] Logging user logs to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260314_214852-2augfge8/logs/debug.log
+2026-03-14 21:48:52,939 INFO    MainThread:255346 [wandb_init.py:setup_run_log_directory():707] Logging internal logs to /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260314_214852-2augfge8/logs/debug-internal.log
+2026-03-14 21:48:52,939 INFO    MainThread:255346 [wandb_init.py:init():833] calling init triggers
+2026-03-14 21:48:52,939 INFO    MainThread:255346 [wandb_init.py:init():838] wandb.init called with sweep_config: {'batch_size': 128, 'dropout': 0.4, 'epochs': 100, 'hidden_size': 64, 'lookback_daily': 365, 'lookback_hourly': 72, 'lr_schedule': '1:5e-4,10:1e-4,25:5e-5', 'patience': 10}
+config: {'_wandb': {}}
+2026-03-14 21:48:52,939 INFO    MainThread:255346 [wandb_init.py:init():881] starting backend
+2026-03-14 21:48:53,150 INFO    MainThread:255346 [wandb_init.py:init():884] sending inform_init request
+2026-03-14 21:48:53,161 INFO    MainThread:255346 [wandb_init.py:init():892] backend started and connected
+2026-03-14 21:48:53,162 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb None None {'batch_size': 128, 'dropout': 0.4, 'epochs': 100, 'hidden_size': 64, 'lookback_daily': 365, 'lookback_hourly': 72, 'lr_schedule': '1:5e-4,10:1e-4,25:5e-5', 'patience': 10}
+2026-03-14 21:48:53,163 INFO    MainThread:255346 [wandb_init.py:init():962] updated telemetry
+2026-03-14 21:48:53,164 INFO    MainThread:255346 [wandb_init.py:init():986] communicating run to backend with 90.0 second timeout
+2026-03-14 21:48:55,035 INFO    MainThread:255346 [wandb_init.py:init():1033] starting run threads in backend
+2026-03-14 21:48:55,164 INFO    MainThread:255346 [wandb_run.py:_console_start():2506] atexit reg
+2026-03-14 21:48:55,164 INFO    MainThread:255346 [wandb_run.py:_redirect():2354] redirect: wrap_raw
+2026-03-14 21:48:55,165 INFO    MainThread:255346 [wandb_run.py:_redirect():2423] Wrapping output streams.
+2026-03-14 21:48:55,165 INFO    MainThread:255346 [wandb_run.py:_redirect():2446] Redirects installed.
+2026-03-14 21:48:55,169 INFO    MainThread:255346 [wandb_init.py:init():1073] run started, returning control to user process
+2026-03-14 21:48:55,169 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set data_path = /home/kongw0a/MTS_LSTM/experiment_withcursor/data/selected_stn_data.nc - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,169 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb data_path /home/kongw0a/MTS_LSTM/experiment_withcursor/data/selected_stn_data.nc None
+2026-03-14 21:48:55,170 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set static_path = /home/kongw0a/MTS_LSTM/experiment_withcursor/data/static_h.csv - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,170 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb static_path /home/kongw0a/MTS_LSTM/experiment_withcursor/data/static_h.csv None
+2026-03-14 21:48:55,170 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set streamflow_min = 0.0 - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,170 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb streamflow_min 0.0 None
+2026-03-14 21:48:55,170 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set streamflow_max = 1000.0 - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,170 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb streamflow_max 1000.0 None
+2026-03-14 21:48:55,171 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set train_start = 1990-10-01 - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,171 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb train_start 1990-10-01 None
+2026-03-14 21:48:55,171 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set train_end = 2003-09-30 - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,171 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb train_end 2003-09-30 None
+2026-03-14 21:48:55,171 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set val_start = 2003-10-01 - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,171 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb val_start 2003-10-01 None
+2026-03-14 21:48:55,171 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set val_end = 2008-09-30 - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,171 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb val_end 2008-09-30 None
+2026-03-14 21:48:55,172 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set test_start = 2008-10-01 - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,172 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb test_start 2008-10-01 None
+2026-03-14 21:48:55,172 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set test_end = 2015-09-30 - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,172 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb test_end 2015-09-30 None
+2026-03-14 21:48:55,172 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set dynamic_vars = ['Rainf', 'Tair', 'PotEvap'] - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,172 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb dynamic_vars ['Rainf', 'Tair', 'PotEvap'] None
+2026-03-14 21:48:55,173 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set target_var = Streamflow - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,173 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb target_var Streamflow None
+2026-03-14 21:48:55,173 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set num_workers = 4 - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,173 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb num_workers 4 None
+2026-03-14 21:48:55,173 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set pin_memory = True - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,173 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb pin_memory True None
+2026-03-14 21:48:55,173 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set frequency_factor = 24 - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,173 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb frequency_factor 24 None
+2026-03-14 21:48:55,174 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set hidden_size_daily = 64 - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,174 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb hidden_size_daily 64 None
+2026-03-14 21:48:55,174 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set hidden_size_hourly = 64 - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,174 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb hidden_size_hourly 64 None
+2026-03-14 21:48:55,174 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set num_layers = 1 - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,174 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb num_layers 1 None
+2026-03-14 21:48:55,174 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set lr = 0.0005 - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,174 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb lr 0.0005 None
+2026-03-14 21:48:55,175 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set loss = nse_loss - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,175 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb loss nse_loss None
+2026-03-14 21:48:55,175 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set reg_lambda = 1.0 - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,175 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb reg_lambda 1.0 None
+2026-03-14 21:48:55,175 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set nse_eps = 1e-06 - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,175 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb nse_eps 1e-06 None
+2026-03-14 21:48:55,175 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set early_stopping = True - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,175 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb early_stopping True None
+2026-03-14 21:48:55,175 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set seed = 42 - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,176 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb seed 42 None
+2026-03-14 21:48:55,176 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set output_dir = runs/20260314/MTSLSTM/WANDB_RUN_ID - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,176 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb output_dir runs/20260314/MTSLSTM/WANDB_RUN_ID None
+2026-03-14 21:48:55,176 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set model_save_path = /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/checkpoints/best_model_mtslstm.pth - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,176 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb model_save_path /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/checkpoints/best_model_mtslstm.pth None
+2026-03-14 21:48:55,176 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set best_model_path = /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/checkpoints/best_model_mtslstm.pth - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,176 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb best_model_path /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/checkpoints/best_model_mtslstm.pth None
+2026-03-14 21:48:55,176 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set scaler_save_path = /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/checkpoints/scalers.pkl - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,176 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb scaler_save_path /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/checkpoints/scalers.pkl None
+2026-03-14 21:48:55,177 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set resume = True - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,177 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb resume True None
+2026-03-14 21:48:55,177 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set checkpoint_path = None - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,177 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb checkpoint_path None None
+2026-03-14 21:48:55,177 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set save_every = 1 - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,177 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb save_every 1 None
+2026-03-14 21:48:55,177 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set wandb = True - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,177 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb wandb True None
+2026-03-14 21:48:55,178 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set wandb_project = MTSLSTM_Streamflow - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,178 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb wandb_project MTSLSTM_Streamflow None
+2026-03-14 21:48:55,178 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set wandb_run_name = MTSLSTM_sweep - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,178 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb wandb_run_name MTSLSTM_sweep None
+2026-03-14 21:48:55,178 INFO    MainThread:255346 [wandb_config.py:__setitem__():154] [no run ID] config set wandb_mode = online - <bound method Run._config_callback of <wandb.sdk.wandb_run.Run object at 0x14da9647d990>>
+2026-03-14 21:48:55,178 INFO    MainThread:255346 [wandb_run.py:_config_callback():1390] config_cb wandb_mode online None
+2026-03-14 22:14:33,831 INFO    MainThread:255346 [wandb_run.py:_finish():2272] finishing run weikang-kong-kaust/uncategorized/2augfge8
+2026-03-14 22:14:33,831 INFO    MainThread:255346 [wandb_run.py:_atexit_cleanup():2471] got exitcode: 0
+2026-03-14 22:14:33,833 INFO    MainThread:255346 [wandb_run.py:_restore():2453] restore
+2026-03-14 22:14:33,834 INFO    MainThread:255346 [wandb_run.py:_restore():2459] restore done
+2026-03-14 22:14:36,786 INFO    MainThread:255346 [wandb_run.py:_footer_sync_info():3835] logging synced files

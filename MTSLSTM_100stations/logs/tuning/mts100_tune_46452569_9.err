@@ -1,0 +1,36 @@
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run f0fejup3
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/wandb/wandb/run-20260408_073443-f0fejup3
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run mtslstm_100stations_tune_idx9_bs128_do0.6_hs128_H168_D365_1775622882
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/MTSLSTM_Streamflow
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/MTSLSTM_Streamflow/runs/f0fejup3
+wandb: updating run metadata
+wandb: updating run metadata; uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading output.log; uploading wandb-summary.json
+wandb: uploading history steps 15-15, summary, console lines 39-40
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▃▂▂▂▂▂▂▂▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ██▄▄▃▁▁▅▂▃▃▄▃▃▃▄
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0001
+wandb: test/median_kge 0.66924
+wandb: test/median_nse 0.65362
+wandb:      train_loss 0.03798
+wandb:  val/median_kge 0.73953
+wandb:  val/median_nse 0.68457
+wandb:        val_loss 0.15507
+wandb: 
+wandb: 🚀 View run mtslstm_100stations_tune_idx9_bs128_do0.6_hs128_H168_D365_1775622882 at: https://wandb.ai/weikang-kong-kaust/MTSLSTM_Streamflow/runs/f0fejup3
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/MTSLSTM_Streamflow
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/wandb/wandb/run-20260408_073443-f0fejup3/logs

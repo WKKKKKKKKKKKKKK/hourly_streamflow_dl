@@ -1,0 +1,5 @@
+15-station data references used by MTSLSTM tuning
+- Dynamic data: /home/kongw0a/MTS_LSTM/experiment_withcursor/data/selected_stn_data.nc
+- Static attributes: /home/kongw0a/MTS_LSTM/experiment_withcursor/data/static_h.csv
+- Best run id: 2augfge8
+- Best run dir: /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5

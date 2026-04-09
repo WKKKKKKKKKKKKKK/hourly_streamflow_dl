@@ -1,0 +1,28 @@
+wandb: Starting wandb agent 🕵️
+2026-03-14 17:12:54,454 - wandb.wandb_agent - INFO - Running runs: []
+2026-03-14 17:12:55,334 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-14 17:12:55,334 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.4
+	epochs: 62
+	hidden_size: 256
+	lookback: 8760
+	lr: 0.0001
+2026-03-14 17:12:55,339 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/Train.py --wandb --wandb-project=LSTM_Streamflow --wandb-run-name=BaselineLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/BaselineLSTM/WANDB_RUN_ID --batch_size=256 --dropout=0.4 --epochs=62 --hidden_size=256 --lookback=8760 --lr=0.0001
+2026-03-14 17:13:00,347 - wandb.wandb_agent - INFO - Running runs: ['g2whtjmu']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'LSTM_Streamflow' when running a sweep.
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/wandb/run-20260314_171311-g2whtjmu
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run BaselineLSTM_sweep_1773497590
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/LSTM_Streamflow
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/LSTM_Streamflow/sweeps/04v6ys42
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/LSTM_Streamflow/runs/g2whtjmu
+wandb: WARNING Config item 'lookback' was locked by 'sweep' (ignored update).
+wandb: WARNING Config item 'batch_size' was locked by 'sweep' (ignored update).
+wandb: WARNING Config item 'hidden_size' was locked by 'sweep' (ignored update).
+wandb: WARNING Config item 'dropout' was locked by 'sweep' (ignored update).
+wandb: WARNING Config item 'lr' was locked by 'sweep' (ignored update).
+wandb: WARNING Config item 'epochs' was locked by 'sweep' (ignored update).
+slurmstepd: error: *** JOB 46020425 ON gpu201-23-r CANCELLED AT 2026-03-14T17:13:42 ***

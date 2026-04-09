@@ -1,0 +1,12 @@
+scheme_code,scheme_label,koppen_class,selection_order,target_count,station_id,lat,lon,val_samples,test_samples,val_reason,test_reason,min_dist_to_training_km,min_dist_to_selected_km,train_samples,train_score_status,train_exclusion_reason,train_nse,train_kge
+S1,S1 Csb-CA,Csb,2,8,11449500,38.92739984,-122.84360465,8656.0,52454.0,ok,ok,723.3296772476136,328.81519123615084,0,excluded,no_valid_windows,,
+S1,S1 Csb-CA,Csb,8,8,11105510,34.043333,-118.684167,7192.0,26959.0,ok,ok,1310.598431700001,50.46716975894076,0,excluded,no_valid_windows,,
+S2,S2 Cfa-SE,Cfa,1,12,07381450,30.155476,-91.331776,8137.0,33044.0,ok,ok,1280.912079568715,363.28363563444935,0,excluded,no_valid_windows,,
+S2,S2 Cfa-SE,Cfa,9,12,02171700,33.30489,-79.67813,6862.0,46070.0,ok,ok,532.2807407518455,433.4704797356795,0,excluded,no_valid_windows,,
+S2,S2 Cfa-SE,Cfa,12,12,02444160,33.21067874,-88.28864536,8766.0,41924.0,ok,ok,838.3835439256572,242.8462315581461,0,excluded,no_valid_windows,,
+S2,S2 Cfa-SE,Cfb,1,5,03508050,35.287778,-83.143889,35088.0,52456.0,ok,ok,349.27369630815764,17.1821929331792,0,excluded,no_valid_windows,,
+S2,S2 Cfa-SE,Cfb,4,5,03510577,35.384444,-83.291667,35088.0,52584.0,ok,ok,347.45015399805527,17.1821929331792,0,excluded,no_valid_windows,,
+U1,U1 Dfa-MW,Dfa,7,10,06797500,42.26852222,-98.33939444,13684.0,37102.0,ok,ok,1541.1772884976044,210.0068441475951,0,excluded,no_valid_windows,,
+U2,U2 Dfb(E)-GL,Dfb,4,10,05432927,42.87472,-89.79929,7674.0,51215.0,ok,ok,893.0217427405946,286.6212723243908,0,excluded,no_valid_windows,,
+U2,U2 Dfb(E)-GL,Dfb,9,10,01018009,46.11528,-67.84028,2924.0,27964.0,ok,ok,1099.856382572565,142.22025165517803,0,excluded,no_valid_windows,,
+U2,U2 Dfb(E)-GL,Dfb,10,10,01048220,44.9475,-69.656944,2924.0,33029.0,ok,ok,908.7599394660838,189.74868341770733,0,excluded,no_valid_windows,,

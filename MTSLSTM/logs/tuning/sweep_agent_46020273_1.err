@@ -1,0 +1,118 @@
+wandb: Starting wandb agent 🕵️
+2026-03-14 16:38:43,525 - wandb.wandb_agent - INFO - Running runs: []
+2026-03-14 16:38:44,275 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-14 16:38:44,275 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 64
+	lookback_daily: 365
+	lookback_hourly: 72
+	lr_schedule: 1:5e-4,10:1e-4,25:5e-5
+	patience: 10
+2026-03-14 16:38:44,279 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.4 --epochs=100 --hidden_size=64 --lookback_daily=365 --lookback_hourly=72 --lr_schedule=1:5e-4,10:1e-4,25:5e-5 --patience=10
+2026-03-14 16:38:49,288 - wandb.wandb_agent - INFO - Running runs: ['ts6e0cps']
+usage: Train.py [-h] [--data-path DATA_PATH] [--static-path STATIC_PATH]
+                [--streamflow-min STREAMFLOW_MIN]
+                [--streamflow-max STREAMFLOW_MAX] [--train-start TRAIN_START]
+                [--train-end TRAIN_END] [--val-start VAL_START]
+                [--val-end VAL_END] [--test-start TEST_START]
+                [--test-end TEST_END]
+                [--dynamic-vars DYNAMIC_VARS [DYNAMIC_VARS ...]]
+                [--target-var TARGET_VAR] [--batch-size BATCH_SIZE]
+                [--num-workers NUM_WORKERS] [--pin-memory [PIN_MEMORY]]
+                [--no-pin-memory] [--lookback-hourly LOOKBACK_HOURLY]
+                [--lookback-daily LOOKBACK_DAILY]
+                [--frequency-factor FREQUENCY_FACTOR]
+                [--hidden-size-daily HIDDEN_SIZE_DAILY]
+                [--hidden-size-hourly HIDDEN_SIZE_HOURLY]
+                [--num-layers NUM_LAYERS] [--dropout DROPOUT] [--lr LR]
+                [--lr-schedule LR_SCHEDULE] [--epochs EPOCHS]
+                [--loss {mse,nse_loss}] [--reg-lambda REG_LAMBDA]
+                [--nse-eps NSE_EPS] [--early-stopping] [--patience PATIENCE]
+                [--seed SEED] [--output-dir OUTPUT_DIR]
+                [--model-save-path MODEL_SAVE_PATH]
+                [--best-model-path BEST_MODEL_PATH]
+                [--scaler-save-path SCALER_SAVE_PATH] [--wandb [WANDB]]
+                [--no-wandb] [--wandb-project WANDB_PROJECT]
+                [--wandb-run-name WANDB_RUN_NAME] [--wandb-mode WANDB_MODE]
+Train.py: error: unrecognized arguments: --batch_size=128 --hidden_size=64 --lookback_daily=365 --lookback_hourly=72 --lr_schedule=1:5e-4,10:1e-4,25:5e-5
+2026-03-14 16:38:54,685 - wandb.wandb_agent - INFO - Cleaning up finished run: ts6e0cps
+2026-03-14 16:38:55,767 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-14 16:38:55,767 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 64
+	lookback_daily: 365
+	lookback_hourly: 72
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-14 16:38:55,771 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.4 --epochs=100 --hidden_size=64 --lookback_daily=365 --lookback_hourly=72 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-14 16:39:00,779 - wandb.wandb_agent - INFO - Running runs: ['rmgvpq2o']
+usage: Train.py [-h] [--data-path DATA_PATH] [--static-path STATIC_PATH]
+                [--streamflow-min STREAMFLOW_MIN]
+                [--streamflow-max STREAMFLOW_MAX] [--train-start TRAIN_START]
+                [--train-end TRAIN_END] [--val-start VAL_START]
+                [--val-end VAL_END] [--test-start TEST_START]
+                [--test-end TEST_END]
+                [--dynamic-vars DYNAMIC_VARS [DYNAMIC_VARS ...]]
+                [--target-var TARGET_VAR] [--batch-size BATCH_SIZE]
+                [--num-workers NUM_WORKERS] [--pin-memory [PIN_MEMORY]]
+                [--no-pin-memory] [--lookback-hourly LOOKBACK_HOURLY]
+                [--lookback-daily LOOKBACK_DAILY]
+                [--frequency-factor FREQUENCY_FACTOR]
+                [--hidden-size-daily HIDDEN_SIZE_DAILY]
+                [--hidden-size-hourly HIDDEN_SIZE_HOURLY]
+                [--num-layers NUM_LAYERS] [--dropout DROPOUT] [--lr LR]
+                [--lr-schedule LR_SCHEDULE] [--epochs EPOCHS]
+                [--loss {mse,nse_loss}] [--reg-lambda REG_LAMBDA]
+                [--nse-eps NSE_EPS] [--early-stopping] [--patience PATIENCE]
+                [--seed SEED] [--output-dir OUTPUT_DIR]
+                [--model-save-path MODEL_SAVE_PATH]
+                [--best-model-path BEST_MODEL_PATH]
+                [--scaler-save-path SCALER_SAVE_PATH] [--wandb [WANDB]]
+                [--no-wandb] [--wandb-project WANDB_PROJECT]
+                [--wandb-run-name WANDB_RUN_NAME] [--wandb-mode WANDB_MODE]
+Train.py: error: unrecognized arguments: --batch_size=128 --hidden_size=64 --lookback_daily=365 --lookback_hourly=72 --lr_schedule=1:1e-3,10:5e-4,25:1e-4
+2026-03-14 16:39:06,176 - wandb.wandb_agent - INFO - Cleaning up finished run: rmgvpq2o
+2026-03-14 16:39:06,964 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-14 16:39:06,964 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 64
+	lookback_daily: 365
+	lookback_hourly: 168
+	lr_schedule: 1:5e-4,10:1e-4,25:5e-5
+	patience: 10
+2026-03-14 16:39:06,969 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.4 --epochs=100 --hidden_size=64 --lookback_daily=365 --lookback_hourly=168 --lr_schedule=1:5e-4,10:1e-4,25:5e-5 --patience=10
+2026-03-14 16:39:11,977 - wandb.wandb_agent - INFO - Running runs: ['16dgimur']
+usage: Train.py [-h] [--data-path DATA_PATH] [--static-path STATIC_PATH]
+                [--streamflow-min STREAMFLOW_MIN]
+                [--streamflow-max STREAMFLOW_MAX] [--train-start TRAIN_START]
+                [--train-end TRAIN_END] [--val-start VAL_START]
+                [--val-end VAL_END] [--test-start TEST_START]
+                [--test-end TEST_END]
+                [--dynamic-vars DYNAMIC_VARS [DYNAMIC_VARS ...]]
+                [--target-var TARGET_VAR] [--batch-size BATCH_SIZE]
+                [--num-workers NUM_WORKERS] [--pin-memory [PIN_MEMORY]]
+                [--no-pin-memory] [--lookback-hourly LOOKBACK_HOURLY]
+                [--lookback-daily LOOKBACK_DAILY]
+                [--frequency-factor FREQUENCY_FACTOR]
+                [--hidden-size-daily HIDDEN_SIZE_DAILY]
+                [--hidden-size-hourly HIDDEN_SIZE_HOURLY]
+                [--num-layers NUM_LAYERS] [--dropout DROPOUT] [--lr LR]
+                [--lr-schedule LR_SCHEDULE] [--epochs EPOCHS]
+                [--loss {mse,nse_loss}] [--reg-lambda REG_LAMBDA]
+                [--nse-eps NSE_EPS] [--early-stopping] [--patience PATIENCE]
+                [--seed SEED] [--output-dir OUTPUT_DIR]
+                [--model-save-path MODEL_SAVE_PATH]
+                [--best-model-path BEST_MODEL_PATH]
+                [--scaler-save-path SCALER_SAVE_PATH] [--wandb [WANDB]]
+                [--no-wandb] [--wandb-project WANDB_PROJECT]
+                [--wandb-run-name WANDB_RUN_NAME] [--wandb-mode WANDB_MODE]
+Train.py: error: unrecognized arguments: --batch_size=128 --hidden_size=64 --lookback_daily=365 --lookback_hourly=168 --lr_schedule=1:5e-4,10:1e-4,25:5e-5
+2026-03-14 16:39:17,376 - wandb.wandb_agent - ERROR - Detected 3 failed runs in the first 60 seconds, shutting down.
+2026-03-14 16:39:17,376 - wandb.wandb_agent - INFO - To disable this check set WANDB_AGENT_DISABLE_FLAPPING=true
+wandb: Terminating and syncing runs. Press ctrl-c to kill.

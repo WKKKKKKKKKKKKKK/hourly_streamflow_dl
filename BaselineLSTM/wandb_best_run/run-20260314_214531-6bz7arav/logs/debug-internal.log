@@ -1,0 +1,15 @@
+{"time":"2026-03-14T21:45:31.257228513+03:00","level":"INFO","msg":"stream: starting","core version":"0.22.3"}
+{"time":"2026-03-14T21:45:32.261548742+03:00","level":"INFO","msg":"stream: created new stream","id":"6bz7arav"}
+{"time":"2026-03-14T21:45:32.261614319+03:00","level":"INFO","msg":"handler: started","stream_id":"6bz7arav"}
+{"time":"2026-03-14T21:45:32.262775371+03:00","level":"INFO","msg":"stream: started","id":"6bz7arav"}
+{"time":"2026-03-14T21:45:32.263119195+03:00","level":"INFO","msg":"writer: started","stream_id":"6bz7arav"}
+{"time":"2026-03-14T21:45:32.263143533+03:00","level":"INFO","msg":"sender: started","stream_id":"6bz7arav"}
+{"time":"2026-03-14T21:45:33.031465052+03:00","level":"INFO","msg":"flowcontrol: backed up, offloading to disk","recordNumber":37}
+{"time":"2026-03-14T21:45:33.45741213+03:00","level":"INFO","msg":"flowcontrol: unblocked","totalOffloaded":4}
+{"time":"2026-03-15T05:00:05.265506514+03:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/weikang-kong-kaust/uncategorized/6bz7arav/file_stream\": read tcp 10.109.28.31:57098->35.186.228.49:443: read: connection reset by peer"}
+{"time":"2026-03-16T02:03:54.611685646+03:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2026-03-16T02:03:55.613081038+03:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2026-03-16T02:03:55.617072822+03:00","level":"INFO","msg":"stream: closing","id":"6bz7arav"}
+{"time":"2026-03-16T02:03:55.617082705+03:00","level":"INFO","msg":"handler: closed","stream_id":"6bz7arav"}
+{"time":"2026-03-16T02:03:55.617745696+03:00","level":"INFO","msg":"sender: closed","stream_id":"6bz7arav"}
+{"time":"2026-03-16T02:03:55.617754252+03:00","level":"INFO","msg":"stream: closed","id":"6bz7arav"}

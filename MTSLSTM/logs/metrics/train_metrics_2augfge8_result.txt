@@ -1,0 +1,13 @@
+[Tue Mar 17 07:00:43 PM +03 2026] Starting MTSLSTM train metrics for 2augfge8
+Host: cn603-18-r
+Workdir: /home/kongw0a/MTS_LSTM/experiment_withcursor
+Model: /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/runs/20260314/MTSLSTM/2augfge8_hd64-64_bs128_H72_D365_do0.4_lossnse_loss_reg1.0_sch1-5e-4-10-1e-4-25-5e-5/best_model.pth
+Total valid samples: 541405
+Total valid samples: 409478
+Total valid samples: 752454
+================================
+Split: train
+Median NSE: 0.912072488841589
+Median KGE: 0.9257960694949389
+================================
+[Tue Mar 17 07:08:07 PM +03 2026] Done

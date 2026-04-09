@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/run_grid.py", line 65, in <module>
+    main()
+  File "/home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/run_grid.py", line 21, in main
+    rec = load_record('grid_runs.jsonl', args.idx)
+  File "/home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/run_grid.py", line 12, in load_record
+    return json.loads(line)
+  File "/ibex/user/kongw0a/conda-environments/hydroenv/lib/python3.10/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+  File "/ibex/user/kongw0a/conda-environments/hydroenv/lib/python3.10/json/decoder.py", line 340, in decode
+    raise JSONDecodeError("Extra data", s, end)
+json.decoder.JSONDecodeError: Extra data: line 1 column 505 (char 504)

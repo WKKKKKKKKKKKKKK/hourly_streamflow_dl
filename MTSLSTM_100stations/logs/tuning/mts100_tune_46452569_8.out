@@ -1,0 +1,58 @@
+W&B online. Running your script from this directory will now sync to the cloud.
+Using device: cuda
+Run hparams: {'lookback_hourly': 168, 'lookback_daily': 365, 'batch_size': 256, 'hidden_size_daily': 128, 'hidden_size_hourly': 128, 'num_layers': 1, 'dropout': 0.4, 'lr': 0.0005, 'lr_schedule': '1:5e-4,10:1e-4,25:5e-5', 'epochs': 100, 'loss': 'nse_loss', 'reg_lambda': 1.0, 'early_stopping': True, 'patience': 10}
+Aliased 90 station IDs in static features: 03535400, 01409000, 03262700, 0204382800, 01605500, 03288200, 03168000, 01486500, 01613050, 03201980 ...
+Total valid samples: 5754695
+Total valid samples: 2514258
+Total valid samples: 3803952
+Epoch 1/100 | Train Loss: 0.793017 | Val Loss: 0.201653
+Best model saved.
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 2/100 | Train Loss: 0.215750 | Val Loss: 0.290719
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 3/100 | Train Loss: 0.167295 | Val Loss: 0.144314
+Best model saved.
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 4/100 | Train Loss: 0.141038 | Val Loss: 0.164783
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 5/100 | Train Loss: 0.125285 | Val Loss: 0.156863
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 6/100 | Train Loss: 0.110359 | Val Loss: 0.145675
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 7/100 | Train Loss: 0.101566 | Val Loss: 0.150606
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 8/100 | Train Loss: 0.097178 | Val Loss: 0.152400
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 9/100 | Train Loss: 0.095938 | Val Loss: 0.144209
+Best model saved.
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 10/100 | Train Loss: 0.063030 | Val Loss: 0.149386
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 11/100 | Train Loss: 0.057566 | Val Loss: 0.141220
+Best model saved.
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 12/100 | Train Loss: 0.054490 | Val Loss: 0.147552
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 13/100 | Train Loss: 0.052921 | Val Loss: 0.148912
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 14/100 | Train Loss: 0.050324 | Val Loss: 0.145921
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 15/100 | Train Loss: 0.049067 | Val Loss: 0.162116
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 16/100 | Train Loss: 0.047096 | Val Loss: 0.155956
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 17/100 | Train Loss: 0.046272 | Val Loss: 0.170043
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 18/100 | Train Loss: 0.045191 | Val Loss: 0.165511
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 19/100 | Train Loss: 0.044785 | Val Loss: 0.179989
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 20/100 | Train Loss: 0.043170 | Val Loss: 0.177435
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Epoch 21/100 | Train Loss: 0.042977 | Val Loss: 0.171102
+Checkpoint saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/checkpoint.pth
+Early stopping triggered.
+Training finished.
+Model saved to /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx8_bs256_do0.4_hs128_H168_D365/model.pth
+VAL  median NSE: 0.6746872926519167 median KGE: 0.7607959396162013
+TEST median NSE: 0.6439063315011635 median KGE: 0.7017325932897579

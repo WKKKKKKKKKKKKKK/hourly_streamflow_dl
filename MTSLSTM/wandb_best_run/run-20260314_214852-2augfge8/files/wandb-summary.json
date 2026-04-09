@@ -1,0 +1,1 @@
+{"train_loss":0.050482381733013955,"_wandb":{"runtime":1538},"val/median_nse":0.6209325772349156,"test/median_kge":0.6284684169971972,"val_loss":0.2697475842330002,"val/median_kge":0.7442275154967299,"test/median_nse":0.5652028945833508,"_timestamp":1.7735156738308225e+09,"_runtime":1538,"lr":0.0001,"_step":23}

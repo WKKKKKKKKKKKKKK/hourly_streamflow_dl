@@ -1,0 +1,200 @@
+_wandb:
+    value:
+        cli_version: 0.22.3
+        e:
+            4oqgk8jcgzrypyld3r1h7wfzwdaxin9d:
+                args:
+                    - --wandb
+                    - --wandb-project=MTSLSTM_Streamflow
+                    - --wandb-run-name=MTSLSTM_sweep
+                    - --wandb-mode=online
+                    - --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID
+                    - --loss=nse_loss
+                    - --reg-lambda=1.0
+                    - --early-stopping
+                    - --batch_size=128
+                    - --dropout=0.4
+                    - --epochs=100
+                    - --hidden_size=64
+                    - --lookback_daily=365
+                    - --lookback_hourly=72
+                    - --lr_schedule=1:5e-4,10:1e-4,25:5e-5
+                    - --patience=10
+                codePath: Train.py
+                codePathLocal: Train.py
+                cpu_count: 48
+                cpu_count_logical: 48
+                cudaVersion: "12.8"
+                disk:
+                    /:
+                        total: "401237422080"
+                        used: "11371110400"
+                email: weikang.kong@kaust.edu.sa
+                executable: /ibex/user/kongw0a/conda-environments/hydroenv/bin/python
+                gpu: Tesla V100-SXM2-32GB
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Volta
+                      cudaCores: 5120
+                      memoryTotal: "34359738368"
+                      name: Tesla V100-SXM2-32GB
+                      uuid: GPU-f65fd996-5e18-5d71-8f74-58623f1f9bf3
+                host: gpu214-06
+                memory:
+                    total: "810203795456"
+                os: Linux-5.14.0-427.20.1.el9_4.0.1.x86_64-x86_64-with-glibc2.34
+                program: /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py
+                python: CPython 3.10.19
+                root: /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM
+                slurm:
+                    array_job_id: "46021668"
+                    array_task_count: "2"
+                    array_task_id: "1"
+                    array_task_max: "2"
+                    array_task_min: "1"
+                    array_task_step: "1"
+                    cluster_name: dragon
+                    conf: /opt/slurm/cluster/ibex/slurm/slurm.conf
+                    cpus_on_node: "4"
+                    cpus_per_task: "4"
+                    gpus_on_node: "1"
+                    gtids: "0"
+                    job_account: pi-beckhe
+                    job_cpus_per_node: "4"
+                    job_end_time: "1774377955"
+                    job_gid: "1217655"
+                    job_gpus: "2"
+                    job_id: "46021669"
+                    job_name: mts_sweep
+                    job_nodelist: gpu214-06
+                    job_num_nodes: "1"
+                    job_partition: gpu
+                    job_qos: normal
+                    job_start_time: "1773513955"
+                    job_uid: "217655"
+                    job_user: kongw0a
+                    jobid: "46021669"
+                    localid: "0"
+                    mem_per_node: "32768"
+                    nnodes: "1"
+                    nodeid: "0"
+                    nodelist: gpu214-06
+                    oom_kill_step: "0"
+                    prio_process: "0"
+                    procid: "0"
+                    script_context: prolog_task
+                    submit_dir: /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM
+                    submit_host: vsc509-29-r
+                    task_pid: "255287"
+                    tasks_per_node: "1"
+                    topology_addr: main-intel.ibsw-intel-01-2.gpu214-06
+                    topology_addr_pattern: switch.switch.node
+                    tres_per_task: cpu=4
+                startedAt: "2026-03-14T18:48:52.925321Z"
+                writerId: 4oqgk8jcgzrypyld3r1h7wfzwdaxin9d
+        m: []
+        python_version: 3.10.19
+        t:
+            "1":
+                - 1
+            "2":
+                - 1
+            "3":
+                - 2
+                - 13
+                - 14
+                - 19
+                - 61
+            "4": 3.10.19
+            "5": 0.22.3
+            "12": 0.22.3
+            "13": linux-x86_64
+batch_size:
+    value: 128
+best_model_path:
+    value: /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/checkpoints/best_model_mtslstm.pth
+checkpoint_path:
+    value: null
+data_path:
+    value: /home/kongw0a/MTS_LSTM/experiment_withcursor/data/selected_stn_data.nc
+dropout:
+    value: 0.4
+dynamic_vars:
+    value:
+        - Rainf
+        - Tair
+        - PotEvap
+early_stopping:
+    value: true
+epochs:
+    value: 100
+frequency_factor:
+    value: 24
+hidden_size:
+    value: 64
+hidden_size_daily:
+    value: 64
+hidden_size_hourly:
+    value: 64
+lookback_daily:
+    value: 365
+lookback_hourly:
+    value: 72
+loss:
+    value: nse_loss
+lr:
+    value: 0.0005
+lr_schedule:
+    value: 1:5e-4,10:1e-4,25:5e-5
+model_save_path:
+    value: /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/checkpoints/best_model_mtslstm.pth
+nse_eps:
+    value: 1e-06
+num_layers:
+    value: 1
+num_workers:
+    value: 4
+output_dir:
+    value: runs/20260314/MTSLSTM/WANDB_RUN_ID
+patience:
+    value: 10
+pin_memory:
+    value: true
+reg_lambda:
+    value: 1
+resume:
+    value: true
+save_every:
+    value: 1
+scaler_save_path:
+    value: /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/checkpoints/scalers.pkl
+seed:
+    value: 42
+static_path:
+    value: /home/kongw0a/MTS_LSTM/experiment_withcursor/data/static_h.csv
+streamflow_max:
+    value: 1000
+streamflow_min:
+    value: 0
+target_var:
+    value: Streamflow
+test_end:
+    value: "2015-09-30"
+test_start:
+    value: "2008-10-01"
+train_end:
+    value: "2003-09-30"
+train_start:
+    value: "1990-10-01"
+val_end:
+    value: "2008-09-30"
+val_start:
+    value: "2003-10-01"
+wandb:
+    value: true
+wandb_mode:
+    value: online
+wandb_project:
+    value: MTSLSTM_Streamflow
+wandb_run_name:
+    value: MTSLSTM_sweep

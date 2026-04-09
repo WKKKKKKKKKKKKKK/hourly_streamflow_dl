@@ -1,0 +1,13 @@
+{MTSLSTM: hidden_size(daily and hourly): [2*32, 2*64,2*128],
+        sequence_length: [365d+72h,365d+168h,365d+336h],
+        dropout: [0.4, 0.6],
+        learning_rate(epoch : learning rate): [(1:5e−4,10:1e−4, 25:5e−5),(1: 1e−3, 10: 5e−4, 25: 1e−4)],
+        batch_size: [128, 256],
+    }
+
+{LSTM: hidden_size: [256],
+        sequence_length: [365*24,180*24],
+        dropout: [0.4],
+        learning_rate(epoch : learning rate): [5e−4, 1e−4],
+        batch_size: [256,512],
+    }

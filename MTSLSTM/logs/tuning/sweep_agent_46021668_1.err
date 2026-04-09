@@ -1,0 +1,1762 @@
+wandb: Starting wandb agent 🕵️
+2026-03-14 21:46:06,009 - wandb.wandb_agent - INFO - Running runs: []
+2026-03-14 21:46:07,153 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-14 21:46:07,154 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 64
+	lookback_daily: 365
+	lookback_hourly: 72
+	lr_schedule: 1:5e-4,10:1e-4,25:5e-5
+	patience: 10
+2026-03-14 21:46:07,157 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.4 --epochs=100 --hidden_size=64 --lookback_daily=365 --lookback_hourly=72 --lr_schedule=1:5e-4,10:1e-4,25:5e-5 --patience=10
+2026-03-14 21:46:12,169 - wandb.wandb_agent - INFO - Running runs: ['2augfge8']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run 2augfge8
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260314_214852-2augfge8
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773514131
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/2augfge8
+wandb: updating run metadata
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading output.log; uploading wandb-summary.json
+wandb: uploading history steps 22-22, summary, console lines 54-55
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss █▄▂▄▅▃▂▂▄▁▂▂▁▂▂▂▂▂▃▃▄▃▃
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0001
+wandb: test/median_kge 0.62847
+wandb: test/median_nse 0.5652
+wandb:      train_loss 0.05048
+wandb:  val/median_kge 0.74423
+wandb:  val/median_nse 0.62093
+wandb:        val_loss 0.26975
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773514131 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/2augfge8
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260314_214852-2augfge8/logs
+2026-03-14 22:14:41,747 - wandb.wandb_agent - INFO - Cleaning up finished run: 2augfge8
+2026-03-14 22:14:42,719 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-14 22:14:42,719 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 64
+	lookback_daily: 365
+	lookback_hourly: 168
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-14 22:14:42,722 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.4 --epochs=100 --hidden_size=64 --lookback_daily=365 --lookback_hourly=168 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-14 22:14:47,733 - wandb.wandb_agent - INFO - Running runs: ['w4zydozi']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run w4zydozi
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260314_221721-w4zydozi
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773515840
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/w4zydozi
+wandb: updating run metadata
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 13-13, summary, console lines 33-34
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▂▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▃█▄▁▂▃▄▄▄▃▄▄▄▄
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.50291
+wandb: test/median_nse 0.56332
+wandb:      train_loss 0.0636
+wandb:  val/median_kge 0.40907
+wandb:  val/median_nse 0.50135
+wandb:        val_loss 0.32056
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773515840 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/w4zydozi
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260314_221721-w4zydozi/logs
+2026-03-14 22:33:16,564 - wandb.wandb_agent - INFO - Cleaning up finished run: w4zydozi
+2026-03-14 22:33:17,407 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-14 22:33:17,407 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 64
+	lookback_daily: 365
+	lookback_hourly: 336
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-14 22:33:17,412 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.4 --epochs=100 --hidden_size=64 --lookback_daily=365 --lookback_hourly=336 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-14 22:33:22,423 - wandb.wandb_agent - INFO - Running runs: ['9nev8xix']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run 9nev8xix
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260314_223600-9nev8xix
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773516958
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/9nev8xix
+wandb: updating run metadata
+wandb: uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 15-15, summary, console lines 38-39
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▆█▁▂▂▁▁▂▃▂▁▂▂▃▅▂
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.53367
+wandb: test/median_nse 0.61826
+wandb:      train_loss 0.06263
+wandb:  val/median_kge 0.50042
+wandb:  val/median_nse 0.56874
+wandb:        val_loss 0.26351
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773516958 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/9nev8xix
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260314_223600-9nev8xix/logs
+2026-03-14 22:55:27,611 - wandb.wandb_agent - INFO - Cleaning up finished run: 9nev8xix
+2026-03-14 22:55:28,413 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-14 22:55:28,414 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 128
+	lookback_daily: 365
+	lookback_hourly: 72
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-14 22:55:28,419 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.4 --epochs=100 --hidden_size=128 --lookback_daily=365 --lookback_hourly=72 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-14 22:55:33,430 - wandb.wandb_agent - INFO - Running runs: ['eshxxffe']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run eshxxffe
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260314_225809-eshxxffe
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773518288
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/eshxxffe
+wandb: updating run metadata
+wandb: updating run metadata; uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading history steps 12-12, summary, console lines 32-33; uploading config.yaml
+wandb: uploading output.log; uploading history steps 12-12, summary, console lines 32-33
+wandb: uploading data
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▂▂▁▂▁▃▂▁▅▄█▇▄
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.32058
+wandb: test/median_nse 0.46894
+wandb:      train_loss 0.0621
+wandb:  val/median_kge 0.29439
+wandb:  val/median_nse 0.46309
+wandb:        val_loss 0.49961
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773518288 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/eshxxffe
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260314_225809-eshxxffe/logs
+2026-03-14 23:20:18,454 - wandb.wandb_agent - INFO - Cleaning up finished run: eshxxffe
+2026-03-14 23:20:19,215 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-14 23:20:19,215 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 128
+	lookback_daily: 365
+	lookback_hourly: 168
+	lr_schedule: 1:5e-4,10:1e-4,25:5e-5
+	patience: 10
+2026-03-14 23:20:19,219 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.4 --epochs=100 --hidden_size=128 --lookback_daily=365 --lookback_hourly=168 --lr_schedule=1:5e-4,10:1e-4,25:5e-5 --patience=10
+2026-03-14 23:20:24,230 - wandb.wandb_agent - INFO - Running runs: ['amenyf5s']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run amenyf5s
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260314_232310-amenyf5s
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773519788
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/amenyf5s
+wandb: updating run metadata
+wandb: uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 33-33, summary, console lines 81-82
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▁▁▁▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▆▆▆▄▅▅█▄▄▃▃▃▂▂▂▂▃▂▂▁▂▂▃▁▂▂▂▂▃▁▂▃▂▂
+wandb: 
+wandb: Run summary:
+wandb:              lr 5e-05
+wandb: test/median_kge 0.62562
+wandb: test/median_nse 0.57745
+wandb:      train_loss 0.03058
+wandb:  val/median_kge 0.71919
+wandb:  val/median_nse 0.50604
+wandb:        val_loss 0.28366
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773519788 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/amenyf5s
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260314_232310-amenyf5s/logs
+2026-03-15 00:24:02,880 - wandb.wandb_agent - INFO - Cleaning up finished run: amenyf5s
+2026-03-15 00:24:03,851 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 00:24:03,851 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 128
+	lookback_daily: 365
+	lookback_hourly: 336
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-15 00:24:03,854 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.4 --epochs=100 --hidden_size=128 --lookback_daily=365 --lookback_hourly=336 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-15 00:24:08,866 - wandb.wandb_agent - INFO - Running runs: ['l99ysehd']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run l99ysehd
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_002645-l99ysehd
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773523604
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/l99ysehd
+wandb: updating run metadata
+wandb: updating run metadata; uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 12-12, summary, console lines 32-33
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▂▁▁▃▃▄█▂▄▅▆▅▇
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.33155
+wandb: test/median_nse 0.38316
+wandb:      train_loss 0.07081
+wandb:  val/median_kge 0.30721
+wandb:  val/median_nse 0.38933
+wandb:        val_loss 0.56624
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773523604 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/l99ysehd
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_002645-l99ysehd/logs
+2026-03-15 00:53:33,209 - wandb.wandb_agent - INFO - Cleaning up finished run: l99ysehd
+2026-03-15 00:53:34,157 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 00:53:34,157 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 256
+	lookback_daily: 365
+	lookback_hourly: 72
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-15 00:53:34,161 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.4 --epochs=100 --hidden_size=256 --lookback_daily=365 --lookback_hourly=72 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-15 00:53:39,172 - wandb.wandb_agent - INFO - Running runs: ['9jkml0ll']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run 9jkml0ll
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_005606-9jkml0ll
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773525364
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/9jkml0ll
+wandb: updating run metadata
+wandb: uploading wandb-summary.json; uploading output.log; uploading history steps 15-15, summary, console lines 40-41
+wandb: uploading wandb-summary.json; uploading output.log; uploading history steps 15-15, summary, console lines 40-41; uploading config.yaml
+wandb: uploading data
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▆▄▃█▁▁▁▂▁▂▁▂▁▁▁▂
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.61214
+wandb: test/median_nse 0.53512
+wandb:      train_loss 0.04393
+wandb:  val/median_kge 0.70829
+wandb:  val/median_nse 0.6204
+wandb:        val_loss 0.24678
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773525364 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/9jkml0ll
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_005606-9jkml0ll/logs
+2026-03-15 02:23:59,691 - wandb.wandb_agent - INFO - Cleaning up finished run: 9jkml0ll
+2026-03-15 02:24:00,547 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 02:24:00,547 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 256
+	lookback_daily: 365
+	lookback_hourly: 168
+	lr_schedule: 1:5e-4,10:1e-4,25:5e-5
+	patience: 10
+2026-03-15 02:24:00,550 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.4 --epochs=100 --hidden_size=256 --lookback_daily=365 --lookback_hourly=168 --lr_schedule=1:5e-4,10:1e-4,25:5e-5 --patience=10
+2026-03-15 02:24:05,561 - wandb.wandb_agent - INFO - Running runs: ['ugaipxmj']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run ugaipxmj
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_022656-ugaipxmj
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773530814
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/ugaipxmj
+wandb: updating run metadata
+wandb: updating run metadata; uploading history steps 11-11, summary, console lines 29-29
+wandb: uploading history steps 11-11, summary, console lines 29-29; uploading output.log; uploading wandb-summary.json
+wandb: uploading history steps 11-11, summary, console lines 29-29; uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 11-11, summary, console lines 29-29
+wandb: uploading summary, console lines 29-30
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▁▁▁▂▄▂▃▁▆█▆▄
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0001
+wandb: test/median_kge 0.48883
+wandb: test/median_nse 0.55802
+wandb:      train_loss 0.06124
+wandb:  val/median_kge 0.35937
+wandb:  val/median_nse 0.41414
+wandb:        val_loss 0.61616
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773530814 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/ugaipxmj
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_022656-ugaipxmj/logs
+2026-03-15 03:41:07,978 - wandb.wandb_agent - INFO - Cleaning up finished run: ugaipxmj
+2026-03-15 03:41:08,763 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 03:41:08,764 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 256
+	lookback_daily: 365
+	lookback_hourly: 168
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-15 03:41:08,768 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.4 --epochs=100 --hidden_size=256 --lookback_daily=365 --lookback_hourly=168 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-15 03:41:13,779 - wandb.wandb_agent - INFO - Running runs: ['wc26v4zc']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run wc26v4zc
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_034351-wc26v4zc
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773535429
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/wc26v4zc
+wandb: updating run metadata
+wandb: uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 15-15, summary, console lines 39-40
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▁▁▁▁▂▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▅▃▅▃▂▁▅▅▄▄▅▄▆▆▆█
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.44679
+wandb: test/median_nse 0.52362
+wandb:      train_loss 0.06891
+wandb:  val/median_kge 0.65254
+wandb:  val/median_nse 0.6299
+wandb:        val_loss 0.51408
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773535429 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/wc26v4zc
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_034351-wc26v4zc/logs
+2026-03-15 05:20:35,306 - wandb.wandb_agent - INFO - Cleaning up finished run: wc26v4zc
+2026-03-15 05:20:36,126 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 05:20:36,126 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 256
+	lookback_daily: 365
+	lookback_hourly: 336
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-15 05:20:36,130 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.4 --epochs=100 --hidden_size=256 --lookback_daily=365 --lookback_hourly=336 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-15 05:20:41,142 - wandb.wandb_agent - INFO - Running runs: ['vsv1ukjn']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run vsv1ukjn
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_052336-vsv1ukjn
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773541415
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/vsv1ukjn
+wandb: updating run metadata
+wandb: updating run metadata; uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 10-10, summary, console lines 26-27
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▂▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▁▄█▂▂▃▅▄▃▃▃
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.08302
+wandb: test/median_nse 0.3198
+wandb:      train_loss 0.08663
+wandb:  val/median_kge 0.03318
+wandb:  val/median_nse 0.22464
+wandb:        val_loss 0.57477
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773541415 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/vsv1ukjn
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_052336-vsv1ukjn/logs
+2026-03-15 06:43:24,868 - wandb.wandb_agent - INFO - Cleaning up finished run: vsv1ukjn
+2026-03-15 06:43:25,660 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 06:43:25,660 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.6
+	epochs: 100
+	hidden_size: 64
+	lookback_daily: 365
+	lookback_hourly: 168
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-15 06:43:25,664 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.6 --epochs=100 --hidden_size=64 --lookback_daily=365 --lookback_hourly=168 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-15 06:43:30,676 - wandb.wandb_agent - INFO - Running runs: ['1thitqzs']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run 1thitqzs
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_064626-1thitqzs
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773546385
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/1thitqzs
+wandb: updating run metadata
+wandb: uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 13-13, summary, console lines 33-34
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▂▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▃█▄▁▂▃▄▄▄▃▄▄▄▄
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.50291
+wandb: test/median_nse 0.56332
+wandb:      train_loss 0.0636
+wandb:  val/median_kge 0.40907
+wandb:  val/median_nse 0.50135
+wandb:        val_loss 0.32056
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773546385 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/1thitqzs
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_064626-1thitqzs/logs
+2026-03-15 07:02:22,194 - wandb.wandb_agent - INFO - Cleaning up finished run: 1thitqzs
+2026-03-15 07:02:23,093 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 07:02:23,093 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.6
+	epochs: 100
+	hidden_size: 64
+	lookback_daily: 365
+	lookback_hourly: 336
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-15 07:02:23,100 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.6 --epochs=100 --hidden_size=64 --lookback_daily=365 --lookback_hourly=336 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-15 07:02:28,107 - wandb.wandb_agent - INFO - Running runs: ['8f1sc1hn']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run 8f1sc1hn
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_070505-8f1sc1hn
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773547504
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/8f1sc1hn
+wandb: updating run metadata
+wandb: uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 15-15, summary, console lines 38-39
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▆█▁▂▂▁▁▂▃▂▁▂▂▃▅▂
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.53367
+wandb: test/median_nse 0.61826
+wandb:      train_loss 0.06263
+wandb:  val/median_kge 0.50042
+wandb:  val/median_nse 0.56874
+wandb:        val_loss 0.26351
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773547504 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/8f1sc1hn
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_070505-8f1sc1hn/logs
+2026-03-15 07:24:10,924 - wandb.wandb_agent - INFO - Cleaning up finished run: 8f1sc1hn
+2026-03-15 07:24:11,767 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 07:24:11,767 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.6
+	epochs: 100
+	hidden_size: 128
+	lookback_daily: 365
+	lookback_hourly: 72
+	lr_schedule: 1:5e-4,10:1e-4,25:5e-5
+	patience: 10
+2026-03-15 07:24:11,773 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.6 --epochs=100 --hidden_size=128 --lookback_daily=365 --lookback_hourly=72 --lr_schedule=1:5e-4,10:1e-4,25:5e-5 --patience=10
+2026-03-15 07:24:16,783 - wandb.wandb_agent - INFO - Running runs: ['nzrxn6cm']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run nzrxn6cm
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_072706-nzrxn6cm
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773548825
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/nzrxn6cm
+wandb: updating run metadata
+wandb: uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading output.log; uploading wandb-summary.json
+wandb: uploading history steps 14-14, summary, console lines 38-39
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss █▅▄▂▁▂▅▂▁▂▂▂▂▁▂
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0001
+wandb: test/median_kge 0.60149
+wandb: test/median_nse 0.60114
+wandb:      train_loss 0.04779
+wandb:  val/median_kge 0.71415
+wandb:  val/median_nse 0.6323
+wandb:        val_loss 0.18814
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773548825 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/nzrxn6cm
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_072706-nzrxn6cm/logs
+2026-03-15 07:52:41,326 - wandb.wandb_agent - INFO - Cleaning up finished run: nzrxn6cm
+2026-03-15 07:52:42,116 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 07:52:42,116 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.6
+	epochs: 100
+	hidden_size: 128
+	lookback_daily: 365
+	lookback_hourly: 168
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-15 07:52:42,119 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.6 --epochs=100 --hidden_size=128 --lookback_daily=365 --lookback_hourly=168 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-15 07:52:47,131 - wandb.wandb_agent - INFO - Running runs: ['36i78c2q']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run 36i78c2q
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_075530-36i78c2q
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773550528
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/36i78c2q
+wandb: updating run metadata
+wandb: uploading wandb-summary.json; uploading output.log; uploading config.yaml
+wandb: uploading history steps 12-12, summary, console lines 31-32
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▂▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▁▃▁▃▂▂█▄▄▄▃▂▃
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.35664
+wandb: test/median_nse 0.42065
+wandb:      train_loss 0.07154
+wandb:  val/median_kge 0.38672
+wandb:  val/median_nse 0.33468
+wandb:        val_loss 0.43453
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773550528 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/36i78c2q
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_075530-36i78c2q/logs
+2026-03-15 08:19:32,791 - wandb.wandb_agent - INFO - Cleaning up finished run: 36i78c2q
+2026-03-15 08:19:33,553 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 08:19:33,553 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.6
+	epochs: 100
+	hidden_size: 128
+	lookback_daily: 365
+	lookback_hourly: 336
+	lr_schedule: 1:5e-4,10:1e-4,25:5e-5
+	patience: 10
+2026-03-15 08:19:33,557 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.6 --epochs=100 --hidden_size=128 --lookback_daily=365 --lookback_hourly=336 --lr_schedule=1:5e-4,10:1e-4,25:5e-5 --patience=10
+2026-03-15 08:19:38,568 - wandb.wandb_agent - INFO - Running runs: ['g5cr58wk']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run g5cr58wk
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_082218-g5cr58wk
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773552137
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/g5cr58wk
+wandb: updating run metadata
+wandb: updating run metadata; uploading history steps 18-18, summary, console lines 47-48
+wandb: uploading history steps 18-18, summary, console lines 47-48; uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading output.log; uploading wandb-summary.json
+wandb: uploading data
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss █▇▆▆▇█▇▂▁▂▂▂▂▁▂▂▂▁▂
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0001
+wandb: test/median_kge 0.68414
+wandb: test/median_nse 0.62526
+wandb:      train_loss 0.05987
+wandb:  val/median_kge 0.70123
+wandb:  val/median_nse 0.56611
+wandb:        val_loss 0.2263
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773552137 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/g5cr58wk
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_082218-g5cr58wk/logs
+2026-03-15 09:01:44,527 - wandb.wandb_agent - INFO - Cleaning up finished run: g5cr58wk
+2026-03-15 09:01:45,494 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 09:01:45,494 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.6
+	epochs: 100
+	hidden_size: 256
+	lookback_daily: 365
+	lookback_hourly: 72
+	lr_schedule: 1:5e-4,10:1e-4,25:5e-5
+	patience: 10
+2026-03-15 09:01:45,498 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.6 --epochs=100 --hidden_size=256 --lookback_daily=365 --lookback_hourly=72 --lr_schedule=1:5e-4,10:1e-4,25:5e-5 --patience=10
+2026-03-15 09:01:50,509 - wandb.wandb_agent - INFO - Running runs: ['u4malzcr']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run u4malzcr
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_090427-u4malzcr
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773554665
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/u4malzcr
+wandb: updating run metadata
+wandb: updating run metadata; uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 35-35, summary, console lines 86-87
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▇██▄▃▃▃▅▃▃▃▃▂▂▂▂▂▂▂▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: 
+wandb: Run summary:
+wandb:              lr 5e-05
+wandb: test/median_kge 0.57677
+wandb: test/median_nse 0.54168
+wandb:      train_loss 0.02116
+wandb:  val/median_kge 0.69148
+wandb:  val/median_nse 0.61974
+wandb:        val_loss 0.20693
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773554665 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/u4malzcr
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_090427-u4malzcr/logs
+2026-03-15 12:15:48,306 - wandb.wandb_agent - INFO - Cleaning up finished run: u4malzcr
+2026-03-15 12:15:49,068 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 12:15:49,069 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 128
+	dropout: 0.6
+	epochs: 100
+	hidden_size: 256
+	lookback_daily: 365
+	lookback_hourly: 336
+	lr_schedule: 1:5e-4,10:1e-4,25:5e-5
+	patience: 10
+2026-03-15 12:15:49,079 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=128 --dropout=0.6 --epochs=100 --hidden_size=256 --lookback_daily=365 --lookback_hourly=336 --lr_schedule=1:5e-4,10:1e-4,25:5e-5 --patience=10
+2026-03-15 12:15:54,089 - wandb.wandb_agent - INFO - Running runs: ['nbww5wl3']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run nbww5wl3
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_121814-nbww5wl3
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773566293
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/nbww5wl3
+wandb: updating run metadata
+wandb: updating run metadata; uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 15-15, summary, console lines 39-40
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▅█▅▇▅▁▃▄▂▄▄▅▄▅▅▆
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0001
+wandb: test/median_kge 0.66473
+wandb: test/median_nse 0.59211
+wandb:      train_loss 0.05418
+wandb:  val/median_kge 0.7025
+wandb:  val/median_nse 0.62514
+wandb:        val_loss 0.38778
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773566293 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/nbww5wl3
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_121814-nbww5wl3/logs
+2026-03-15 14:11:16,396 - wandb.wandb_agent - INFO - Cleaning up finished run: nbww5wl3
+2026-03-15 14:11:17,196 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 14:11:17,196 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 64
+	lookback_daily: 365
+	lookback_hourly: 72
+	lr_schedule: 1:5e-4,10:1e-4,25:5e-5
+	patience: 10
+2026-03-15 14:11:17,202 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=256 --dropout=0.4 --epochs=100 --hidden_size=64 --lookback_daily=365 --lookback_hourly=72 --lr_schedule=1:5e-4,10:1e-4,25:5e-5 --patience=10
+2026-03-15 14:11:22,208 - wandb.wandb_agent - INFO - Running runs: ['2gksgczm']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run 2gksgczm
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_141343-2gksgczm
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773573222
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/2gksgczm
+wandb: updating run metadata
+wandb: updating run metadata; uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading output.log; uploading config.yaml
+wandb: uploading history steps 18-18, summary, console lines 48-49
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss █▄▃▃▂▁▁▂▁▁▂▂▃▃▃▃▃▃▃
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0001
+wandb: test/median_kge 0.53078
+wandb: test/median_nse 0.59101
+wandb:      train_loss 0.06811
+wandb:  val/median_kge 0.6831
+wandb:  val/median_nse 0.5958
+wandb:        val_loss 0.28327
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773573222 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/2gksgczm
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_141343-2gksgczm/logs
+2026-03-15 14:29:03,871 - wandb.wandb_agent - INFO - Cleaning up finished run: 2gksgczm
+2026-03-15 14:29:04,750 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 14:29:04,750 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 64
+	lookback_daily: 365
+	lookback_hourly: 72
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-15 14:29:04,753 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=256 --dropout=0.4 --epochs=100 --hidden_size=64 --lookback_daily=365 --lookback_hourly=72 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-15 14:29:09,763 - wandb.wandb_agent - INFO - Running runs: ['gz802q43']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run gz802q43
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_143124-gz802q43
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773574282
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/gz802q43
+wandb: updating run metadata
+wandb: updating run metadata; uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading output.log; uploading config.yaml
+wandb: uploading history steps 25-25, summary, console lines 62-63
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss █▃▄▃▃▃▃▃▂▂▂▃▁▂▁▁▂▂▂▂▃▃▂▂▂▂
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0001
+wandb: test/median_kge 0.60769
+wandb: test/median_nse 0.52342
+wandb:      train_loss 0.03539
+wandb:  val/median_kge 0.72993
+wandb:  val/median_nse 0.59198
+wandb:        val_loss 0.25492
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773574282 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/gz802q43
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_143124-gz802q43/logs
+2026-03-15 14:52:27,458 - wandb.wandb_agent - INFO - Cleaning up finished run: gz802q43
+2026-03-15 14:52:28,305 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 14:52:28,305 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 64
+	lookback_daily: 365
+	lookback_hourly: 168
+	lr_schedule: 1:5e-4,10:1e-4,25:5e-5
+	patience: 10
+2026-03-15 14:52:28,308 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=256 --dropout=0.4 --epochs=100 --hidden_size=64 --lookback_daily=365 --lookback_hourly=168 --lr_schedule=1:5e-4,10:1e-4,25:5e-5 --patience=10
+2026-03-15 14:52:33,318 - wandb.wandb_agent - INFO - Running runs: ['ymv9bg4z']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run ymv9bg4z
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_145451-ymv9bg4z
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773575690
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/ymv9bg4z
+wandb: uploading data; updating run metadata
+wandb: uploading data; updating run metadata; uploading output.log; uploading wandb-summary.json
+wandb: uploading data; uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 18-18, summary, console lines 48-49
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss █▅▅▆▄▁▁▂▁▁▂▁▂▂▂▁▁▁▁
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0001
+wandb: test/median_kge 0.61083
+wandb: test/median_nse 0.6342
+wandb:      train_loss 0.08205
+wandb:  val/median_kge 0.64401
+wandb:  val/median_nse 0.61695
+wandb:        val_loss 0.18242
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773575690 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/ymv9bg4z
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_145451-ymv9bg4z/logs
+2026-03-15 15:11:00,162 - wandb.wandb_agent - INFO - Cleaning up finished run: ymv9bg4z
+2026-03-15 15:11:01,241 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 15:11:01,241 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 64
+	lookback_daily: 365
+	lookback_hourly: 168
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-15 15:11:01,244 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=256 --dropout=0.4 --epochs=100 --hidden_size=64 --lookback_daily=365 --lookback_hourly=168 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-15 15:11:06,254 - wandb.wandb_agent - INFO - Running runs: ['fai2sbyz']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run fai2sbyz
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_151322-fai2sbyz
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773576800
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/fai2sbyz
+wandb: updating run metadata
+wandb: updating run metadata; uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading config.yaml
+wandb: uploading history steps 23-23, summary, console lines 59-60
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss █▆▃▃▃▃▃▂▂▁▁▂▂▁▃▁▃▁▂▁▃▁▁▂
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.57099
+wandb: test/median_nse 0.57977
+wandb:      train_loss 0.05309
+wandb:  val/median_kge 0.67497
+wandb:  val/median_nse 0.60713
+wandb:        val_loss 0.22332
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773576800 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/fai2sbyz
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_151322-fai2sbyz/logs
+2026-03-15 15:33:25,847 - wandb.wandb_agent - INFO - Cleaning up finished run: fai2sbyz
+2026-03-15 15:33:26,639 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 15:33:26,640 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 64
+	lookback_daily: 365
+	lookback_hourly: 336
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-15 15:33:26,643 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=256 --dropout=0.4 --epochs=100 --hidden_size=64 --lookback_daily=365 --lookback_hourly=336 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-15 15:33:31,653 - wandb.wandb_agent - INFO - Running runs: ['cjre1q46']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run cjre1q46
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_153547-cjre1q46
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773578146
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/cjre1q46
+wandb: updating run metadata
+wandb: updating run metadata; uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 17-17, summary, console lines 46-47
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▅▃▂▂▁▂▁▁▂▂▃▄▄▅▆▇▇█
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.58004
+wandb: test/median_nse 0.56211
+wandb:      train_loss 0.07495
+wandb:  val/median_kge 0.62794
+wandb:  val/median_nse 0.6265
+wandb:        val_loss 0.63852
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773578146 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/cjre1q46
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_153547-cjre1q46/logs
+2026-03-15 15:52:21,764 - wandb.wandb_agent - INFO - Cleaning up finished run: cjre1q46
+2026-03-15 15:52:22,574 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 15:52:22,574 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 128
+	lookback_daily: 365
+	lookback_hourly: 72
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-15 15:52:22,577 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=256 --dropout=0.4 --epochs=100 --hidden_size=128 --lookback_daily=365 --lookback_hourly=72 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-15 15:52:27,587 - wandb.wandb_agent - INFO - Running runs: ['2hg6gn3r']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run 2hg6gn3r
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_155450-2hg6gn3r
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773579289
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/2hg6gn3r
+wandb: updating run metadata
+wandb: updating run metadata; uploading wandb-summary.json; uploading output.log
+wandb: uploading wandb-summary.json; uploading output.log; uploading config.yaml
+wandb: uploading output.log; uploading config.yaml
+wandb: uploading history steps 11-11, summary, console lines 29-30
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▃▁▄▂▁▁▂▇█▅▆▆
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.3597
+wandb: test/median_nse 0.41717
+wandb:      train_loss 0.0775
+wandb:  val/median_kge 0.42168
+wandb:  val/median_nse 0.3715
+wandb:        val_loss 0.57069
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773579289 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/2hg6gn3r
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_155450-2hg6gn3r/logs
+2026-03-15 16:11:51,035 - wandb.wandb_agent - INFO - Cleaning up finished run: 2hg6gn3r
+2026-03-15 16:11:51,867 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 16:11:51,867 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 128
+	lookback_daily: 365
+	lookback_hourly: 168
+	lr_schedule: 1:5e-4,10:1e-4,25:5e-5
+	patience: 10
+2026-03-15 16:11:51,870 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=256 --dropout=0.4 --epochs=100 --hidden_size=128 --lookback_daily=365 --lookback_hourly=168 --lr_schedule=1:5e-4,10:1e-4,25:5e-5 --patience=10
+2026-03-15 16:11:56,880 - wandb.wandb_agent - INFO - Running runs: ['xjjdpcd7']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run xjjdpcd7
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_161418-xjjdpcd7
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773580456
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/xjjdpcd7
+wandb: updating run metadata
+wandb: updating run metadata; uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 18-18, summary, console lines 49-50
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss █▆▆▄▂▇▂▁▁▁▂▂▂▂▂▂▃▂▃
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0001
+wandb: test/median_kge 0.41528
+wandb: test/median_nse 0.53391
+wandb:      train_loss 0.06031
+wandb:  val/median_kge 0.58921
+wandb:  val/median_nse 0.55659
+wandb:        val_loss 0.25028
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773580456 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/xjjdpcd7
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_161418-xjjdpcd7/logs
+2026-03-15 16:42:25,657 - wandb.wandb_agent - INFO - Cleaning up finished run: xjjdpcd7
+2026-03-15 16:42:26,499 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 16:42:26,499 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 128
+	lookback_daily: 365
+	lookback_hourly: 336
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-15 16:42:26,502 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=256 --dropout=0.4 --epochs=100 --hidden_size=128 --lookback_daily=365 --lookback_hourly=336 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-15 16:42:31,513 - wandb.wandb_agent - INFO - Running runs: ['2bwzlsaf']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run 2bwzlsaf
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_164506-2bwzlsaf
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773582305
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/2bwzlsaf
+wandb: updating run metadata
+wandb: uploading wandb-summary.json; uploading output.log; uploading config.yaml
+wandb: uploading history steps 16-16, summary, console lines 42-43
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss █▄▄▄▅▄▁▂▃▄▅▄▄▃▃▅▆
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.60657
+wandb: test/median_nse 0.59858
+wandb:      train_loss 0.06812
+wandb:  val/median_kge 0.58886
+wandb:  val/median_nse 0.50929
+wandb:        val_loss 0.35078
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773582305 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/2bwzlsaf
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_164506-2bwzlsaf/logs
+2026-03-15 17:13:55,178 - wandb.wandb_agent - INFO - Cleaning up finished run: 2bwzlsaf
+2026-03-15 17:13:55,960 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 17:13:55,960 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 256
+	lookback_daily: 365
+	lookback_hourly: 72
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-15 17:13:55,963 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=256 --dropout=0.4 --epochs=100 --hidden_size=256 --lookback_daily=365 --lookback_hourly=72 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-15 17:14:00,973 - wandb.wandb_agent - INFO - Running runs: ['whmnfsof']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run whmnfsof
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_171621-whmnfsof
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773584179
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/whmnfsof
+wandb: updating run metadata
+wandb: updating run metadata; uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 29-29, summary, console lines 69-70
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▆▄▃▃▂▆▃▄▃▄▂▃▂▂▂█▃▂▂▁▃▂▁▂▃▂▂▂▂▂
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0001
+wandb: test/median_kge 0.56351
+wandb: test/median_nse 0.56152
+wandb:      train_loss 0.02087
+wandb:  val/median_kge 0.68087
+wandb:  val/median_nse 0.58485
+wandb:        val_loss 0.2286
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773584179 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/whmnfsof
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_171621-whmnfsof/logs
+2026-03-15 19:27:06,719 - wandb.wandb_agent - INFO - Cleaning up finished run: whmnfsof
+2026-03-15 19:27:07,817 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 19:27:07,817 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 256
+	lookback_daily: 365
+	lookback_hourly: 168
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-15 19:27:07,820 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=256 --dropout=0.4 --epochs=100 --hidden_size=256 --lookback_daily=365 --lookback_hourly=168 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-15 19:27:12,830 - wandb.wandb_agent - INFO - Running runs: ['blugh3qw']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run blugh3qw
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_192937-blugh3qw
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773592175
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/blugh3qw
+wandb: updating run metadata
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 16-16, summary, console lines 43-44
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▇▆▃▃▂▁▁▄▄▃▂▄▃▂▂█▁
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.48252
+wandb: test/median_nse 0.59515
+wandb:      train_loss 0.06755
+wandb:  val/median_kge 0.59874
+wandb:  val/median_nse 0.55427
+wandb:        val_loss 0.22995
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773592175 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/blugh3qw
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_192937-blugh3qw/logs
+2026-03-15 20:51:50,040 - wandb.wandb_agent - INFO - Cleaning up finished run: blugh3qw
+2026-03-15 20:51:50,800 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 20:51:50,801 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.4
+	epochs: 100
+	hidden_size: 256
+	lookback_daily: 365
+	lookback_hourly: 336
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-15 20:51:50,806 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=256 --dropout=0.4 --epochs=100 --hidden_size=256 --lookback_daily=365 --lookback_hourly=336 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-15 20:51:55,816 - wandb.wandb_agent - INFO - Running runs: ['fkoqf0ef']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run fkoqf0ef
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_205416-fkoqf0ef
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773597254
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/fkoqf0ef
+wandb: updating run metadata
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 15-15, summary, console lines 39-40
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▄▄▃▁▁▁▁▂▂▁▂▂▃▂▂█
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.60556
+wandb: test/median_nse 0.4812
+wandb:      train_loss 0.07212
+wandb:  val/median_kge 0.5569
+wandb:  val/median_nse 0.52817
+wandb:        val_loss 0.52362
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773597254 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/fkoqf0ef
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_205416-fkoqf0ef/logs
+2026-03-15 22:23:47,938 - wandb.wandb_agent - INFO - Cleaning up finished run: fkoqf0ef
+2026-03-15 22:23:48,830 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 22:23:48,830 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.6
+	epochs: 100
+	hidden_size: 64
+	lookback_daily: 365
+	lookback_hourly: 336
+	lr_schedule: 1:5e-4,10:1e-4,25:5e-5
+	patience: 10
+2026-03-15 22:23:48,834 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=256 --dropout=0.6 --epochs=100 --hidden_size=64 --lookback_daily=365 --lookback_hourly=336 --lr_schedule=1:5e-4,10:1e-4,25:5e-5 --patience=10
+2026-03-15 22:23:53,845 - wandb.wandb_agent - INFO - Running runs: ['i0j6pdhe']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run i0j6pdhe
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_222628-i0j6pdhe
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773602787
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/i0j6pdhe
+wandb: updating run metadata
+wandb: updating run metadata; uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading output.log; uploading wandb-summary.json
+wandb: uploading history steps 27-27, summary, console lines 71-72
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss █▅▄▅▄▃▄▃▄▃▃▂▂▃▂▂▂▁▁▁▁▂▂▂▂▂▁▂
+wandb: 
+wandb: Run summary:
+wandb:              lr 5e-05
+wandb: test/median_kge 0.62038
+wandb: test/median_nse 0.61384
+wandb:      train_loss 0.07271
+wandb:  val/median_kge 0.73742
+wandb:  val/median_nse 0.5547
+wandb:        val_loss 0.2415
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773602787 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/i0j6pdhe
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_222628-i0j6pdhe/logs
+2026-03-15 22:51:34,280 - wandb.wandb_agent - INFO - Cleaning up finished run: i0j6pdhe
+2026-03-15 22:51:35,384 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 22:51:35,384 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.6
+	epochs: 100
+	hidden_size: 128
+	lookback_daily: 365
+	lookback_hourly: 72
+	lr_schedule: 1:5e-4,10:1e-4,25:5e-5
+	patience: 10
+2026-03-15 22:51:35,388 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=256 --dropout=0.6 --epochs=100 --hidden_size=128 --lookback_daily=365 --lookback_hourly=72 --lr_schedule=1:5e-4,10:1e-4,25:5e-5 --patience=10
+2026-03-15 22:51:40,397 - wandb.wandb_agent - INFO - Running runs: ['jv2zmkte']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run jv2zmkte
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_225354-jv2zmkte
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773604432
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/jv2zmkte
+wandb: updating run metadata
+wandb: updating run metadata; uploading output.log; uploading wandb-summary.json; uploading history steps 25-25, summary, console lines 61-62
+wandb: uploading output.log; uploading wandb-summary.json; uploading history steps 25-25, summary, console lines 61-62; uploading config.yaml
+wandb: uploading output.log
+wandb: uploading data
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▇▅█▅▁▃▃▁▂▂▁▁▁▁▁▁▂▁▁▁▂▁▂▁▂▂
+wandb: 
+wandb: Run summary:
+wandb:              lr 5e-05
+wandb: test/median_kge 0.6183
+wandb: test/median_nse 0.59708
+wandb:      train_loss 0.04039
+wandb:  val/median_kge 0.6938
+wandb:  val/median_nse 0.58131
+wandb:        val_loss 0.21563
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773604432 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/jv2zmkte
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_225354-jv2zmkte/logs
+2026-03-15 23:29:04,392 - wandb.wandb_agent - INFO - Cleaning up finished run: jv2zmkte
+2026-03-15 23:29:05,295 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 23:29:05,295 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.6
+	epochs: 100
+	hidden_size: 128
+	lookback_daily: 365
+	lookback_hourly: 168
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-15 23:29:05,304 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=256 --dropout=0.6 --epochs=100 --hidden_size=128 --lookback_daily=365 --lookback_hourly=168 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-15 23:29:10,314 - wandb.wandb_agent - INFO - Running runs: ['pvj3zvhd']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run pvj3zvhd
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_233128-pvj3zvhd
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773606686
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/pvj3zvhd
+wandb: uploading data; updating run metadata
+wandb: updating run metadata
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 11-11, summary, console lines 29-30
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▃▁▂▃▅▃▅▄▄▆▇█
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.1213
+wandb: test/median_nse 0.1063
+wandb:      train_loss 0.07939
+wandb:  val/median_kge 0.13298
+wandb:  val/median_nse 0.07526
+wandb:        val_loss 0.54915
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773606686 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/pvj3zvhd
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_233128-pvj3zvhd/logs
+2026-03-15 23:49:36,700 - wandb.wandb_agent - INFO - Cleaning up finished run: pvj3zvhd
+2026-03-15 23:49:37,941 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-15 23:49:37,941 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.6
+	epochs: 100
+	hidden_size: 128
+	lookback_daily: 365
+	lookback_hourly: 336
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-15 23:49:37,944 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=256 --dropout=0.6 --epochs=100 --hidden_size=128 --lookback_daily=365 --lookback_hourly=336 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-15 23:49:42,955 - wandb.wandb_agent - INFO - Running runs: ['4atpwkud']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run 4atpwkud
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260315_235206-4atpwkud
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773607924
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/4atpwkud
+wandb: updating run metadata
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 16-16, summary, console lines 42-43
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss █▄▄▄▅▄▁▂▃▄▅▄▄▃▃▅▆
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.60657
+wandb: test/median_nse 0.59858
+wandb:      train_loss 0.06812
+wandb:  val/median_kge 0.58886
+wandb:  val/median_nse 0.50929
+wandb:        val_loss 0.35078
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773607924 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/4atpwkud
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260315_235206-4atpwkud/logs
+2026-03-16 00:20:50,989 - wandb.wandb_agent - INFO - Cleaning up finished run: 4atpwkud
+2026-03-16 00:20:51,893 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-16 00:20:51,893 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.6
+	epochs: 100
+	hidden_size: 256
+	lookback_daily: 365
+	lookback_hourly: 72
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-16 00:20:51,897 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=256 --dropout=0.6 --epochs=100 --hidden_size=256 --lookback_daily=365 --lookback_hourly=72 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-16 00:20:56,907 - wandb.wandb_agent - INFO - Running runs: ['ggg2z0rq']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run ggg2z0rq
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260316_002313-ggg2z0rq
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773609792
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/ggg2z0rq
+wandb: updating run metadata
+wandb: uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 29-29, summary, console lines 69-70
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▆▄▃▃▂▆▃▄▃▄▂▃▂▂▂█▃▂▂▁▃▂▁▂▃▂▂▂▂▂
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0001
+wandb: test/median_kge 0.56351
+wandb: test/median_nse 0.56152
+wandb:      train_loss 0.02087
+wandb:  val/median_kge 0.68087
+wandb:  val/median_nse 0.58485
+wandb:        val_loss 0.2286
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773609792 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/ggg2z0rq
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260316_002313-ggg2z0rq/logs
+2026-03-16 02:32:38,273 - wandb.wandb_agent - INFO - Cleaning up finished run: ggg2z0rq
+2026-03-16 02:32:39,113 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-16 02:32:39,113 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.6
+	epochs: 100
+	hidden_size: 256
+	lookback_daily: 365
+	lookback_hourly: 168
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-16 02:32:39,117 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=256 --dropout=0.6 --epochs=100 --hidden_size=256 --lookback_daily=365 --lookback_hourly=168 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-16 02:32:44,127 - wandb.wandb_agent - INFO - Running runs: ['fsukhvv6']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run fsukhvv6
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260316_023459-fsukhvv6
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773617698
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/fsukhvv6
+wandb: updating run metadata
+wandb: updating run metadata; uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 16-16, summary, console lines 43-44
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▇▆▃▃▂▁▁▄▄▃▂▄▃▂▂█▁
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.48252
+wandb: test/median_nse 0.59515
+wandb:      train_loss 0.06755
+wandb:  val/median_kge 0.59874
+wandb:  val/median_nse 0.55427
+wandb:        val_loss 0.22995
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773617698 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/fsukhvv6
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260316_023459-fsukhvv6/logs
+2026-03-16 03:55:01,991 - wandb.wandb_agent - INFO - Cleaning up finished run: fsukhvv6
+2026-03-16 03:55:02,773 - wandb.wandb_agent - INFO - Agent received command: run
+2026-03-16 03:55:02,773 - wandb.wandb_agent - INFO - Agent starting run with config:
+	batch_size: 256
+	dropout: 0.6
+	epochs: 100
+	hidden_size: 256
+	lookback_daily: 365
+	lookback_hourly: 336
+	lr_schedule: 1:1e-3,10:5e-4,25:1e-4
+	patience: 10
+2026-03-16 03:55:02,776 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py --wandb --wandb-project=MTSLSTM_Streamflow --wandb-run-name=MTSLSTM_sweep --wandb-mode=online --output-dir=runs/20260314/MTSLSTM/WANDB_RUN_ID --loss=nse_loss --reg-lambda=1.0 --early-stopping --batch_size=256 --dropout=0.6 --epochs=100 --hidden_size=256 --lookback_daily=365 --lookback_hourly=336 --lr_schedule=1:1e-3,10:5e-4,25:1e-4 --patience=10
+2026-03-16 03:55:07,786 - wandb.wandb_agent - INFO - Running runs: ['2h8osf7m']
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: WARNING Ignoring project 'MTSLSTM_Streamflow' when running a sweep.
+wandb: setting up run 2h8osf7m
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/wandb/run-20260316_035726-2h8osf7m
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MTSLSTM_sweep_1773622644
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: 🧹 View sweep at https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/01fvdpma
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/uncategorized/runs/2h8osf7m
+wandb: updating run metadata
+wandb: updating run metadata; uploading output.log; uploading wandb-summary.json
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading history steps 15-15, summary, console lines 39-40
+wandb: 
+wandb: Run history:
+wandb:              lr █████████▁▁▁▁▁▁▁
+wandb: test/median_kge ▁
+wandb: test/median_nse ▁
+wandb:      train_loss █▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  val/median_kge ▁
+wandb:  val/median_nse ▁
+wandb:        val_loss ▄▄▃▁▁▁▁▂▂▁▂▂▃▂▂█
+wandb: 
+wandb: Run summary:
+wandb:              lr 0.0005
+wandb: test/median_kge 0.60556
+wandb: test/median_nse 0.4812
+wandb:      train_loss 0.07212
+wandb:  val/median_kge 0.5569
+wandb:  val/median_nse 0.52817
+wandb:        val_loss 0.52362
+wandb: 
+wandb: 🚀 View run MTSLSTM_sweep_1773622644 at: https://wandb.ai/weikang-kong-kaust/uncategorized/runs/2h8osf7m
+wandb: ⭐️ View project at: https://wandb.ai/weikang-kong-kaust/uncategorized
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260316_035726-2h8osf7m/logs
+2026-03-16 05:27:38,493 - wandb.wandb_agent - INFO - Cleaning up finished run: 2h8osf7m
+2026-03-16 05:27:39,210 - wandb.wandb_agent - INFO - Agent received command: exit
+2026-03-16 05:27:39,210 - wandb.wandb_agent - INFO - Received exit command. Killing runs and quitting.
+wandb: Terminating and syncing runs. Press ctrl-c to kill.

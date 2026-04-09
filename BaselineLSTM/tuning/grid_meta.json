@@ -1,0 +1,19 @@
+{
+  "keys": [
+    "lr",
+    "dropout",
+    "hidden_size",
+    "batch_size",
+    "lookback",
+    "epochs"
+  ],
+  "fixed_args": [
+    "--wandb",
+    "--wandb-project=LSTM_Streamflow",
+    "--wandb-run-name=BaselineLSTM_sweep",
+    "--wandb-mode=online",
+    "--early-stopping",
+    "--patience=10",
+    "--output-dir=runs/${envvar:RUN_DATE}/BaselineLSTM/${envvar:WANDB_RUN_ID}"
+  ]
+}

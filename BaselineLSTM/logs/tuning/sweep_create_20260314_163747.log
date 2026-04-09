@@ -1,0 +1,4 @@
+wandb: Creating sweep from: sweep.yaml
+wandb: Creating sweep with ID: rs3l952a
+wandb: View sweep at: https://wandb.ai/weikang-kong-kaust/LSTM_Streamflow/sweeps/rs3l952a
+wandb: Run sweep agent with: wandb agent weikang-kong-kaust/LSTM_Streamflow/rs3l952a

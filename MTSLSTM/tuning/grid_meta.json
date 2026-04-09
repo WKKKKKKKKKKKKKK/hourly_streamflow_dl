@@ -1,0 +1,22 @@
+{
+  "keys": [
+    "lr_schedule",
+    "dropout",
+    "hidden_size",
+    "batch_size",
+    "lookback_hourly",
+    "lookback_daily",
+    "epochs",
+    "patience"
+  ],
+  "fixed_args": [
+    "--wandb",
+    "--wandb-project=MTSLSTM_Streamflow",
+    "--wandb-run-name=MTSLSTM_sweep",
+    "--wandb-mode=online",
+    "--output-dir=runs/${envvar:RUN_DATE}/MTSLSTM/${envvar:WANDB_RUN_ID}",
+    "--loss=nse_loss",
+    "--reg-lambda=1.0",
+    "--early-stopping"
+  ]
+}

@@ -1,0 +1,4 @@
+wandb: Creating sweep from: sweep.yaml
+wandb: Creating sweep with ID: 69tpmgzm
+wandb: View sweep at: https://wandb.ai/weikang-kong-kaust/uncategorized/sweeps/69tpmgzm
+wandb: Run sweep agent with: wandb agent weikang-kong-kaust/uncategorized/69tpmgzm

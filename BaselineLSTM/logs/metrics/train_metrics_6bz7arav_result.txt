@@ -1,0 +1,10 @@
+[Tue Mar 17 07:00:31 PM +03 2026] Starting BaselineLSTM train metrics for 6bz7arav
+Host: cn603-12-r
+Workdir: /home/kongw0a/MTS_LSTM/experiment_withcursor
+Model: /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/best_model.pth
+================================
+Split: train
+Median NSE: 0.8641952099561759
+Median KGE: 0.8527882610216142
+================================
+[Wed Mar 18 02:29:25 AM +03 2026] Done

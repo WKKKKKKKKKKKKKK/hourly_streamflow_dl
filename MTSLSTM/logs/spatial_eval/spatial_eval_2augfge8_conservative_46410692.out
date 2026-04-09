@@ -1,0 +1,16 @@
+[2026-04-06 20:16:54] loading 57 stations
+  loaded 10/57 stations
+  loaded 20/57 stations
+  loaded 30/57 stations
+  loaded 40/57 stations
+  loaded 50/57 stations
+  loaded 57/57 stations
+[2026-04-06 20:16:58] device=cuda
+[2026-04-06 20:16:58] preparing validation split
+[2026-04-06 20:16:58] building validation loader
+Total valid samples: 1530711
+[2026-04-06 20:18:30] evaluating validation split
+[2026-04-06 20:19:20] preparing test split
+[2026-04-06 20:19:20] building test loader
+Total valid samples: 2449897
+[2026-04-06 20:21:38] evaluating test split

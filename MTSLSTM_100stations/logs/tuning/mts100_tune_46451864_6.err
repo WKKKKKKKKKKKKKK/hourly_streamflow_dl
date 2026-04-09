@@ -1,0 +1,34 @@
+wandb: Currently logged in as: weikang-kong (weikang-kong-kaust) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run yax3o3t1
+wandb: Tracking run with wandb version 0.22.3
+wandb: Run data is saved locally in /ibex/project/c2266/wkkong/data/CAEMLSH/data_workstation/CAMELSH/training_runs/wandb/wandb/run-20260407_204533-yax3o3t1
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run mtslstm_100stations_tune_idx6_bs256_do0.4_hs64_H336_D365_1775583931
+wandb: ⭐️ View project at https://wandb.ai/weikang-kong-kaust/MTSLSTM_Streamflow
+wandb: 🚀 View run at https://wandb.ai/weikang-kong-kaust/MTSLSTM_Streamflow/runs/yax3o3t1
+Traceback (most recent call last):
+  File "/home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py", line 642, in <module>
+    main()
+  File "/home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Train.py", line 602, in main
+    trainer.fit()
+  File "/home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/trainer.py", line 189, in fit
+    train_loss = self.train_one_epoch(epoch)
+  File "/home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/trainer.py", line 150, in train_one_epoch
+    outputs = self.model({"H": H, "D": D}, S)
+  File "/ibex/user/kongw0a/conda-environments/hydroenv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/ibex/user/kongw0a/conda-environments/hydroenv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Modelzoo.py", line 362, in forward
+    out_D, (h_D, c_D) = self.lstm_daily(x_daily)
+  File "/ibex/user/kongw0a/conda-environments/hydroenv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/ibex/user/kongw0a/conda-environments/hydroenv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/ibex/user/kongw0a/conda-environments/hydroenv/lib/python3.10/site-packages/torch/nn/modules/rnn.py", line 1101, in forward
+    self.check_forward_args(input, hx, batch_sizes)
+  File "/ibex/user/kongw0a/conda-environments/hydroenv/lib/python3.10/site-packages/torch/nn/modules/rnn.py", line 1002, in check_forward_args
+    self.check_input(input, batch_sizes)
+  File "/ibex/user/kongw0a/conda-environments/hydroenv/lib/python3.10/site-packages/torch/nn/modules/rnn.py", line 314, in check_input
+    raise RuntimeError(
+RuntimeError: input.size(-1) must be equal to input_size. Expected 30, got 21

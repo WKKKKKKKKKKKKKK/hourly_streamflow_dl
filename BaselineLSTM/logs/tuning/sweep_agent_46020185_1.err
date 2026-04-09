@@ -1,0 +1,4 @@
+wandb: Starting wandb agent 🕵️
+wandb: ERROR Error while calling W&B API: name required for project query (<Response [400]>)
+wandb: ERROR Find detailed error logs at: /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/wandb/debug-cli.kongw0a.log
+Error: HTTP 400: name required for project query

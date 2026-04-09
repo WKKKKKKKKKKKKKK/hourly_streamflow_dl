@@ -1,0 +1,243 @@
+Starting W&B agent on host gpu214-06, task 2, sweep weikang-kong-kaust/uncategorized/6eco58ws
+Using device: cuda
+Run hparams: {'lookback': 8760, 'batch_size': 256, 'hidden_size': 256, 'num_layers': 1, 'dropout': 0.4, 'lr': 0.0001, 'epochs': 55, 'loss': 'nse_loss', 'early_stopping': True, 'patience': 10}
+Epoch 1/55 | Train Loss: 36.193773 | Val Loss: 2.190121
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 2/55 | Train Loss: 15.872987 | Val Loss: 0.741323
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 3/55 | Train Loss: 11.104546 | Val Loss: 0.816634
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 4/55 | Train Loss: 7.462157 | Val Loss: 1.326149
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 5/55 | Train Loss: 4.814100 | Val Loss: 0.757167
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 6/55 | Train Loss: 2.815504 | Val Loss: 0.555340
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 7/55 | Train Loss: 1.568447 | Val Loss: 0.509901
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 8/55 | Train Loss: 0.884128 | Val Loss: 0.508884
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 9/55 | Train Loss: 0.641167 | Val Loss: 0.478569
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 10/55 | Train Loss: 0.539350 | Val Loss: 0.450036
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 11/55 | Train Loss: 0.521472 | Val Loss: 0.587603
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 12/55 | Train Loss: 0.492070 | Val Loss: 0.392860
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 13/55 | Train Loss: 0.392606 | Val Loss: 0.452564
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 14/55 | Train Loss: 0.326641 | Val Loss: 0.508774
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 15/55 | Train Loss: 0.297488 | Val Loss: 0.440114
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 16/55 | Train Loss: 0.269743 | Val Loss: 0.477134
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 17/55 | Train Loss: 0.256131 | Val Loss: 0.486206
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 18/55 | Train Loss: 0.234276 | Val Loss: 0.392398
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 19/55 | Train Loss: 0.243406 | Val Loss: 0.369096
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 20/55 | Train Loss: 0.216862 | Val Loss: 0.369063
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 21/55 | Train Loss: 0.203380 | Val Loss: 0.360134
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 22/55 | Train Loss: 0.201182 | Val Loss: 0.372182
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 23/55 | Train Loss: 0.188965 | Val Loss: 0.388831
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 24/55 | Train Loss: 0.191884 | Val Loss: 0.453948
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 25/55 | Train Loss: 0.173164 | Val Loss: 0.381807
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 26/55 | Train Loss: 0.196461 | Val Loss: 0.391391
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 27/55 | Train Loss: 0.163088 | Val Loss: 0.395359
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 28/55 | Train Loss: 0.153628 | Val Loss: 0.420318
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 29/55 | Train Loss: 0.152810 | Val Loss: 0.389876
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 30/55 | Train Loss: 0.155898 | Val Loss: 0.407393
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 31/55 | Train Loss: 0.149478 | Val Loss: 0.438914
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Early stopping triggered at epoch 31
+Model saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/6bz7arav_lr0.0001_bs256_lb8760_hs256_do0.4_lossnse_loss/model.pth
+VAL  median NSE: 0.5479329981001202 median KGE: 0.7042301344595682
+TEST median NSE: 0.5380668494335858 median KGE: 0.6001281573193791
+Using device: cuda
+Run hparams: {'lookback': 8760, 'batch_size': 512, 'hidden_size': 256, 'num_layers': 1, 'dropout': 0.4, 'lr': 0.0005, 'epochs': 55, 'loss': 'nse_loss', 'early_stopping': True, 'patience': 10}
+Epoch 1/55 | Train Loss: 28.523160 | Val Loss: 1.354091
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 2/55 | Train Loss: 8.359390 | Val Loss: 0.889480
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 3/55 | Train Loss: 2.500607 | Val Loss: 0.582456
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 4/55 | Train Loss: 0.815607 | Val Loss: 0.453924
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 5/55 | Train Loss: 0.528392 | Val Loss: 0.419573
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 6/55 | Train Loss: 0.416081 | Val Loss: 0.344263
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 7/55 | Train Loss: 0.338120 | Val Loss: 0.323511
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 8/55 | Train Loss: 0.310088 | Val Loss: 0.313828
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 9/55 | Train Loss: 0.258103 | Val Loss: 0.322129
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 10/55 | Train Loss: 0.242436 | Val Loss: 0.290393
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 11/55 | Train Loss: 0.230591 | Val Loss: 0.342250
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 12/55 | Train Loss: 0.220709 | Val Loss: 0.318212
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 13/55 | Train Loss: 0.207091 | Val Loss: 0.321411
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 14/55 | Train Loss: 0.191511 | Val Loss: 0.358725
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 15/55 | Train Loss: 0.189902 | Val Loss: 0.303913
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 16/55 | Train Loss: 0.177323 | Val Loss: 0.358253
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 17/55 | Train Loss: 0.174198 | Val Loss: 0.358710
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 18/55 | Train Loss: 0.168102 | Val Loss: 0.328864
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 19/55 | Train Loss: 0.174872 | Val Loss: 0.320437
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 20/55 | Train Loss: 0.163157 | Val Loss: 0.315572
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/checkpoint.pth
+Early stopping triggered at epoch 20
+Model saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/k2flns9x_lr0.0005_bs512_lb8760_hs256_do0.4_lossnse_loss/model.pth
+VAL  median NSE: 0.6262580338053794 median KGE: 0.7041175593373732
+TEST median NSE: 0.6470235745576409 median KGE: 0.577405327684772
+Using device: cuda
+Run hparams: {'lookback': 4320, 'batch_size': 512, 'hidden_size': 256, 'num_layers': 1, 'dropout': 0.4, 'lr': 0.0005, 'epochs': 55, 'loss': 'nse_loss', 'early_stopping': True, 'patience': 10}
+Epoch 1/55 | Train Loss: 27.985349 | Val Loss: 3.294560
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 2/55 | Train Loss: 8.342332 | Val Loss: 0.872812
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 3/55 | Train Loss: 2.966229 | Val Loss: 0.808266
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 4/55 | Train Loss: 0.935443 | Val Loss: 0.686416
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 5/55 | Train Loss: 0.622444 | Val Loss: 0.470481
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 6/55 | Train Loss: 0.465670 | Val Loss: 0.408200
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 7/55 | Train Loss: 0.348293 | Val Loss: 0.378032
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 8/55 | Train Loss: 0.305659 | Val Loss: 0.386424
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 9/55 | Train Loss: 0.270864 | Val Loss: 0.366859
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 10/55 | Train Loss: 0.260079 | Val Loss: 0.295541
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 11/55 | Train Loss: 0.231319 | Val Loss: 0.308640
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 12/55 | Train Loss: 0.216237 | Val Loss: 0.406380
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 13/55 | Train Loss: 0.206152 | Val Loss: 0.326565
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 14/55 | Train Loss: 0.203010 | Val Loss: 0.352437
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 15/55 | Train Loss: 0.201371 | Val Loss: 0.327258
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 16/55 | Train Loss: 0.183462 | Val Loss: 0.342099
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 17/55 | Train Loss: 0.174126 | Val Loss: 0.324790
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 18/55 | Train Loss: 0.173583 | Val Loss: 0.367896
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 19/55 | Train Loss: 0.162425 | Val Loss: 0.372110
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 20/55 | Train Loss: 0.156457 | Val Loss: 0.439315
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Early stopping triggered at epoch 20
+Model saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/psviv6ub_lr0.0005_bs512_lb4320_hs256_do0.4_lossnse_loss/model.pth
+VAL  median NSE: 0.6030821857618731 median KGE: 0.5857050115070146
+TEST median NSE: 0.6001396180487939 median KGE: 0.4901628512334879
+Using device: cuda
+Run hparams: {'lookback': 4320, 'batch_size': 512, 'hidden_size': 256, 'num_layers': 1, 'dropout': 0.4, 'lr': 0.0001, 'epochs': 55, 'loss': 'nse_loss', 'early_stopping': True, 'patience': 10}
+Epoch 1/55 | Train Loss: 47.068900 | Val Loss: 6.009673
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 2/55 | Train Loss: 19.303544 | Val Loss: 2.353730
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 3/55 | Train Loss: 15.055559 | Val Loss: 0.748422
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 4/55 | Train Loss: 11.741328 | Val Loss: 1.295375
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 5/55 | Train Loss: 9.208338 | Val Loss: 0.720221
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 6/55 | Train Loss: 6.851444 | Val Loss: 0.971257
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 7/55 | Train Loss: 4.999608 | Val Loss: 0.808670
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 8/55 | Train Loss: 3.558217 | Val Loss: 0.591386
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 9/55 | Train Loss: 2.430682 | Val Loss: 0.590905
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 10/55 | Train Loss: 1.491839 | Val Loss: 0.549922
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 11/55 | Train Loss: 0.987898 | Val Loss: 0.523344
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 12/55 | Train Loss: 0.715728 | Val Loss: 0.514546
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 13/55 | Train Loss: 0.618250 | Val Loss: 0.510730
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 14/55 | Train Loss: 0.518882 | Val Loss: 0.425046
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 15/55 | Train Loss: 0.534548 | Val Loss: 0.478200
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 16/55 | Train Loss: 0.459090 | Val Loss: 0.581819
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 17/55 | Train Loss: 0.412864 | Val Loss: 0.439018
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 18/55 | Train Loss: 0.408557 | Val Loss: 0.438485
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 19/55 | Train Loss: 0.375207 | Val Loss: 0.443330
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 20/55 | Train Loss: 0.377500 | Val Loss: 0.508095
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 21/55 | Train Loss: 0.335064 | Val Loss: 0.431272
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 22/55 | Train Loss: 0.319549 | Val Loss: 0.393233
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 23/55 | Train Loss: 0.268674 | Val Loss: 0.366205
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 24/55 | Train Loss: 0.253761 | Val Loss: 0.337224
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 25/55 | Train Loss: 0.231310 | Val Loss: 0.340526
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 26/55 | Train Loss: 0.226572 | Val Loss: 0.322639
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 27/55 | Train Loss: 0.229534 | Val Loss: 0.379360
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 28/55 | Train Loss: 0.215945 | Val Loss: 0.316193
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 29/55 | Train Loss: 0.198184 | Val Loss: 0.353408
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 30/55 | Train Loss: 0.202621 | Val Loss: 0.317159
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 31/55 | Train Loss: 0.191057 | Val Loss: 0.336923
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 32/55 | Train Loss: 0.174179 | Val Loss: 0.330114
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 33/55 | Train Loss: 0.177737 | Val Loss: 0.340066
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 34/55 | Train Loss: 0.164411 | Val Loss: 0.334545
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 35/55 | Train Loss: 0.174718 | Val Loss: 0.415307
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 36/55 | Train Loss: 0.160590 | Val Loss: 0.504853
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 37/55 | Train Loss: 0.163238 | Val Loss: 0.414208
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Epoch 38/55 | Train Loss: 0.160262 | Val Loss: 0.482637
+Checkpoint saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/checkpoint.pth
+Early stopping triggered at epoch 38
+Model saved to /home/kongw0a/MTS_LSTM/experiment_withcursor/BaselineLSTM/runs/20260314/BaselineLSTM/i9ocvwca_lr0.0001_bs512_lb4320_hs256_do0.4_lossnse_loss/model.pth
+VAL  median NSE: 0.6110575638780851 median KGE: 0.6749675685078038
+TEST median NSE: 0.6393068898206802 median KGE: 0.5935301349684508

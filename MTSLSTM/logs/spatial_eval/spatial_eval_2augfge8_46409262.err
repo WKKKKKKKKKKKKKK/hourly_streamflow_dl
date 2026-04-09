@@ -1,0 +1,20 @@
+Traceback (most recent call last):
+  File "/home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/outputs/spatial_generalization_eval_2augfge8/evaluate_selected_stations_gpu.py", line 241, in <module>
+    main()
+  File "/home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/outputs/spatial_generalization_eval_2augfge8/evaluate_selected_stations_gpu.py", line 171, in main
+    val_row = evaluate_station(model, scalers, val_dyn_std, val_static_std, val_y_std, station_id, device, 'val')
+  File "/home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/outputs/spatial_generalization_eval_2augfge8/evaluate_selected_stations_gpu.py", line 93, in evaluate_station
+    out = model(
+  File "/ibex/user/kongw0a/conda-environments/hydroenv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/ibex/user/kongw0a/conda-environments/hydroenv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/kongw0a/MTS_LSTM/experiment_withcursor/MTSLSTM/Modelzoo.py", line 362, in forward
+    out_D, (h_D, c_D) = self.lstm_daily(x_daily)
+  File "/ibex/user/kongw0a/conda-environments/hydroenv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/ibex/user/kongw0a/conda-environments/hydroenv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/ibex/user/kongw0a/conda-environments/hydroenv/lib/python3.10/site-packages/torch/nn/modules/rnn.py", line 1124, in forward
+    result = _VF.lstm(
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 15.33 GiB. GPU 0 has a total capacity of 10.90 GiB of which 9.01 GiB is free. Including non-PyTorch memory, this process has 1.89 GiB memory in use. Of the allocated memory 1.73 GiB is allocated by PyTorch, and 11.59 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
