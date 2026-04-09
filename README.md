@@ -75,6 +75,31 @@ The multi-time-scale LSTM model is constructed following the methodology describ
 - Validation: 2003-10-01 — 2008-09-30  
 - Test: 2008-10-01 — 2015-09-30  
 
+
+### 100-Station Data Setup for Reproducibility
+
+The 100-station NetCDF files are not stored directly in this GitHub repository because of file-size limits. Share the archive `data_100stations_share.tar.gz` separately (for example via Google Drive), then place the extracted files under a top-level `data/` directory in the repository root.
+
+After extraction, the repository should contain:
+
+```text
+hourly_streamflow_dl/
+├── data/
+│   ├── selected_stn_data_100stations_west10_east90_proposal_boxes_part01of02.nc
+│   ├── selected_stn_data_100stations_west10_east90_proposal_boxes_part02of02.nc
+│   ├── selected_stn_data_100stations_west10_east90_proposal_boxes.csv
+│   └── static_h_topo_priority27.csv
+├── MTSLSTM_100stations/
+└── ...
+```
+
+Notes:
+- The two `part*.nc` files together form the full 100-station dynamic dataset. Both files are required.
+- If extracting the archive creates another nested folder, move the files so that they end up directly inside `data/` as shown above.
+- The updated `MTSLSTM_100stations` configuration and tuning script now look for these 100-station files in `repo_root/data/` by default, so no local absolute path edits are required if the files are placed there.
+- These shared files are for the 100-station MTSLSTM experiments. The 15-station BaselineLSTM/MTSLSTM experiments use a different dataset and are not reproduced from this archive.
+
+
 ### Model Performance
 ### 15-Station Experiment
 | Metric (hourly)               | MTS-LSTM | LSTM |
