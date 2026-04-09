@@ -3,6 +3,37 @@ Deep learning for hourly streamflow forecasting
 
 The multi-time-scale LSTM model is constructed following the methodology described in the paper (Gauch et al., 2021): https://hess.copernicus.org/articles/25/2045/2021/
 
+## Environment Setup
+
+The repository does not currently ship with a dedicated `requirements.txt` or `environment.yml`. The instructions below are a minimal environment for running the archived experiments, based on the code imports in this repository and the dependency snapshots stored in the archived W&B runs.
+
+Recommended runtime:
+- Python `3.10` (the archived best-run metadata was recorded with `CPython 3.10.19`)
+- Linux environment
+- GPU optional, but recommended for training
+
+Example setup with `venv`:
+
+```bash
+python3.10 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+```
+
+Install PyTorch first.
+Choose the command that matches your machine from the official PyTorch installation guide: https://pytorch.org/get-started/locally/
+
+Then install the main Python packages used by this codebase:
+
+```bash
+pip install numpy pandas xarray PyYAML wandb scikit-learn matplotlib
+```
+
+Notes:
+- `wandb` is optional for reproduction. If you do not want online logging, use `--no-wandb` or set `WANDB_MODE=offline`.
+- The core training/inference code in this repository depends mainly on `torch`, `numpy`, `pandas`, `xarray`, `PyYAML`, and `wandb`.
+- Archived W&B runs also include a full package snapshot under `BaselineLSTM/wandb_best_run/.../files/requirements.txt` and `MTSLSTM/wandb_best_run/.../files/requirements.txt` if you want to inspect the original environment more closely.
+
 ### Dynamic data: 
 - CAMELSH timeseries
   - BaselineLSTM & MTSLSTM comparison (15 stations)
