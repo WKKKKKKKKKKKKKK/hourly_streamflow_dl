@@ -1,0 +1,31 @@
+{
+  "idx": 2,
+  "lr": 0.0005,
+  "dropout": 0.4,
+  "hidden_size": 256,
+  "batch_size": 256,
+  "lookback_days": 180,
+  "epochs": 55,
+  "patience": 10,
+  "selection_metric": "val_median_nse",
+  "aggregation": {
+    "Rainf": "daily_mean_of_hourly",
+    "Tair": "daily_mean_of_hourly",
+    "PotEvap": "daily_mean_of_hourly",
+    "Streamflow": "daily_mean_of_hourly"
+  },
+  "splits": {
+    "train": [
+      "1990-10-01",
+      "2003-09-30"
+    ],
+    "val": [
+      "2003-10-01",
+      "2008-09-30"
+    ],
+    "test": [
+      "2008-10-01",
+      "2015-09-30"
+    ]
+  }
+}

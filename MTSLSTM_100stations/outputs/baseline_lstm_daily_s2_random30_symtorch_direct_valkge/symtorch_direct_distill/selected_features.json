@@ -1,0 +1,18 @@
+[
+  "PotEvap_lag60",
+  "PotEvap_lag55",
+  "PotEvap_lag54",
+  "PotEvap_lag48",
+  "PotEvap_lag46",
+  "PotEvap_lag45",
+  "PotEvap_lag44",
+  "PotEvap_lag33",
+  "PotEvap_lag29",
+  "Rainf_lag2",
+  "Rainf_lag1",
+  "low_prec_freq",
+  "DRAIN_SQKM",
+  "ELEV_STD_M_BASIN",
+  "SLOPE_PCT",
+  "STRAHLER_MAX"
+]

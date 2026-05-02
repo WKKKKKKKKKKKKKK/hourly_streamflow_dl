@@ -1,0 +1,37 @@
+{
+  "seed": 42,
+  "lookback": 60,
+  "hidden_size": 64,
+  "dropout": 0.2,
+  "lr": 0.0005,
+  "weight_decay": 1e-05,
+  "epochs": 25,
+  "patience": 5,
+  "dynamic_features": [
+    "rain_1",
+    "rain_3",
+    "rain_7",
+    "rain_30",
+    "pet_1",
+    "pet_7",
+    "pet_30",
+    "tair_1",
+    "tair_7",
+    "tair_30",
+    "wetness_7",
+    "wetness_30",
+    "rain_pet_ratio_30",
+    "doy_sin",
+    "doy_cos"
+  ],
+  "static_features": [
+    "aridity_index",
+    "BFI_AVE",
+    "DRAIN_SQKM",
+    "SLOPE_PCT",
+    "CLAYAVE",
+    "SANDAVE",
+    "for_pc_use",
+    "urb_pc_use"
+  ]
+}

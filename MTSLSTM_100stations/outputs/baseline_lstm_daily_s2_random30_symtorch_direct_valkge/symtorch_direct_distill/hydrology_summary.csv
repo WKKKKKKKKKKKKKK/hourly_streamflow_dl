@@ -1,0 +1,4 @@
+split,n_stations,lstm_median_nse,lstm_median_kge,symbolic_median_nse,symbolic_median_kge,lstm_negative_nse_stations,lstm_negative_kge_stations,symbolic_negative_nse_stations,symbolic_negative_kge_stations
+train,30,0.8427947062238659,0.8157848363542285,-0.4590292109296148,-0.5747431329717095,0,0,20,21
+val,30,0.6631219019585531,0.6628984628754264,-1.0990132651963858,-0.9263067415921084,7,6,25,27
+test,30,0.577718965965722,0.6400164699915,-0.8481798040786767,-0.7044764415439114,8,7,25,27

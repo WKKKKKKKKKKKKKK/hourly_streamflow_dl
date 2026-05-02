@@ -1,0 +1,5 @@
+CDFs of absolute average local peak lag for three methods across train/validation/test
+
+Output figure: /home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/s2_random30_threeway_ppt_plots/three_method_peak_lag_cdfs.png
+Per-station lags: /home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/s2_random30_threeway_ppt_plots/three_method_peak_lag_per_station.csv
+Summary table: /home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/s2_random30_threeway_ppt_plots/three_method_peak_lag_comparison.csv

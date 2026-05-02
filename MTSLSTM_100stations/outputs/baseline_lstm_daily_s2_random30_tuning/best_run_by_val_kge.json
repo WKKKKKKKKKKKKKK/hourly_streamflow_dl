@@ -1,0 +1,19 @@
+{
+  "idx": 9,
+  "tag": "idx9_lr0.001_bs128_lb90_hs128_do0.2_lossnse_loss",
+  "lr": 0.001,
+  "dropout": 0.2,
+  "hidden_size": 128,
+  "batch_size": 128,
+  "lookback_days": 90,
+  "epochs_cap": 55,
+  "epochs_ran": 30,
+  "train_seconds": 712.6338787078857,
+  "selection_metric_name": "val_median_kge",
+  "selection_metric": 0.6628984101689163,
+  "val_median_nse": 0.6631219224813721,
+  "val_median_kge": 0.6628984101689163,
+  "test_median_nse": 0.5777190450159493,
+  "test_median_kge": 0.6400164337273261,
+  "run_dir": "/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/baseline_lstm_daily_s2_random30_tuning/runs/idx9_lr0.001_bs128_lb90_hs128_do0.2_lossnse_loss"
+}

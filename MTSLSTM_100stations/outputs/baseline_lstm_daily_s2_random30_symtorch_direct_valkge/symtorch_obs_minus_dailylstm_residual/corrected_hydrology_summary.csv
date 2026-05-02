@@ -1,0 +1,4 @@
+split,n_stations,lstm_median_nse,lstm_median_kge,corrected_median_nse,corrected_median_kge,lstm_negative_nse_stations,lstm_negative_kge_stations,corrected_negative_nse_stations,corrected_negative_kge_stations
+train,30,0.8427947062238659,0.8157848363542285,0.7544537123733714,0.837247959830141,0,0,3,1
+val,30,0.6631219019585531,0.6628984628754264,0.4631618411603682,0.6058946774113454,7,6,12,9
+test,30,0.577718965965722,0.6400164699915,0.21740373729964085,0.48677451451871784,8,7,13,10

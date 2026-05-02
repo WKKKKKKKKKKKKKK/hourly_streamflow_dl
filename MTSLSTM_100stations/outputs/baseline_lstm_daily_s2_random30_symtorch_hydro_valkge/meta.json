@@ -1,0 +1,344 @@
+{
+  "best_run": {
+    "idx": 9,
+    "tag": "idx9_lr0.001_bs128_lb90_hs128_do0.2_lossnse_loss",
+    "lr": 0.001,
+    "dropout": 0.2,
+    "hidden_size": 128,
+    "batch_size": 128,
+    "lookback_days": 90,
+    "epochs_cap": 55,
+    "epochs_ran": 30,
+    "train_seconds": 712.6338787078857,
+    "selection_metric_name": "val_median_kge",
+    "selection_metric": 0.6628984101689163,
+    "val_median_nse": 0.6631219224813721,
+    "val_median_kge": 0.6628984101689163,
+    "test_median_nse": 0.5777190450159493,
+    "test_median_kge": 0.6400164337273261,
+    "run_dir": "/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/baseline_lstm_daily_s2_random30_tuning/runs/idx9_lr0.001_bs128_lb90_hs128_do0.2_lossnse_loss"
+  },
+  "lookback_days": 90,
+  "y_mean": 26.327667236328125,
+  "y_std": 64.6494369506836,
+  "feature_cols": [
+    "rain_sum_1",
+    "rain_sum_3",
+    "rain_sum_7",
+    "rain_sum_14",
+    "rain_sum_30",
+    "rain_sum_60",
+    "rain_sum_90",
+    "pet_sum_1",
+    "pet_sum_3",
+    "pet_sum_7",
+    "pet_sum_14",
+    "pet_sum_30",
+    "pet_sum_60",
+    "pet_sum_90",
+    "tair_mean_1",
+    "tair_mean_3",
+    "tair_mean_7",
+    "tair_mean_14",
+    "tair_mean_30",
+    "tair_mean_60",
+    "tair_mean_90",
+    "wetness_7",
+    "wetness_30",
+    "wetness_90",
+    "api_7",
+    "api_30",
+    "rain_pet_logratio_30",
+    "rain_pet_logratio_90",
+    "storminess_logratio_3_30",
+    "storminess_logratio_7_90",
+    "tair_diff_7_30",
+    "tair_diff_30_90",
+    "doy_sin",
+    "doy_cos",
+    "lstm_pred_raw",
+    "lstm_pred_log1p",
+    "p_mean",
+    "pet_mean",
+    "aridity_index",
+    "p_seasonality",
+    "frac_snow",
+    "high_prec_freq",
+    "high_prec_dur",
+    "low_prec_freq",
+    "low_prec_dur",
+    "DRAIN_SQKM",
+    "ELEV_MEAN_M_BASIN",
+    "ELEV_STD_M_BASIN",
+    "SLOPE_PCT",
+    "RRMEAN",
+    "RRMEDIAN",
+    "BAS_COMPACTNESS",
+    "STREAMS_KM_SQ_KM",
+    "STRAHLER_MAX",
+    "TOPWET",
+    "CLAYAVE",
+    "SANDAVE",
+    "AWCAVE",
+    "PERMAVE",
+    "BDAVE",
+    "for_pc_use",
+    "crp_pc_use",
+    "urb_pc_use"
+  ],
+  "feature_scalers": {
+    "rain_sum_1": {
+      "mean": 0.14900994789363023,
+      "std": 0.35278386046876103
+    },
+    "rain_sum_3": {
+      "mean": 0.4458076923912396,
+      "std": 0.692106131014955
+    },
+    "rain_sum_7": {
+      "mean": 1.0389905372086892,
+      "std": 1.1100584814995962
+    },
+    "rain_sum_14": {
+      "mean": 2.077093226655775,
+      "std": 1.6521429369436629
+    },
+    "rain_sum_30": {
+      "mean": 4.445114195603106,
+      "std": 2.6196996541760496
+    },
+    "rain_sum_60": {
+      "mean": 8.875894716195305,
+      "std": 4.069562750289649
+    },
+    "rain_sum_90": {
+      "mean": 13.296607618446467,
+      "std": 5.279883100277968
+    },
+    "pet_sum_1": {
+      "mean": 0.20483205960237638,
+      "std": 0.09236519018987055
+    },
+    "pet_sum_3": {
+      "mean": 0.6144547208000561,
+      "std": 0.2619238206325785
+    },
+    "pet_sum_7": {
+      "mean": 1.4334231936732877,
+      "std": 0.588572973468658
+    },
+    "pet_sum_14": {
+      "mean": 2.866409013766159,
+      "std": 1.1493832119747698
+    },
+    "pet_sum_30": {
+      "mean": 6.1414133138398785,
+      "std": 2.4034861126756732
+    },
+    "pet_sum_60": {
+      "mean": 12.277069306017365,
+      "std": 4.610149103210141
+    },
+    "pet_sum_90": {
+      "mean": 18.408284389253147,
+      "std": 6.541692029913132
+    },
+    "tair_mean_1": {
+      "mean": 17.29617680235761,
+      "std": 8.87950332776962
+    },
+    "tair_mean_3": {
+      "mean": 17.29577875779166,
+      "std": 8.652036922469499
+    },
+    "tair_mean_7": {
+      "mean": 17.289890745610194,
+      "std": 8.398908800361834
+    },
+    "tair_mean_14": {
+      "mean": 17.27978550544122,
+      "std": 8.228505641885116
+    },
+    "tair_mean_30": {
+      "mean": 17.266567018169155,
+      "std": 8.061265107494082
+    },
+    "tair_mean_60": {
+      "mean": 17.247146101351362,
+      "std": 7.781590219159496
+    },
+    "tair_mean_90": {
+      "mean": 17.23075502264202,
+      "std": 7.428139819513407
+    },
+    "wetness_7": {
+      "mean": -0.3944326564645987,
+      "std": 1.3317002147218102
+    },
+    "wetness_30": {
+      "mean": -1.6962991182367733,
+      "std": 3.7119118787834253
+    },
+    "wetness_90": {
+      "mean": -5.111676770806682,
+      "std": 8.585639944845738
+    },
+    "api_7": {
+      "mean": 0.14852065113668417,
+      "std": 0.15657687463745065
+    },
+    "api_30": {
+      "mean": 0.1482040368999266,
+      "std": 0.08612900433643479
+    },
+    "rain_pet_logratio_30": {
+      "mean": -0.43687077867614105,
+      "std": 0.9169424304369131
+    },
+    "rain_pet_logratio_90": {
+      "mean": -0.3365810329958076,
+      "std": 0.6231837187737383
+    },
+    "storminess_logratio_3_30": {
+      "mean": -5.093032627552596,
+      "std": 4.599888094441126
+    },
+    "storminess_logratio_7_90": {
+      "mean": -3.6682836799506613,
+      "std": 2.82043429503829
+    },
+    "tair_diff_7_30": {
+      "mean": 0.023323727441039686,
+      "std": 2.7320401542154533
+    },
+    "tair_diff_30_90": {
+      "mean": 0.035811995527139366,
+      "std": 3.763967228660717
+    },
+    "doy_sin": {
+      "mean": 0.003403737457928535,
+      "std": 0.706629849947995
+    },
+    "doy_cos": {
+      "mean": -0.0052043376982784184,
+      "std": 0.7075560646358094
+    },
+    "lstm_pred_raw": {
+      "mean": 26.697527072827363,
+      "std": 65.20018447137281
+    },
+    "lstm_pred_log1p": {
+      "mean": 2.060155165779523,
+      "std": 1.4884129029122823
+    },
+    "p_mean": {
+      "mean": 3.6106200835930835,
+      "std": 0.2295994314097503
+    },
+    "pet_mean": {
+      "mean": 5.05017402750457,
+      "std": 0.5263628725573775
+    },
+    "aridity_index": {
+      "mean": 1.4024798324233607,
+      "std": 0.1598051715719141
+    },
+    "p_seasonality": {
+      "mean": 0.11089101914493962,
+      "std": 0.29309996668325433
+    },
+    "frac_snow": {
+      "mean": 0.012756309819366268,
+      "std": 0.013812076205183134
+    },
+    "high_prec_freq": {
+      "mean": 20.561515944624936,
+      "std": 1.5595075055407286
+    },
+    "high_prec_dur": {
+      "mean": 1.1892585501179531,
+      "std": 0.01997848835814505
+    },
+    "low_prec_freq": {
+      "mean": 236.18623655186127,
+      "std": 9.536109004071164
+    },
+    "low_prec_dur": {
+      "mean": 4.343587194142243,
+      "std": 0.2958143659068615
+    },
+    "DRAIN_SQKM": {
+      "mean": 1752.4536854347805,
+      "std": 2998.5680694131624
+    },
+    "ELEV_MEAN_M_BASIN": {
+      "mean": 251.21719477336484,
+      "std": 242.0892792269332
+    },
+    "ELEV_STD_M_BASIN": {
+      "mean": 45.511067674046785,
+      "std": 41.701185118397404
+    },
+    "SLOPE_PCT": {
+      "mean": 4.997956148316816,
+      "std": 4.532425450323625
+    },
+    "RRMEAN": {
+      "mean": 0.3923080994695369,
+      "std": 0.11981300775298494
+    },
+    "RRMEDIAN": {
+      "mean": 0.3720059341403769,
+      "std": 0.13633673994818635
+    },
+    "BAS_COMPACTNESS": {
+      "mean": 1.5671749148936167,
+      "std": 0.3197943815457096
+    },
+    "STREAMS_KM_SQ_KM": {
+      "mean": 0.8373235222269613,
+      "std": 0.27798875445178617
+    },
+    "STRAHLER_MAX": {
+      "mean": 4.313337905023144,
+      "std": 1.5569982324324931
+    },
+    "TOPWET": {
+      "mean": 12.540790685748187,
+      "std": 1.0681327123186721
+    },
+    "CLAYAVE": {
+      "mean": 25.929300210530283,
+      "std": 12.811145243328477
+    },
+    "SANDAVE": {
+      "mean": 41.770059896508684,
+      "std": 27.089087005447208
+    },
+    "AWCAVE": {
+      "mean": 0.12555817083244705,
+      "std": 0.027405686839833025
+    },
+    "PERMAVE": {
+      "mean": 3.9661372707400213,
+      "std": 3.9202297760926967
+    },
+    "BDAVE": {
+      "mean": 1.4340946740297271,
+      "std": 0.04421824523893329
+    },
+    "for_pc_use": {
+      "mean": 43.27949116458242,
+      "std": 27.505465160290445
+    },
+    "crp_pc_use": {
+      "mean": 6.799869268214224,
+      "std": 18.099748805111076
+    },
+    "urb_pc_use": {
+      "mean": 17.387704686327208,
+      "std": 23.756673144542237
+    }
+  },
+  "n_rows": 155916
+}

@@ -1,0 +1,4 @@
+model,scatter_sample_n,test_kge_valid_n,test_kge_negative_n,test_kge_excluded_n,test_nse_valid_n,test_nse_negative_n,test_nse_excluded_n
+Best 100-station MTSLSTM,10000,28,12,2,28,14,2
+Daily-supervised transfer MTSLSTM,10000,28,5,2,28,7,2
+Transfer + symbolic regression prior,10000,28,8,2,28,9,2

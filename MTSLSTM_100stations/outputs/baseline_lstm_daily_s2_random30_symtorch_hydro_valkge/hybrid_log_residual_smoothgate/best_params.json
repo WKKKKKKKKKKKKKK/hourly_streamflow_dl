@@ -1,0 +1,8 @@
+{
+  "alpha": 0.8,
+  "beta": 0.2,
+  "tau": 0.2,
+  "sharpness": 0.05,
+  "global_equation": "(SLOPE_PCT + (rain_pet_logratio_90 - p_mean)) * ((0.5582391 - for_pc_use) * 0.06458572)",
+  "event_equation": "-0.070106834 / cos(square(PERMAVE))"
+}

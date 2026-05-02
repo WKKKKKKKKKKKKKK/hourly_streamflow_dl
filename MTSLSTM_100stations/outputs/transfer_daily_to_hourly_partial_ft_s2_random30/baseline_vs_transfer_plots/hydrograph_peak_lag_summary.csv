@@ -1,0 +1,7 @@
+model,station_id,hydro_start,hydro_end,mean_peak_lag_hours,matched_peak_count,obs_peak_count,pred_peak_count
+Baseline best 100-station MTSLSTM,02191300,2013-10-01 00:00:00,2015-09-30 23:00:00,-4.181818181818182,22,23,42
+Baseline best 100-station MTSLSTM,07058000,2013-10-01 00:00:00,2015-09-30 23:00:00,-5.2,15,18,33
+Baseline best 100-station MTSLSTM,07071500,2013-10-01 00:00:00,2015-09-30 23:00:00,-3.76,25,26,50
+Daily-supervised transfer MTSLSTM,02191300,2013-10-01 00:00:00,2015-09-30 23:00:00,-1.4761904761904763,21,23,50
+Daily-supervised transfer MTSLSTM,07058000,2013-10-01 00:00:00,2015-09-30 23:00:00,-10.588235294117647,17,18,85
+Daily-supervised transfer MTSLSTM,07071500,2013-10-01 00:00:00,2015-09-30 23:00:00,-2.2,20,26,150

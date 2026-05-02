@@ -1,0 +1,18 @@
+{
+  "idx":4,
+  "tag":"idx4_lr0.0005_bs512_lb180_hs256_do0.4_lossnse_loss",
+  "lr":0.0005,
+  "dropout":0.4,
+  "hidden_size":256,
+  "batch_size":512,
+  "lookback_days":180,
+  "epochs_cap":55,
+  "epochs_ran":55,
+  "train_seconds":589.6191215515,
+  "selection_metric":0.7046760032,
+  "val_median_nse":0.7046760032,
+  "val_median_kge":0.6326528097,
+  "test_median_nse":0.5308641245,
+  "test_median_kge":0.5626969849,
+  "run_dir":"\/home\/kongw0a\/hourly_streamflow_dl\/MTSLSTM_100stations\/outputs\/baseline_lstm_daily_s2_random30_tuning\/runs\/idx4_lr0.0005_bs512_lb180_hs256_do0.4_lossnse_loss"
+}

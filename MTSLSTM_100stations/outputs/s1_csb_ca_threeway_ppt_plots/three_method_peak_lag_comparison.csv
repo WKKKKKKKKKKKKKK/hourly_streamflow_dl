@@ -1,0 +1,4 @@
+split,baseline,symbolic,transfer,baseline_valid_n,symbolic_valid_n,transfer_valid_n
+test,2.0,0.7142857142857143,3.9456521739130435,21,21,24
+train,-2.666666666666667,-0.75,2.5,16,16,15
+val,3.2142857142857144,3.5714285714285716,-2.0,16,19,19

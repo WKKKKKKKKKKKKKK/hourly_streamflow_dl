@@ -1,0 +1,26 @@
+{
+  "source_pretrained_model": "/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx2_bs128_do0.4_hs64_H168_D365/best_model.pth",
+  "best_epoch_by_val_hourly_kge": 5,
+  "learning_rate": 0.0005,
+  "weight_decay": 1e-05,
+  "agg_loss_weight": 0.5,
+  "sym_loss_weight": 0.2,
+  "symbolic_hybrid": {
+    "alpha": 0.8,
+    "beta": 0.2,
+    "tau": 0.2,
+    "sharpness": 0.05,
+    "global_equation": "(SLOPE_PCT + (rain_pet_logratio_90 - p_mean)) * ((0.5582391 - for_pc_use) * 0.06458572)",
+    "event_equation": "-0.070106834 / cos(square(PERMAVE))",
+    "baseline_for_prior": "frozen source MTSLSTM daily prediction",
+    "gate_threshold": "station-specific q75 of source train daily log-flow predictions"
+  },
+  "trainable_modules": [
+    "lstm_daily",
+    "transfer_h",
+    "transfer_c",
+    "head_daily",
+    "head_hourly"
+  ],
+  "selection_metric": "val_hourly_kge"
+}

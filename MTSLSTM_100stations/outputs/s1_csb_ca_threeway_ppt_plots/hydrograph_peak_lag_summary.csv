@@ -1,0 +1,10 @@
+model,station_id,hydro_start,hydro_end,mean_peak_lag_hours,matched_peak_count,obs_peak_count,pred_peak_count
+Best 100-station MTSLSTM,10296000,2013-10-01 00:00:00,2015-09-30 23:00:00,-5.0,1,12,227
+Best 100-station MTSLSTM,11447360,2013-10-01 00:00:00,2015-09-30 23:00:00,-34.0,1,21,273
+Best 100-station MTSLSTM,11466200,2013-10-01 00:00:00,2015-09-30 23:00:00,2.0,8,25,172
+Daily-supervised transfer MTSLSTM,10296000,2013-10-01 00:00:00,2015-09-30 23:00:00,-5.0,1,12,233
+Daily-supervised transfer MTSLSTM,11447360,2013-10-01 00:00:00,2015-09-30 23:00:00,14.4375,16,21,303
+Daily-supervised transfer MTSLSTM,11466200,2013-10-01 00:00:00,2015-09-30 23:00:00,2.3181818181818183,22,25,27
+Transfer + symbolic regression prior,10296000,2013-10-01 00:00:00,2015-09-30 23:00:00,,0,12,14
+Transfer + symbolic regression prior,11447360,2013-10-01 00:00:00,2015-09-30 23:00:00,0.6666666666666666,6,21,344
+Transfer + symbolic regression prior,11466200,2013-10-01 00:00:00,2015-09-30 23:00:00,1.4285714285714286,21,25,86

@@ -1,0 +1,86 @@
+{
+  "source_run": {
+    "idx": 9,
+    "tag": "idx9_lr0.001_bs128_lb90_hs128_do0.2_lossnse_loss",
+    "lr": 0.001,
+    "dropout": 0.2,
+    "hidden_size": 128,
+    "batch_size": 128,
+    "lookback_days": 90,
+    "epochs_cap": 55,
+    "epochs_ran": 30,
+    "train_seconds": 712.6338787078857,
+    "selection_metric_name": "val_median_kge",
+    "selection_metric": 0.6628984101689163,
+    "val_median_nse": 0.6631219224813721,
+    "val_median_kge": 0.6628984101689163,
+    "test_median_nse": 0.5777190450159493,
+    "test_median_kge": 0.6400164337273261,
+    "run_dir": "/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/baseline_lstm_daily_s2_random30_tuning/runs/idx9_lr0.001_bs128_lb90_hs128_do0.2_lossnse_loss"
+  },
+  "splits": {
+    "train": [
+      "1990-10-01",
+      "2003-09-30"
+    ],
+    "val": [
+      "2003-10-01",
+      "2008-09-30"
+    ],
+    "test": [
+      "2008-10-01",
+      "2015-09-30"
+    ]
+  },
+  "lookback_days": 90,
+  "dynamic_vars": [
+    "Rainf",
+    "Tair",
+    "PotEvap"
+  ],
+  "static_vars": [
+    "p_mean",
+    "pet_mean",
+    "aridity_index",
+    "p_seasonality",
+    "frac_snow",
+    "high_prec_freq",
+    "high_prec_dur",
+    "low_prec_freq",
+    "low_prec_dur",
+    "DRAIN_SQKM",
+    "ELEV_MEAN_M_BASIN",
+    "ELEV_STD_M_BASIN",
+    "SLOPE_PCT",
+    "RRMEAN",
+    "RRMEDIAN",
+    "BAS_COMPACTNESS",
+    "STREAMS_KM_SQ_KM",
+    "STRAHLER_MAX",
+    "TOPWET",
+    "CLAYAVE",
+    "SANDAVE",
+    "AWCAVE",
+    "PERMAVE",
+    "BDAVE",
+    "for_pc_use",
+    "crp_pc_use",
+    "urb_pc_use"
+  ],
+  "n_total_features": 297,
+  "n_train_samples": 139770,
+  "n_val_samples": 52140,
+  "n_test_samples": 74010,
+  "n_distill_samples": 9000,
+  "distill_sampling": {
+    "strategy": "balanced_per_station_cap",
+    "per_station_cap": 300,
+    "seed": 42
+  },
+  "scalers": {
+    "y_mean": 26.327667236328125,
+    "y_std": 64.6494369506836
+  },
+  "selected_stations_csv": "/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/s2_random30_idx2_eval/selected_stations.csv",
+  "variable_names_json": "/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/baseline_lstm_daily_s2_random30_symtorch_direct_valkge/variable_names.json"
+}
