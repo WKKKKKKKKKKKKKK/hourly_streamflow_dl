@@ -20,22 +20,7 @@ Best-run artifacts:
 - `outputs/baseline_lstm_daily_s2_random30_tuning/best_run_by_val_kge.json`
 - `outputs/baseline_lstm_daily_s2_random30_tuning/runs/idx9_lr0.001_bs128_lb90_hs128_do0.2_lossnse_loss/`
 
-## 2. SymTorch-related daily teacher
-
-Code:
-- `code/train_symtorch_daily_teacher_s2_random30.py`
-
-Outputs:
-- `outputs/symtorch_daily_teacher_s2_random30/`
-- `outputs/symtorch_daily_teacher_s2_random30_gpu/`
-- `outputs/symtorch_daily_teacher_s2_random30_gpu_rawmetric/`
-
-Key model files:
-- `outputs/symtorch_daily_teacher_s2_random30/best_daily_teacher_model.pth`
-- `outputs/symtorch_daily_teacher_s2_random30_gpu/best_daily_teacher_model.pth`
-- `outputs/symtorch_daily_teacher_s2_random30_gpu_rawmetric/best_daily_teacher_model.pth`
-
-## 3. SymTorch distillation and symbolic residual experiments
+## 2. SymTorch distillation and symbolic residual experiments
 
 Code:
 - `code/export_best_daily_lstm_for_symtorch.py`
@@ -59,7 +44,7 @@ Hydrology-informed symbolic outputs:
 - `outputs/baseline_lstm_daily_s2_random30_symtorch_hydro_valkge/hydro_log_residual_eventq75/`
 - `outputs/baseline_lstm_daily_s2_random30_symtorch_hydro_valkge/hybrid_log_residual_smoothgate/`
 
-## 4. Transfer learning from daily to hourly
+## 3. Transfer learning from daily to hourly
 
 Code:
 - `code/transfer_daily_head_tune_s2_random30.py`
@@ -72,7 +57,7 @@ Outputs:
 Comparison plots and summaries:
 - `outputs/transfer_daily_to_hourly_partial_ft_s2_random30/baseline_vs_transfer_plots/`
 
-## 5. Transfer learning with symbolic prior
+## 4. Transfer learning with symbolic prior
 
 Code:
 - `code/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid.py`
@@ -83,7 +68,7 @@ Outputs:
 - `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.1/`
 - `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.2/`
 
-## 6. Evaluation and presentation plots
+## 5. Evaluation and presentation plots
 
 Code:
 - `code/evaluate_s2_random30_idx2.py`
@@ -101,7 +86,7 @@ Outputs:
 - `outputs/s1_csb_ca_threeway_ppt_plots/`
 - `outputs/u2_dfb_e_gl_threeway_ppt_plots/`
 
-## 7. Original 100-station archive
+## 6. Original 100-station archive
 
 Core code and metadata:
 - `code/Modelzoo.py`
@@ -121,7 +106,7 @@ Spatial generalization outputs:
 - `outputs/spatial_generalization_eval_mts100_idx2_trainperiod_conservative/`
 - `outputs/spatial_generalization_eval_mts100_idx2_valtest_conservative/`
 
-## 8. Fast lookup
+## 7. Fast lookup
 
 If you want the shortest path:
 

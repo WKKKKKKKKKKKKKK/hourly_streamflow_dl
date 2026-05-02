@@ -35,7 +35,6 @@ The repository now also keeps the full 30-station experiment chain under `output
 
 Main experiment families:
 - daily baseline LSTM on the selected 30 stations
-- daily teacher LSTM for symbolic-prior work
 - SymTorch direct and residual distillation
 - daily-to-hourly transfer learning
 - daily-to-hourly transfer learning with symbolic priors
@@ -49,7 +48,6 @@ Most important 30-station output folders:
 - `outputs/baseline_lstm_daily_s2_random30_tuning/`
 - `outputs/baseline_lstm_daily_s2_random30_symtorch_direct_valkge/`
 - `outputs/baseline_lstm_daily_s2_random30_symtorch_hydro_valkge/`
-- `outputs/symtorch_daily_teacher_s2_random30/`
 - `outputs/transfer_daily_head_tune_s2_random30/`
 - `outputs/transfer_daily_to_hourly_partial_ft_s2_random30/`
 - `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid/`
@@ -59,7 +57,6 @@ Most important 30-station output folders:
 
 Most important 30-station scripts:
 - `code/tune_baseline_lstm_daily_s2_random30.py`
-- `code/train_symtorch_daily_teacher_s2_random30.py`
 - `code/export_best_daily_lstm_for_symtorch.py`
 - `code/distill_best_daily_lstm_with_symtorch.py`
 - `code/distill_daily_lstm_obs_residual_with_symtorch.py`

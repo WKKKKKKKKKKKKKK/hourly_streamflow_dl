@@ -32,34 +32,7 @@ Supporting artifacts kept in the run folders:
 - `summary.md`
 - `per_station_metrics.csv`
 
-## 2. Daily LSTM teacher used for SymTorch prior experiments
-
-Purpose:
-Train a compact daily teacher with engineered daily features for symbolic-prior work.
-
-Primary code:
-- `code/train_symtorch_daily_teacher_s2_random30.py`
-
-Result folders:
-- `outputs/symtorch_daily_teacher_s2_random30/`
-- `outputs/symtorch_daily_teacher_s2_random30_gpu/`
-- `outputs/symtorch_daily_teacher_s2_random30_gpu_rawmetric/`
-
-Key model files:
-- `outputs/symtorch_daily_teacher_s2_random30/best_daily_teacher_model.pth`
-- `outputs/symtorch_daily_teacher_s2_random30_gpu/best_daily_teacher_model.pth`
-- `outputs/symtorch_daily_teacher_s2_random30_gpu_rawmetric/best_daily_teacher_model.pth`
-
-Typical artifacts in each folder:
-- `summary.md`
-- `teacher_summary_metrics.csv`
-- `teacher_per_station_metrics.csv`
-- `teacher_training_history.csv`
-- `teacher_predictions.csv.gz`
-- `daily_feature_rows_raw.csv.gz`
-- `daily_feature_rows_scaled.csv.gz`
-
-## 3. SymTorch distillation of the daily LSTM
+## 2. SymTorch distillation of the daily LSTM
 
 Purpose:
 Export the best daily LSTM, then distill symbolic equations against either the raw daily-LSTM output or residual targets.
@@ -104,7 +77,7 @@ Useful summary files:
 - `outputs/baseline_lstm_daily_s2_random30_symtorch_hydro_valkge/summary.md`
 - `outputs/baseline_lstm_daily_s2_random30_symtorch_hydro_valkge/experiment_comparison.csv`
 
-## 4. Transfer learning from daily to hourly
+## 3. Transfer learning from daily to hourly
 
 Purpose:
 Use the daily-model knowledge to initialize and fine-tune the hourly model on the same 30-station subset.
@@ -135,7 +108,7 @@ Related comparison outputs:
 - `outputs/s2_random30_idx2_eval/`
 - `outputs/transfer_daily_to_hourly_partial_ft_s2_random30/baseline_vs_transfer_plots/`
 
-## 5. Transfer learning with symbolic prior
+## 4. Transfer learning with symbolic prior
 
 Purpose:
 Inject symbolic-prior information into the daily-to-hourly transfer model and compare different symbolic weights.
@@ -162,7 +135,7 @@ Typical artifacts in each symbolic-transfer folder:
 - `summary_hourly_metrics.csv`
 - `per_station_hourly_metrics.csv`
 
-## 6. Evaluation and presentation plots for three-way comparisons
+## 5. Evaluation and presentation plots for three-way comparisons
 
 Purpose:
 Compare baseline hourly, transfer-learning, and symbolic-transfer results.
@@ -180,7 +153,7 @@ Plot output folders:
 - `outputs/s1_csb_ca_threeway_ppt_plots/`
 - `outputs/u2_dfb_e_gl_threeway_ppt_plots/`
 
-## 7. Fast navigation by experiment family
+## 6. Fast navigation by experiment family
 
 If you only need the most important entry points:
 
