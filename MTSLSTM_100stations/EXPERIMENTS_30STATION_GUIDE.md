@@ -83,22 +83,18 @@ Purpose:
 Use the daily-model knowledge to initialize and fine-tune the hourly model on the same 30-station subset.
 
 Primary code:
-- `code/transfer_daily_head_tune_s2_random30.py`
 - `code/transfer_daily_to_hourly_partial_ft_s2_random30.py`
 - `code/evaluate_s2_random30_idx2.py`
 - `code/plot_s2_random30_baseline_vs_transfer.py`
 
-Main output folders:
-- `outputs/transfer_daily_head_tune_s2_random30/`
+Main output folder:
 - `outputs/transfer_daily_to_hourly_partial_ft_s2_random30/`
 
-Key model files:
-- `outputs/transfer_daily_head_tune_s2_random30/best_transfer_model.pth`
+Key model file:
 - `outputs/transfer_daily_to_hourly_partial_ft_s2_random30/best_transfer_model.pth`
 
 Transfer-learning artifacts:
-- `trial_summary.csv`
-- `run_metadata.json`
+- `method_notes.md`
 - `training_history.csv`
 - `summary.md`
 - `summary_hourly_metrics.csv`
@@ -172,7 +168,6 @@ If you only need the most important entry points:
   `outputs/baseline_lstm_daily_s2_random30_symtorch_hydro_valkge/`
 
 - Transfer learning:
-  `code/transfer_daily_head_tune_s2_random30.py`
   `code/transfer_daily_to_hourly_partial_ft_s2_random30.py`
   `outputs/transfer_daily_to_hourly_partial_ft_s2_random30/`
 

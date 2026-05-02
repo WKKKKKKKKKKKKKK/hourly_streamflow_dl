@@ -47,11 +47,9 @@ Hydrology-informed symbolic outputs:
 ## 3. Transfer learning from daily to hourly
 
 Code:
-- `code/transfer_daily_head_tune_s2_random30.py`
 - `code/transfer_daily_to_hourly_partial_ft_s2_random30.py`
 
 Outputs:
-- `outputs/transfer_daily_head_tune_s2_random30/`
 - `outputs/transfer_daily_to_hourly_partial_ft_s2_random30/`
 
 Comparison plots and summaries:

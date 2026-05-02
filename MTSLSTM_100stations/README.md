@@ -48,7 +48,6 @@ Most important 30-station output folders:
 - `outputs/baseline_lstm_daily_s2_random30_tuning/`
 - `outputs/baseline_lstm_daily_s2_random30_symtorch_direct_valkge/`
 - `outputs/baseline_lstm_daily_s2_random30_symtorch_hydro_valkge/`
-- `outputs/transfer_daily_head_tune_s2_random30/`
 - `outputs/transfer_daily_to_hourly_partial_ft_s2_random30/`
 - `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid/`
 - `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.05/`
@@ -61,6 +60,5 @@ Most important 30-station scripts:
 - `code/distill_best_daily_lstm_with_symtorch.py`
 - `code/distill_daily_lstm_obs_residual_with_symtorch.py`
 - `code/distill_daily_lstm_hydro_residual_with_symtorch.py`
-- `code/transfer_daily_head_tune_s2_random30.py`
 - `code/transfer_daily_to_hourly_partial_ft_s2_random30.py`
 - `code/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid.py`
