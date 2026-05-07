@@ -84,7 +84,29 @@ Outputs:
 - `outputs/s1_csb_ca_threeway_ppt_plots/`
 - `outputs/u2_dfb_e_gl_threeway_ppt_plots/`
 
-## 6. Original 100-station archive
+## 6. Significance and source-domain degradation analyses
+
+Code:
+- `code/run_s2_threeway_significance_tests.py`
+- `code/evaluate_transfer_on_source_domain.py`
+- `code/analyze_source_domain_transfer_degradation.py`
+- `code/plot_source_domain_kge_vs_mean_flow.py`
+
+Station-level paired significance outputs:
+- `outputs/s2_random30_threeway_ppt_plots/significance_tests_vs_baseline.csv`
+- `outputs/s2_random30_threeway_ppt_plots/symbolic_vs_transfer_significance_tests.csv`
+- `outputs/s2_random30_threeway_ppt_plots/s2_threeway_all_paired_significance_tests.csv`
+
+Source-domain degradation outputs:
+- `outputs/source_domain_transfer_retention_eval/`
+- `outputs/source_domain_transfer_retention_eval/per_station_source_domain_metrics.csv`
+- `outputs/source_domain_transfer_retention_eval/per_station_source_domain_metrics_with_flow.csv`
+- `outputs/source_domain_transfer_retention_eval/lowflow_failure_by_quartile.csv`
+- `outputs/source_domain_transfer_retention_eval/retention_failure_counts.csv`
+- `outputs/source_domain_transfer_retention_eval/kge_vs_flow_test_binned_summary.csv`
+- `outputs/source_domain_transfer_retention_eval/figures/source_domain_test_kge_vs_mean_flow_three_models.png`
+
+## 7. Original 100-station archive
 
 Core code and metadata:
 - `code/Modelzoo.py`
@@ -104,7 +126,7 @@ Spatial generalization outputs:
 - `outputs/spatial_generalization_eval_mts100_idx2_trainperiod_conservative/`
 - `outputs/spatial_generalization_eval_mts100_idx2_valtest_conservative/`
 
-## 7. Fast lookup
+## 8. Fast lookup
 
 If you want the shortest path:
 
@@ -127,3 +149,13 @@ If you want the shortest path:
   `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.05/`
   `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.1/`
   `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.2/`
+
+- Significance tests:
+  `code/run_s2_threeway_significance_tests.py`
+  `outputs/s2_random30_threeway_ppt_plots/s2_threeway_all_paired_significance_tests.csv`
+
+- Source-domain degradation:
+  `code/evaluate_transfer_on_source_domain.py`
+  `code/analyze_source_domain_transfer_degradation.py`
+  `code/plot_source_domain_kge_vs_mean_flow.py`
+  `outputs/source_domain_transfer_retention_eval/`
