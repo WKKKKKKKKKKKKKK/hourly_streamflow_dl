@@ -1,0 +1,26 @@
+{
+  "source_station_count": 100,
+  "station_source": "/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx2_bs128_do0.4_hs64_H168_D365/scalers.pkl::station_y_std.keys()",
+  "splits": {
+    "train": [
+      "1990-10-01",
+      "2003-09-30"
+    ],
+    "val": [
+      "2003-10-01",
+      "2008-09-30"
+    ],
+    "test": [
+      "2008-10-01",
+      "2015-09-30"
+    ]
+  },
+  "models": {
+    "source_pretransfer": "/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx2_bs128_do0.4_hs64_H168_D365/best_model.pth",
+    "transfer": "/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/transfer_daily_to_hourly_partial_ft_s2_random30/best_transfer_model.pth",
+    "symbolic_transfer_sw0.05": "/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.05/best_transfer_model.pth"
+  },
+  "batch_size": 6144,
+  "threads": 4,
+  "elapsed_seconds": 3131.4073753356934
+}

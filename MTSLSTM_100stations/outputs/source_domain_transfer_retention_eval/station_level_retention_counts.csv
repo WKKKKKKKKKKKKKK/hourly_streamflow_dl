@@ -1,0 +1,3 @@
+model,stations,all_valid_splits_retained,any_split_catastrophic,test_retained,test_failure,test_catastrophic
+transfer,93,3,38,4,42,28
+symbolic_transfer_sw0.05,93,9,28,15,35,20
