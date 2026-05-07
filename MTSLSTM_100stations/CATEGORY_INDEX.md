@@ -104,7 +104,9 @@ Source-domain degradation outputs:
 - `outputs/source_domain_transfer_retention_eval/lowflow_failure_by_quartile.csv`
 - `outputs/source_domain_transfer_retention_eval/retention_failure_counts.csv`
 - `outputs/source_domain_transfer_retention_eval/kge_vs_flow_test_binned_summary.csv`
+- `outputs/source_domain_transfer_retention_eval/nse_vs_flow_test_binned_summary.csv`
 - `outputs/source_domain_transfer_retention_eval/figures/source_domain_test_kge_vs_mean_flow_three_models.png`
+- `outputs/source_domain_transfer_retention_eval/figures/source_domain_test_nse_vs_mean_flow_three_models.png`
 
 ## 7. Original 100-station archive
 

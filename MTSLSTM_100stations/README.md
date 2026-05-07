@@ -108,7 +108,8 @@ Then run the degradation post-processing:
 
 ```bash
 python code/analyze_source_domain_transfer_degradation.py
-python code/plot_source_domain_kge_vs_mean_flow.py
+python code/plot_source_domain_kge_vs_mean_flow.py --metric kge
+python code/plot_source_domain_kge_vs_mean_flow.py --metric nse
 ```
 
 The degradation analysis quantifies source-domain forgetting after transfer,
@@ -125,4 +126,6 @@ Important outputs:
 - `outputs/source_domain_transfer_retention_eval/lowflow_failure_by_quartile.csv`
 - `outputs/source_domain_transfer_retention_eval/retention_failure_counts.csv`
 - `outputs/source_domain_transfer_retention_eval/kge_vs_flow_test_binned_summary.csv`
+- `outputs/source_domain_transfer_retention_eval/nse_vs_flow_test_binned_summary.csv`
 - `outputs/source_domain_transfer_retention_eval/figures/source_domain_test_kge_vs_mean_flow_three_models.png`
+- `outputs/source_domain_transfer_retention_eval/figures/source_domain_test_nse_vs_mean_flow_three_models.png`
