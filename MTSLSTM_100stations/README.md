@@ -44,7 +44,7 @@ Main experiment families:
 - three-way evaluation and presentation plots
 
 Start here for the curated map:
-- `EXPERIMENTS_30STATION_GUIDE.md`
+- `CATEGORY_INDEX.md`
 
 Most important 30-station output folders:
 - `outputs/s2_random30_idx2_eval/`

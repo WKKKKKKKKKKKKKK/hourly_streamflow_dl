@@ -172,7 +172,7 @@ Notes:
 ### 30-Station Follow-Up Experiments
 
 The curated 30-station follow-up archive is under `MTSLSTM_100stations/`.
-Start with `MTSLSTM_100stations/README.md` or `MTSLSTM_100stations/EXPERIMENTS_30STATION_GUIDE.md` for the full map.
+Start with `MTSLSTM_100stations/README.md` or `MTSLSTM_100stations/CATEGORY_INDEX.md` for the full map.
 
 The daily-head-only transfer-learning ablation is stored separately from the main daily-to-hourly transfer experiments:
 - `MTSLSTM_100stations/outputs/head_only_daily_head_fc_transfer_s2_random30/`
