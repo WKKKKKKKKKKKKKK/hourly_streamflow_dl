@@ -5,6 +5,8 @@ This directory now contains two related groups of artifacts:
 1. the original 100-station MTSLSTM tuning archive and spatial generalization evaluation
 2. the later 30-station follow-up experiments built around daily LSTM, SymTorch distillation, transfer learning, and transfer learning with symbolic priors
 
+Symtorch (Tan et al., 2026): https://arxiv.org/abs/2602.21307
+
 ## 100-station archive
 
 This part is the reorganized copy of the local 100-station MTSLSTM experiment artifacts from `/home/kongw0a/MTS_LSTM/experiment_withcursor`.
