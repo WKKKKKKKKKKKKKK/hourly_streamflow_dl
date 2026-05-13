@@ -85,8 +85,9 @@ For comparison, the original daily-branch transfer experiments freeze only the h
 | Daily-branch transfer, hourly branch frozen | `outputs/transfer_daily_to_hourly_partial_ft_s2_random30/` | `lstm_daily`, `transfer_h`, `transfer_c`, `head_daily`, `head_hourly` | `lstm_hourly` | HOURLY | 10 | 0.524135 | 0.224185 | 0.489140 | 0.252204 |
 | Symbolic-prior daily-branch transfer, hourly branch frozen | `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.05/` | `lstm_daily`, `transfer_h`, `transfer_c`, `head_daily`, `head_hourly` | `lstm_hourly` | HOURLY | 5 | 0.536782 | 0.290725 | 0.506264 | 0.260709 |
 
-Compact comparison table:
-- `outputs/head_only_daily_head_fc_transfer_s2_random30/comparison_summary.csv`
+Compact comparison tables:
+- head-only daily head FC transfer: `outputs/head_only_daily_head_fc_transfer_s2_random30/comparison_summary.csv`
+- daily-branch transfer with hourly branch frozen: `outputs/transfer_daily_to_hourly_partial_ft_s2_random30/daily_branch_transfer_comparison_summary.csv`
 
 ## Significance and degradation analyses
 
