@@ -1,4 +1,4 @@
-<img width="1500" height="349" alt="image" src="https://github.com/user-attachments/assets/7e5a5ade-e803-4fc8-b06f-2d6b63bfd93b" />
+<img width="3313" height="791" alt="fig" src="https://github.com/user-attachments/assets/4864ef25-caa6-4bd9-bd4b-26001f1e2548" />
 <img width="7489" height="4573" alt="image" src="https://github.com/user-attachments/assets/93472714-abc3-49fd-b9e4-156e2a7e52bf" />
 
 # hourly_streamflow_dl
