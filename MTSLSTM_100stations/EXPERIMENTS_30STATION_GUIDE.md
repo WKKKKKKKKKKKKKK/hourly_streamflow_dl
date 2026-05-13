@@ -131,7 +131,53 @@ Typical artifacts in each symbolic-transfer folder:
 - `summary_hourly_metrics.csv`
 - `per_station_hourly_metrics.csv`
 
-## 5. Evaluation and presentation plots for three-way comparisons
+## 5. Daily-head-only transfer-learning ablation
+
+Purpose:
+Compare ordinary transfer learning and symbolic-prior transfer learning when only the daily output head is fine-tuned.
+This is a daily-branch ablation, not the main hourly forecast transfer experiment.
+
+Frozen parameters:
+- `lstm_daily`
+- `lstm_hourly`
+- `transfer_h`
+- `transfer_c`
+- `head_hourly`
+
+Trainable parameters:
+- `head_daily`
+
+Primary code:
+- `code/transfer_daily_head_tune_s2_random30.py`
+- `code/transfer_daily_head_tune_symbolic_s2_random30.py`
+
+Main output folder:
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/`
+
+Result folders:
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/ordinary_transfer/`
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/symbolic_prior_sw0.05/`
+
+Key model files:
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/ordinary_transfer/best_transfer_model.pth`
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/symbolic_prior_sw0.05/best_transfer_model.pth`
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/ordinary_transfer/trials/*.pth`
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/symbolic_prior_sw0.05/trials/*.pth`
+
+Summary files:
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/README.md`
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/comparison_summary.csv`
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/ordinary_transfer/summary.md`
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/symbolic_prior_sw0.05/summary.md`
+
+Best DAILY metrics:
+
+| Method | Best lr | Weight decay | Symbolic weight | Best epoch | Val KGE | Val NSE | Test KGE | Test NSE |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Ordinary head-only transfer | 0.005 | 0.0001 | NA | 13 | 0.184845 | -0.037005 | 0.206447 | 0.107114 |
+| Symbolic-prior head-only transfer | 0.001 | 0.0 | 0.05 | 14 | 0.183022 | -0.011178 | 0.134518 | 0.029555 |
+
+## 6. Evaluation and presentation plots for three-way comparisons
 
 Purpose:
 Compare baseline hourly, transfer-learning, and symbolic-transfer results.
@@ -149,7 +195,7 @@ Plot output folders:
 - `outputs/s1_csb_ca_threeway_ppt_plots/`
 - `outputs/u2_dfb_e_gl_threeway_ppt_plots/`
 
-## 6. Fast navigation by experiment family
+## 7. Fast navigation by experiment family
 
 If you only need the most important entry points:
 
@@ -176,3 +222,8 @@ If you only need the most important entry points:
   `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.05/`
   `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.1/`
   `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.2/`
+
+- Daily-head-only transfer ablation:
+  `code/transfer_daily_head_tune_s2_random30.py`
+  `code/transfer_daily_head_tune_symbolic_s2_random30.py`
+  `outputs/head_only_daily_head_fc_transfer_s2_random30/`

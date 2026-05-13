@@ -168,6 +168,19 @@ Notes:
 - If you want W&B logging, remove `--no-wandb` in the manual training command and make sure you have logged in with `wandb login`.
 - The 15-station experiments in this repository use a different dataset; the shared `data_100stations_share.tar.gz` archive is only for the 100-station MTSLSTM setup.
 
+### 30-Station Follow-Up Experiments
+
+The curated 30-station follow-up archive is under `MTSLSTM_100stations/`.
+Start with `MTSLSTM_100stations/README.md` or `MTSLSTM_100stations/EXPERIMENTS_30STATION_GUIDE.md` for the full map.
+
+The daily-head-only transfer-learning ablation is stored separately from the main daily-to-hourly transfer experiments:
+- `MTSLSTM_100stations/outputs/head_only_daily_head_fc_transfer_s2_random30/`
+- ordinary transfer: `ordinary_transfer/`
+- symbolic-prior transfer: `symbolic_prior_sw0.05/`
+- scripts: `MTSLSTM_100stations/code/transfer_daily_head_tune_s2_random30.py` and `MTSLSTM_100stations/code/transfer_daily_head_tune_symbolic_s2_random30.py`
+
+In that ablation, only `head_daily` is trainable. The LSTM branches, transfer layers, and hourly head are frozen. Both result folders include `best_transfer_model.pth` and all trial checkpoint files.
+
 ### Model Performance
 ### 15-Station Experiment
 | Metric (hourly)               | MTS-LSTM | LSTM |

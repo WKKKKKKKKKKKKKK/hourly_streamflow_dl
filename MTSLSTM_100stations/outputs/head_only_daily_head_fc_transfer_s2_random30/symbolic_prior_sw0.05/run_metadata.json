@@ -1,0 +1,40 @@
+{
+  "source_model": "/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx2_bs128_do0.4_hs64_H168_D365/best_model.pth",
+  "source_scalers": "/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/training_runs/20260407_mtslstm_100stations_tuning_topo18_v100/idx2_bs128_do0.4_hs64_H168_D365/scalers.pkl",
+  "selected_stations": "/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/s2_random30_idx2_eval/selected_stations.csv",
+  "best_trial": {
+    "lr": 0.001,
+    "weight_decay": 0.0,
+    "sym_loss_weight": 0.05,
+    "best_epoch": 14,
+    "best_val_kge": 0.1830221266245325,
+    "best_val_nse": -0.011178042890186202,
+    "model_path": "/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/transfer_daily_head_tune_symbolic_s2_random30/trials/trial_07_lr0.001_wd0_sw0.05.pth"
+  },
+  "train_dataset_size": 57946,
+  "val_dataset_size": 29952,
+  "test_dataset_size": 55364,
+  "lookback_daily": 365,
+  "daily_aggregation": "24-hour mean for Rainf/Tair/PotEvap/Streamflow to match the pretrained daily branch",
+  "frozen_parameters": [
+    "lstm_daily",
+    "lstm_hourly",
+    "transfer_h",
+    "transfer_c",
+    "head_hourly"
+  ],
+  "trainable_parameters": [
+    "head_daily"
+  ],
+  "symbolic_prior": {
+    "alpha": 0.8,
+    "beta": 0.2,
+    "tau": 0.2,
+    "sharpness": 0.05,
+    "global_equation": "(SLOPE_PCT + (rain_pet_logratio_90 - p_mean)) * ((0.5582391 - for_pc_use) * 0.06458572)",
+    "event_equation": "-0.070106834 / cos(square(PERMAVE))",
+    "baseline_for_prior": "frozen source MTSLSTM daily prediction",
+    "gate_threshold": "station-specific q75 of source train daily log-flow predictions"
+  },
+  "selection_metric": "val_daily_kge"
+}

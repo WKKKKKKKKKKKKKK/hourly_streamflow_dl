@@ -66,7 +66,28 @@ Outputs:
 - `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.1/`
 - `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.2/`
 
-## 5. Evaluation and presentation plots
+## 5. Daily-head-only transfer ablation
+
+Code:
+- `code/transfer_daily_head_tune_s2_random30.py`
+- `code/transfer_daily_head_tune_symbolic_s2_random30.py`
+
+Outputs:
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/`
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/ordinary_transfer/`
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/symbolic_prior_sw0.05/`
+
+Included model files:
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/ordinary_transfer/best_transfer_model.pth`
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/symbolic_prior_sw0.05/best_transfer_model.pth`
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/ordinary_transfer/trials/*.pth`
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/symbolic_prior_sw0.05/trials/*.pth`
+
+Comparison summary:
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/README.md`
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/comparison_summary.csv`
+
+## 6. Evaluation and presentation plots
 
 Code:
 - `code/evaluate_s2_random30_idx2.py`
@@ -84,7 +105,7 @@ Outputs:
 - `outputs/s1_csb_ca_threeway_ppt_plots/`
 - `outputs/u2_dfb_e_gl_threeway_ppt_plots/`
 
-## 6. Significance and source-domain degradation analyses
+## 7. Significance and source-domain degradation analyses
 
 Code:
 - `code/run_s2_threeway_significance_tests.py`
@@ -108,7 +129,7 @@ Source-domain degradation outputs:
 - `outputs/source_domain_transfer_retention_eval/figures/source_domain_test_kge_vs_mean_flow_three_models.png`
 - `outputs/source_domain_transfer_retention_eval/figures/source_domain_test_nse_vs_mean_flow_three_models.png`
 
-## 7. Original 100-station archive
+## 8. Original 100-station archive
 
 Core code and metadata:
 - `code/Modelzoo.py`
@@ -128,7 +149,7 @@ Spatial generalization outputs:
 - `outputs/spatial_generalization_eval_mts100_idx2_trainperiod_conservative/`
 - `outputs/spatial_generalization_eval_mts100_idx2_valtest_conservative/`
 
-## 8. Fast lookup
+## 9. Fast lookup
 
 If you want the shortest path:
 
@@ -151,6 +172,11 @@ If you want the shortest path:
   `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.05/`
   `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.1/`
   `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.2/`
+
+- Daily-head-only transfer ablation:
+  `code/transfer_daily_head_tune_s2_random30.py`
+  `code/transfer_daily_head_tune_symbolic_s2_random30.py`
+  `outputs/head_only_daily_head_fc_transfer_s2_random30/`
 
 - Significance tests:
   `code/run_s2_threeway_significance_tests.py`

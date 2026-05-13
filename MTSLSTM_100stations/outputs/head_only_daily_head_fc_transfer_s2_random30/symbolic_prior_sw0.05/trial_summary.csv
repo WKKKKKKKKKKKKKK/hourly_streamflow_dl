@@ -1,0 +1,13 @@
+lr,weight_decay,sym_loss_weight,best_epoch,best_val_kge,best_val_nse,model_path
+0.001,0.0,0.05,14,0.1830221266245325,-0.011178042890186202,/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/transfer_daily_head_tune_symbolic_s2_random30/trials/trial_07_lr0.001_wd0_sw0.05.pth
+0.0005,0.0,0.05,14,0.16734509551627164,-0.04380793314634224,/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/transfer_daily_head_tune_symbolic_s2_random30/trials/trial_04_lr0.0005_wd0_sw0.05.pth
+0.001,1e-05,0.05,7,0.16386041928279804,-0.023998258761434632,/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/transfer_daily_head_tune_symbolic_s2_random30/trials/trial_08_lr0.001_wd1e-05_sw0.05.pth
+0.001,0.0001,0.05,9,0.1621150690846182,-0.0568018946047506,/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/transfer_daily_head_tune_symbolic_s2_random30/trials/trial_09_lr0.001_wd0.0001_sw0.05.pth
+0.0005,1e-05,0.05,14,0.1618594262438512,-0.055690070587264495,/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/transfer_daily_head_tune_symbolic_s2_random30/trials/trial_05_lr0.0005_wd1e-05_sw0.05.pth
+0.005,0.0001,0.05,2,0.1604139056797731,-0.014423228722096837,/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/transfer_daily_head_tune_symbolic_s2_random30/trials/trial_12_lr0.005_wd0.0001_sw0.05.pth
+0.0005,0.0001,0.05,14,0.15732383820160278,-0.042749409521698756,/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/transfer_daily_head_tune_symbolic_s2_random30/trials/trial_06_lr0.0005_wd0.0001_sw0.05.pth
+0.005,0.0,0.05,1,0.1562691838892588,0.00709248941835372,/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/transfer_daily_head_tune_symbolic_s2_random30/trials/trial_10_lr0.005_wd0_sw0.05.pth
+0.005,1e-05,0.05,6,0.12388156641645481,-0.061679279446428925,/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/transfer_daily_head_tune_symbolic_s2_random30/trials/trial_11_lr0.005_wd1e-05_sw0.05.pth
+0.0001,0.0001,0.05,3,0.03353354626085564,-0.15603112083441517,/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/transfer_daily_head_tune_symbolic_s2_random30/trials/trial_03_lr0.0001_wd0.0001_sw0.05.pth
+0.0001,1e-05,0.05,3,0.033217169050948014,-0.15743656078278767,/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/transfer_daily_head_tune_symbolic_s2_random30/trials/trial_02_lr0.0001_wd1e-05_sw0.05.pth
+0.0001,0.0,0.05,3,0.03081236394863629,-0.15655193248407162,/home/kongw0a/hourly_streamflow_dl/MTSLSTM_100stations/outputs/transfer_daily_head_tune_symbolic_s2_random30/trials/trial_01_lr0.0001_wd0_sw0.05.pth

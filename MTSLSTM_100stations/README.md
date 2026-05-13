@@ -38,6 +38,7 @@ Main experiment families:
 - SymTorch direct and residual distillation
 - daily-to-hourly transfer learning
 - daily-to-hourly transfer learning with symbolic priors
+- daily-head-only transfer-learning ablation with and without symbolic priors
 - three-way evaluation and presentation plots
 
 Start here for the curated map:
@@ -53,6 +54,7 @@ Most important 30-station output folders:
 - `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.05/`
 - `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.1/`
 - `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.2/`
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/`
 
 Most important 30-station scripts:
 - `code/tune_baseline_lstm_daily_s2_random30.py`
@@ -62,6 +64,22 @@ Most important 30-station scripts:
 - `code/distill_daily_lstm_hydro_residual_with_symtorch.py`
 - `code/transfer_daily_to_hourly_partial_ft_s2_random30.py`
 - `code/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid.py`
+- `code/transfer_daily_head_tune_s2_random30.py`
+- `code/transfer_daily_head_tune_symbolic_s2_random30.py`
+
+### Daily-head-only transfer ablation
+
+The head-only ablation is kept under `outputs/head_only_daily_head_fc_transfer_s2_random30/` so it is not confused with the full daily-to-hourly transfer experiments.
+Only `head_daily` is trainable; `lstm_daily`, `lstm_hourly`, `transfer_h`, `transfer_c`, and `head_hourly` are frozen.
+Both ordinary and symbolic-prior folders include the best model and all trial `.pth` checkpoints.
+
+| Method | Output folder | Best val KGE | Best val NSE | Test KGE | Test NSE |
+|---|---|---:|---:|---:|---:|
+| Ordinary head-only transfer | `outputs/head_only_daily_head_fc_transfer_s2_random30/ordinary_transfer/` | 0.184845 | -0.037005 | 0.206447 | 0.107114 |
+| Symbolic-prior head-only transfer | `outputs/head_only_daily_head_fc_transfer_s2_random30/symbolic_prior_sw0.05/` | 0.183022 | -0.011178 | 0.134518 | 0.029555 |
+
+Compact comparison table:
+- `outputs/head_only_daily_head_fc_transfer_s2_random30/comparison_summary.csv`
 
 ## Significance and degradation analyses
 
