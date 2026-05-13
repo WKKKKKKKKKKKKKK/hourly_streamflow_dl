@@ -1,9 +1,11 @@
 <img width="1500" height="349" alt="image" src="https://github.com/user-attachments/assets/7e5a5ade-e803-4fc8-b06f-2d6b63bfd93b" />
 <img width="7489" height="4573" alt="image" src="https://github.com/user-attachments/assets/93472714-abc3-49fd-b9e4-156e2a7e52bf" />
+
 # hourly_streamflow_dl
 Deep learning for hourly streamflow forecasting
 
 The multi-time-scale LSTM model is constructed following the methodology described in the paper (Gauch et al., 2021): https://hess.copernicus.org/articles/25/2045/2021/
+CAMELSH data (Tran et al., 2025): https://www.nature.com/articles/s41597-025-05612-6
 
 ## Environment Setup
 
