@@ -36,12 +36,13 @@ The generated `trial_summary.csv` and `run_metadata.json` files preserve the ori
 
 In this head-only setting, the ordinary transfer run has the better test KGE/NSE. The symbolic-prior run has a slightly lower validation KGE but a less negative validation NSE.
 
-## Reference Daily-Branch Transfer Result
+## Reference Daily-Branch Transfer Results
 
-The original daily-to-hourly transfer experiment is kept in `outputs/transfer_daily_to_hourly_partial_ft_s2_random30/`.
-It freezes `lstm_hourly` and fine-tunes `lstm_daily`, `transfer_h`, `transfer_c`, `head_daily`, and `head_hourly`.
-Its final scores are hourly KGE/NSE, so the row below is a transfer-strategy reference rather than another daily-head score.
+The original daily-to-hourly transfer experiments are kept in `outputs/transfer_daily_to_hourly_partial_ft_s2_random30/` and `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.05/`.
+They freeze `lstm_hourly` and fine-tune `lstm_daily`, `transfer_h`, `transfer_c`, `head_daily`, and `head_hourly`.
+Their final scores are hourly KGE/NSE, so the rows below are transfer-strategy references rather than additional daily-head scores.
 
-| Method | Metric scale | Best lr | Weight decay | Best epoch | Train KGE | Train NSE | Val KGE | Val NSE | Test KGE | Test NSE |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Daily-branch transfer, hourly branch frozen | HOURLY | 0.0005 | 0.00001 | 10 | 0.784762 | 0.720489 | 0.524135 | 0.224185 | 0.489140 | 0.252204 |
+| Method | Metric scale | Best lr | Weight decay | Symbolic weight | Best epoch | Train KGE | Train NSE | Val KGE | Val NSE | Test KGE | Test NSE |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Daily-branch transfer, hourly branch frozen | HOURLY | 0.0005 | 0.00001 | NA | 10 | 0.784762 | 0.720489 | 0.524135 | 0.224185 | 0.489140 | 0.252204 |
+| Symbolic-prior daily-branch transfer, hourly branch frozen | HOURLY | 0.0005 | 0.00001 | 0.05 | 5 | 0.709302 | 0.648869 | 0.536782 | 0.290725 | 0.506264 | 0.260709 |

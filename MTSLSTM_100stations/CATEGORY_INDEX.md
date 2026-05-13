@@ -87,6 +87,7 @@ Comparison summary:
 - `outputs/head_only_daily_head_fc_transfer_s2_random30/README.md`
 - `outputs/head_only_daily_head_fc_transfer_s2_random30/comparison_summary.csv`
 - reference original daily-branch transfer result: `outputs/transfer_daily_to_hourly_partial_ft_s2_random30/summary.md`
+- reference symbolic-prior daily-branch transfer result: `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.05/summary.md`
 
 ## 6. Evaluation and presentation plots
 

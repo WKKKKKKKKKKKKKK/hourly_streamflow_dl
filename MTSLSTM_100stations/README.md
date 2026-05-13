@@ -78,11 +78,12 @@ Both ordinary and symbolic-prior folders include the best model and all trial `.
 | Ordinary head-only transfer | `outputs/head_only_daily_head_fc_transfer_s2_random30/ordinary_transfer/` | 0.184845 | -0.037005 | 0.206447 | 0.107114 |
 | Symbolic-prior head-only transfer | `outputs/head_only_daily_head_fc_transfer_s2_random30/symbolic_prior_sw0.05/` | 0.183022 | -0.011178 | 0.134518 | 0.029555 |
 
-For comparison, the original daily-branch transfer experiment freezes only the hourly LSTM branch and fine-tunes the daily branch plus daily-to-hourly connection/readout modules. Its final scores are hourly KGE/NSE:
+For comparison, the original daily-branch transfer experiments freeze only the hourly LSTM branch and fine-tune the daily branch plus daily-to-hourly connection/readout modules. Their final scores are hourly KGE/NSE:
 
 | Method | Output folder | Trainable modules | Frozen modules | Metric scale | Best epoch | Val KGE | Val NSE | Test KGE | Test NSE |
 |---|---|---|---|---|---:|---:|---:|---:|---:|
 | Daily-branch transfer, hourly branch frozen | `outputs/transfer_daily_to_hourly_partial_ft_s2_random30/` | `lstm_daily`, `transfer_h`, `transfer_c`, `head_daily`, `head_hourly` | `lstm_hourly` | HOURLY | 10 | 0.524135 | 0.224185 | 0.489140 | 0.252204 |
+| Symbolic-prior daily-branch transfer, hourly branch frozen | `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.05/` | `lstm_daily`, `transfer_h`, `transfer_c`, `head_daily`, `head_hourly` | `lstm_hourly` | HOURLY | 5 | 0.536782 | 0.290725 | 0.506264 | 0.260709 |
 
 Compact comparison table:
 - `outputs/head_only_daily_head_fc_transfer_s2_random30/comparison_summary.csv`

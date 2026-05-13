@@ -177,11 +177,12 @@ Best DAILY metrics:
 | Ordinary head-only transfer | 0.005 | 0.0001 | NA | 13 | 0.184845 | -0.037005 | 0.206447 | 0.107114 |
 | Symbolic-prior head-only transfer | 0.001 | 0.0 | 0.05 | 14 | 0.183022 | -0.011178 | 0.134518 | 0.029555 |
 
-Reference daily-branch transfer result from the original daily-to-hourly experiment:
+Reference daily-branch transfer results from the original daily-to-hourly experiments:
 
 | Method | Output folder | Trainable modules | Frozen modules | Metric scale | Best epoch | Val KGE | Val NSE | Test KGE | Test NSE |
 |---|---|---|---|---|---:|---:|---:|---:|---:|
 | Daily-branch transfer, hourly branch frozen | `outputs/transfer_daily_to_hourly_partial_ft_s2_random30/` | `lstm_daily`, `transfer_h`, `transfer_c`, `head_daily`, `head_hourly` | `lstm_hourly` | HOURLY | 10 | 0.524135 | 0.224185 | 0.489140 | 0.252204 |
+| Symbolic-prior daily-branch transfer, hourly branch frozen | `outputs/transfer_daily_to_hourly_partial_ft_s2_random30_symbolic_hybrid_sw0.05/` | `lstm_daily`, `transfer_h`, `transfer_c`, `head_daily`, `head_hourly` | `lstm_hourly` | HOURLY | 5 | 0.536782 | 0.290725 | 0.506264 | 0.260709 |
 
 ## 6. Evaluation and presentation plots for three-way comparisons
 
