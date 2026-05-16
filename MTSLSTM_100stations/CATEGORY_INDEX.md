@@ -29,7 +29,7 @@ Code:
 - `code/distill_daily_lstm_hydro_residual_with_symtorch.py`
 - `code/fuse_hydro_log_symbolic_residuals.py`
 
-Notebook reference:
+Notebook reference/example [On the application of LSTM in meteorology (e.g., MJO prediction) using SymTorch, but unrelated to the main experiment.]:
 - `Sym_lstm/MJO_prediction.ipynb`
 
 Direct export and direct distillation outputs:
