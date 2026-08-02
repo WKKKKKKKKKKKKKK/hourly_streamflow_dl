@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+outputs/
+wandb/
+index/*.csv.gz
+index/*.json
+index/*.csv
+index/*.log
+!index/.gitkeep
+slurm-*.out
+slurm-*.err
+logs/
+*.pth
+*.tmp
+folds/folds_itest.csv
+folds/*.log

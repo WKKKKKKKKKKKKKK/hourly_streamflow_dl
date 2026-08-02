@@ -1,0 +1,125 @@
+# ============================================================
+# Phase I -- LSTM defender (Plan.docx), global MTS-LSTM
+# ============================================================
+# Every entry point reads this file. Override any leaf from the
+# command line with dotted keys, e.g.
+#   python -m train.pretrain_source --set model.hidden_size_daily=256 train.epochs=50
+# ============================================================
+
+data:
+  # Root of the pre-batched hourly_q_dl dataset (contains training/, validation/,
+  # config.json, scalers.json).
+  root: /ibex/project/c2266/abbaa0a/data/input_data/hourly_q_dl/6datasets_H_8760_512_temporal_local_19800101_20251231_0.7_0.3_False_ts_func2_1000_5.0_False_10000_s_func2_1095_10000_3_42_penman_MSWEP_V316_test_Past_hourly_10_hourly_9181_42
+  index_dir: index          # written by scripts/build_index.py (repo-relative)
+
+  # Split of the fixed 1000-step subsampled sequence into the two MTS-LSTM
+  # branches. D = the whole sequence, H = its last `lookback_hourly` positions.
+  # Only the last 228 positions are true 1-hour spacing (see
+  # data/lookback_offsets.json), so keep lookback_hourly <= 228.
+  lookback_hourly: 168
+
+  # corrected_* batches mix 2-3 stations, so they are filtered row-wise.
+  # Setting this false drops them entirely (~0.5% of samples).
+  include_corrected: true
+
+  # Static columns to drop from the 42 provided by the prepared batches.
+  # Plan.md 3.3: socio-economic proxies are a defensible thing to exclude.
+  static_exclude: []
+  # static_exclude: [GDP_5arcmin_2015, GDP_30arcsec_2015, HDI_2015, GDP_percapita_2015,
+  #                  pedigree_of_HDI_2015, pedigree_of_GDP_per_capita_2015,
+  #                  gpw_v4_rev11_2000, gpw_v4_rev11_2005, gpw_v4_rev11_2010,
+  #                  gpw_v4_rev11_2015, gpw_v4_rev11_2020,
+  #                  globpop_density_30arc_2022, globpop_density_30arc_2020,
+  #                  globpop_density_30arc_2010, globpop_density_30arc_2000,
+  #                  globpop_density_30arc_1990]
+
+folds:
+  file: folds/folds_random.csv   # written by scripts/make_folds.py
+  n_folds: 5
+  seed: 42
+
+model:
+  hidden_size_daily: 128
+  hidden_size_hourly: 128
+  num_layers: 1
+  dropout: 0.4
+  # Apply `dropout` to the LSTM outputs before each head. nn.LSTM ignores its
+  # dropout argument when num_layers == 1, so the 100-station reference trained
+  # with none despite dropout=0.4. Set false to reproduce that exactly.
+  head_dropout: true
+  # 1, not 24: the two branches are split by position on one sequence, so the
+  # model's transfer index must be len(D) - len(H).
+  frequency_factor: 1
+
+train:                      # Phase I Step 1 -- pretrain on the 80% source domain
+  epochs: 30
+  # The source pool is ~1.3M batch files (~8 TB), so an epoch is a random sample
+  # of it, redrawn each epoch. 4000 batches = 2.0M samples = ~25 GB of reads.
+  # Raise it once you have seen the wall-clock of the first real run.
+  batches_per_epoch: 4000
+  # Early stopping needs a median-KGE that is comparable across epochs, so the
+  # validation set is FIXED and station-balanced rather than a fresh random draw:
+  # val_max_stations stations x val_batches_per_station batches each.
+  # 1000 x 2 = 2000 batches = ~1.0M samples.
+  val_max_stations: 1000
+  val_batches_per_station: 2
+  lr: 5.0e-4
+  lr_schedule: "1:5e-4,12:1e-4,22:5e-5"
+  loss: nse_basin           # nse_basin | mse
+  reg_lambda: 1.0
+  early_stopping: true
+  patience: 6
+  num_workers: 6
+  pin_memory: true
+  seed: 42
+  grad_clip: 1.0
+
+transfer:                   # Phase I Step 2 -- daily-only fine-tune on the 20% target domain
+  epochs: 12
+  batches_per_epoch: 800
+  lr: 5.0e-4
+  weight_decay: 1.0e-5
+  agg_loss_weight: 0.5      # w_agg on NSE_d(mean_24h(H_seq), y_d)
+  # Frozen so the hourly dynamics learned from the source domain survive;
+  # everything else is fine-tuned (Plan.md 1 / reference set_trainable_parameters).
+  freeze_modules: [lstm_hourly]
+  # A row gets a daily target only if at least this many of the 24 hours ending
+  # at it were actually observed. Both the target and the model's daily value
+  # are averaged over exactly those hours, so a partial day is compared like for
+  # like -- but too low a threshold turns "daily aggregate" back into an hourly
+  # observation and breaks the premise of the experiment.
+  # Measured over 500 random training batches (scripts/daily_coverage.py):
+  # CAMELSH/Germany/Japan/LamaHCE/LamaHIce are essentially complete (median 24
+  # h per window); BOMAustralia is the sparse one (median 16, min 3).
+  #   threshold   rows kept   stations with any data
+  #      12         92.8%            99.8%
+  #      18         89.0%            98.6%
+  #      24         84.6%            94.6%
+  min_daily_hours: 18
+
+  # Early stopping uses the DAILY KGE on a held-out slice of the target-domain
+  # TRAINING period. Hourly observations of the target domain are never touched
+  # before the final evaluation (Plan.md 3.2 #4). The holdout is station-balanced
+  # (this many batches per target station) so the median is stable across epochs;
+  # ~1800 target stations x 2 = ~3600 batches.
+  holdout_batches_per_station: 2
+  patience: 4
+  num_workers: 6
+  seed: 42
+  grad_clip: 1.0
+
+eval:
+  # Final reporting reads at most this many batches per station. A 1,800-station
+  # domain has ~150k validation batches (~930 GB); 12 per station is ~6,100
+  # samples each, plenty for a stable per-station KGE, at ~1.5% of the I/O.
+  # 0 = read everything.
+  max_batches_per_station: 12
+  min_samples_per_station: 100
+
+wandb:
+  project: global_mtslstm_phase1
+  entity: null
+  mode: online              # online | offline | disabled
+  group: null
+
+output_root: outputs
