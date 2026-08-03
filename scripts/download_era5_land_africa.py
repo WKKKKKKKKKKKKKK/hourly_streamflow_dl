@@ -33,7 +33,9 @@ import argparse
 import json
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Lock
 
 import pandas as pd
 
@@ -96,6 +98,11 @@ def main() -> None:
     parser.add_argument("--years-per-request", type=int, default=5)
     parser.add_argument("--hourly", action="store_true", help="Fetch all 24 hours instead of daily totals (24x bigger).")
     parser.add_argument("--dry-run", action="store_true", help="Print the requests and the plan, download nothing.")
+    parser.add_argument(
+        "--workers", type=int, default=1,
+        help="Concurrent CDS requests. Queue time dominates, so 3-4 cuts wall clock a lot; "
+             "CDS limits concurrency per user, and anything it rejects is simply retried on the next run.",
+    )
     parser.add_argument("--only-tile", default=None, help="Restrict to one tile id (useful for a first test).")
     parser.add_argument(
         "--variables", nargs="+", default=ALL_VARIABLES, choices=ALL_VARIABLES,
@@ -145,32 +152,38 @@ def main() -> None:
 
     import cdsapi
 
-    client = cdsapi.Client()
-    done = skipped = failed = 0
-
-    for index, (tile, years) in enumerate(jobs, start=1):
+    pending = []
+    skipped = 0
+    for tile, years in jobs:
         name = f"era5land_{tile['tile']}_{years[0]}-{years[-1]}.nc"
         target = out_dir / name
         if target.exists() and target.stat().st_size > 0 and manifest.get(name, {}).get("complete"):
             skipped += 1
             continue
+        pending.append((name, tile, years))
+    logger.info("%d already complete, %d to fetch, %d worker(s)", skipped, len(pending), args.workers)
 
+    lock = Lock()
+    counter = {"done": 0, "failed": 0}
+
+    def fetch(job) -> None:
+        name, tile, years = job
+        target = out_dir / name
         request = build_request(tile, years, args.hourly, args.variables)
-        logger.info("[%d/%d] %s  area=%s  years=%s-%s",
-                    index, len(jobs), name, request["area"], years[0], years[-1])
+        # One client per worker: cdsapi.Client is not documented as thread-safe.
+        client = cdsapi.Client(progress=False, quiet=True)
         started = time.time()
         try:
             client.retrieve(DATASET, request, str(target))
         except Exception as exc:
-            failed += 1
-            logger.error("  FAILED: %s: %s", type(exc).__name__, str(exc)[:400])
-            manifest[name] = {"complete": False, "error": str(exc)[:400]}
-            manifest_path.write_text(json.dumps(manifest, indent=2))
-            continue
+            with lock:
+                counter["failed"] += 1
+                logger.error("FAILED %s: %s: %s", name, type(exc).__name__, str(exc)[:300])
+                manifest[name] = {"complete": False, "error": str(exc)[:300]}
+                manifest_path.write_text(json.dumps(manifest, indent=2))
+            return
 
-        size_mib = target.stat().st_size / 1024**2
-        logger.info("  ok: %.1f MiB in %.0f s", size_mib, time.time() - started)
-        manifest[name] = {
+        entry = {
             "complete": True,
             "tile": tile["tile"],
             "years": [years[0], years[-1]],
@@ -179,11 +192,27 @@ def main() -> None:
             "hourly": bool(args.hourly),
             "size_bytes": target.stat().st_size,
         }
-        manifest_path.write_text(json.dumps(manifest, indent=2))
-        done += 1
+        with lock:
+            counter["done"] += 1
+            manifest[name] = entry
+            manifest_path.write_text(json.dumps(manifest, indent=2))
+            logger.info(
+                "[%d/%d] %s  %.1f MiB in %.0f s",
+                counter["done"] + counter["failed"], len(pending), name,
+                entry["size_bytes"] / 1024**2, time.time() - started,
+            )
 
-    logger.info("finished: %d downloaded, %d already present, %d failed", done, skipped, failed)
-    if failed:
+    if args.workers <= 1:
+        for job in pending:
+            fetch(job)
+    else:
+        with ThreadPoolExecutor(max_workers=args.workers) as pool:
+            list(pool.map(fetch, pending))
+
+    logger.info("finished: %d downloaded, %d already present, %d failed",
+                counter["done"], skipped, counter["failed"])
+    if counter["failed"]:
+        logger.info("re-run the same command to retry only the failures (the manifest tracks them)")
         sys.exit(1)
 
 

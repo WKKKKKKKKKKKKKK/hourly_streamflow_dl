@@ -236,9 +236,9 @@ the same result.
   | prepared African daily batches | pointer `input_data/hydrodeepai/.last_batches_path.pubfoldafrica` → `..._D_15872_38_pubfoldafrica` (16,166 − 15,872 = the 294 held-out basins), but **the batch directory itself is gone** — only the pointer survives. |
   | **ERA5-Land** | only `gscad_database/raw/HYSETS/HYSETS_2023_update_ERA5Land.nc` — daily, 14,425 HYSETS watersheds (**North America**), with `total_runoff` / `surface_runoff` in mm/d. No global or African ERA5-Land anywhere under `abbaa0a`. |
 
-  So **Step 5 is blocked on two counts** (no African hourly observations, no African
-  ERA5-Land), and **Step 4 needs new preprocessing**: MTS-LSTM consumes an 8760-hour
-  forcing window, which does not exist for African basins.
+  **ERA5-Land is now being fetched** — see [Africa / ERA5-Land](#africa--era5-land) below.
+  What remains blocked is the **model side of Step 4**: MTS-LSTM consumes an 8760-hour
+  forcing window, and no hourly forcing exists for African basins.
 
 * **Existing baselines found** (candidates for the "traditional LSTM" comparison — worth
   confirming with Ather what they actually are, since the run dirs contain
@@ -260,6 +260,55 @@ the same result.
 * **M2 (symbolic prior).** Optional in PLAN.md; not started.
 
 ---
+
+## Africa / ERA5-Land
+
+Phase I Steps 4–5 evaluate on **African daily** streamflow, with ERA5-Land as the physical
+baseline. Three scripts, run in order:
+
+```bash
+python -m scripts.build_africa_basins          # done: africa/africa_basins.{csv,gpkg} + tiles
+python -m scripts.download_era5_land_africa --workers 4    # login node only (no internet on compute nodes)
+python -m scripts.basin_average_era5_land      # -> per-basin mm/d
+```
+
+**The basins.** 294, taken from the continent-holdout PUB run that defines the African test
+set: GRDCCaravan 126, GRDC 119, `restricted_ADHI` 49. Areas 19–9,839 km² (median 759 —
+`max_area` is 10,000 in the QC config). Catchment polygons come from each station's own
+`processed/20250630/daily/stations/<id>/boundary.shp`, which the gscad pipeline itself uses:
+**294/294 resolved**, polygon area vs `static.csv` area at a median ratio of 0.998. Caravan's
+`grdc_basin_shapes.shp` and GSHA's `boundaries.shp` are wired in as fallbacks but between
+them miss all 49 ADHI basins, so they are never needed. Two polygons are flagged as suspect
+(area ratio beyond 2×): `GRDC__1591800`, `GRDC__1547202`.
+
+**The download.** Basin boxes are merged into **19 tiles / 45,494 ERA5-Land cells**; the full
+Africa box would have been 33 TB. Only the **00:00 UTC** stamp is requested: ERA5-Land's
+accumulated runoff resets at 00 UTC, so that value already is the previous day's total — 24×
+smaller than pulling every hour. The one-day shift back onto the day it accumulates happens
+in `basin_average_era5_land.py`, so what sits on disk is verbatim CDS output. Resumable via
+`manifest.json`; re-running retries only what failed.
+
+| variables × period | requests | volume |
+|---|---|---|
+| 3 vars, 1980–2024 | 171 | 8.4 GiB |
+| `runoff` only, 1990–2024 | 76 | 2.2 GiB |
+
+**Location.** `/ibex/user/kongw0a/era5_land_africa`, symlinked as
+`~/era5_land_africa`. Not in `$HOME` proper: that filesystem is at 191 G against a 180 G
+soft quota (200 G hard).
+
+**Sanity check on the first tile** (t+02-01, southern DRC/Zambia, 2000): `ro` in metres,
+366 daily steps all stamped 00:00; ×1000 → mm/d with median 0.13 and an annual total of
+233 mm/yr, which is the right order for that region.
+
+**Still open for Step 4.** Running the MTS-LSTM over African basins needs hourly `pet`,
+`pcp`, `temp` for them, and none exists — the processed hourly forcings are basin-averaged
+for the 10,423 hourly stations only, and there are no global raw hourly grids under
+`abbaa0a`. ERA5-Land is itself hourly at 0.1°, so the same tiling could produce that forcing
+(~150 GB for 2000–2020 plus the Penman inputs, and days of CDS queue), but it swaps the
+precipitation product: the model is trained on MSWEP V3.16, so an ERA5-Land-forced Africa
+run would confound transfer skill with forcing differences. MSWEP V3 hourly for Africa would
+have to come from gloh2o.org instead.
 
 ## W&B
 
