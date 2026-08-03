@@ -55,7 +55,7 @@ from data.dataset import (
     load_scalers,
     make_loader,
     pick_per_station,
-    resolve_static_columns,
+    resolve_static_spec,
 )
 from data.folds import domain_stations, load_folds
 from eval.evaluate import evaluate_model, write_results
@@ -146,7 +146,9 @@ def main() -> None:
 
     scalers = load_scalers(cfg.data.root)
     ds_config = load_dataset_config(cfg.data.root)
-    static_keep, static_names = resolve_static_columns(cfg.data.root, cfg.data.get("static_exclude"))
+    static_keep, onehot_specs, static_names = resolve_static_spec(
+        cfg.data.root, cfg.data.get("static_exclude"), cfg.data.get("onehot_static")
+    )
     dyn_size = len(ds_config["dyn_features"])
 
     num_workers = int(cfg.transfer.num_workers)

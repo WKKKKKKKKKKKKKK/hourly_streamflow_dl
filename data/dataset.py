@@ -93,6 +93,75 @@ def resolve_static_columns(root: str | os.PathLike, exclude: list[str] | None) -
     return np.asarray(keep, dtype=np.int64), [names[i] for i in keep]
 
 
+class OneHotSpec:
+    """How to turn one standardized categorical column into indicator columns.
+
+    The prepared batches store static features already standardized, so a
+    Koeppen-Geiger zone arrives as e.g. -0.41 rather than 2. Recovering the class
+    means undoing the standardization and rounding; PLAN.md 3.3 asks for KGZ to
+    be one-hot rather than fed as a number the model would read as ordered.
+    """
+
+    __slots__ = ("name", "column", "mean", "std", "categories")
+
+    def __init__(self, name: str, column: int, mean: float, std: float, categories: list[int]):
+        self.name = name
+        self.column = int(column)
+        self.mean = float(mean)
+        self.std = float(std)
+        self.categories = np.asarray(categories, dtype=np.int64)
+
+    def encode(self, x_static: torch.Tensor) -> torch.Tensor:
+        raw = x_static[:, self.column].to(torch.float64) * self.std + self.mean
+        codes = torch.round(raw).to(torch.int64)
+        cats = torch.as_tensor(self.categories, device=x_static.device)
+        indicators = (codes.unsqueeze(1) == cats.unsqueeze(0)).to(x_static.dtype)
+
+        # An unlisted code would encode as an all-zero row, which the model reads
+        # as "no zone" -- silent corruption. Fail loudly instead.
+        unmatched = indicators.sum(dim=1) == 0
+        if bool(unmatched.any()):
+            seen = sorted({int(c) for c in codes[unmatched].tolist()})
+            raise ValueError(
+                f"{self.name}: codes {seen} are not in the declared categories "
+                f"{self.categories.tolist()}. Widen onehot_static in the config."
+            )
+        return indicators
+
+    def output_names(self) -> list[str]:
+        return [f"{self.name}=={c}" for c in self.categories]
+
+
+def resolve_static_spec(
+    root: str | os.PathLike,
+    exclude: list[str] | None,
+    onehot: dict[str, list[int]] | None = None,
+) -> tuple[np.ndarray, list["OneHotSpec"], list[str]]:
+    """Static layout: continuous columns to keep, one-hot specs, and output names.
+
+    A one-hot column is removed from the continuous set and appended as indicators,
+    so the model's static width becomes len(continuous) + sum(len(categories)).
+    """
+    names = list(load_dataset_config(root)["static_features"])
+    scalers = load_scalers(root)
+    onehot = dict(onehot or {})
+    unknown = set(onehot) - set(names)
+    if unknown:
+        raise KeyError(f"onehot_static names not present in the dataset: {sorted(unknown)}")
+    dropped = set(exclude or [])
+    overlap = set(onehot) & dropped
+    if overlap:
+        raise ValueError(f"cannot both exclude and one-hot encode: {sorted(overlap)}")
+
+    specs = [
+        OneHotSpec(name, names.index(name), scalers["x_st_mean"][name], scalers["x_st_std"][name], cats)
+        for name, cats in onehot.items()
+    ]
+    keep = [i for i, name in enumerate(names) if name not in dropped and name not in onehot]
+    out_names = [names[i] for i in keep] + [n for spec in specs for n in spec.output_names()]
+    return np.asarray(keep, dtype=np.int64), specs, out_names
+
+
 def daily_occupancy(
     hours: np.ndarray,
     station_block: np.ndarray,
@@ -152,6 +221,7 @@ class PreparedBatchDataset(Dataset):
         allowed_stations: set[str] | None = None,
         with_daily: bool = False,
         min_daily_hours: int = 12,
+        onehot_specs: list["OneHotSpec"] | None = None,
     ):
         self.split_dir = Path(root) / split
         if not self.split_dir.is_dir():
@@ -164,6 +234,7 @@ class PreparedBatchDataset(Dataset):
         self.allowed_stations = allowed_stations
         self.with_daily = bool(with_daily)
         self.min_daily_hours = int(min_daily_hours)
+        self.onehot_specs = list(onehot_specs or [])
 
     def __len__(self) -> int:
         return len(self.prefixes)
@@ -213,7 +284,14 @@ class PreparedBatchDataset(Dataset):
                 if y_daily is not None:
                     y_daily, daily_mask = y_daily[keep_t], daily_mask[keep_t]
 
-        if self.static_keep is not None:
+        if self.onehot_specs:
+            # Encode before slicing: the spec's column index refers to the full set.
+            indicators = [spec.encode(x_static) for spec in self.onehot_specs]
+            continuous = (
+                x_static.index_select(1, self.static_keep) if self.static_keep is not None else x_static
+            )
+            x_static = torch.cat([continuous] + indicators, dim=1)
+        elif self.static_keep is not None:
             x_static = x_static.index_select(1, self.static_keep)
 
         seq_len = x_dyn.shape[1]
@@ -384,7 +462,9 @@ def build_dataset(
             )
     if logger:
         logger.info("%s: %s", split, describe_batch_pool(regular, corrected))
-    static_keep, _ = resolve_static_columns(root, cfg.data.get("static_exclude"))
+    static_keep, onehot_specs, _ = resolve_static_spec(
+        root, cfg.data.get("static_exclude"), cfg.data.get("onehot_static")
+    )
     return PreparedBatchDataset(
         root=root,
         split=split,
@@ -396,4 +476,5 @@ def build_dataset(
         allowed_stations=stations,
         with_daily=with_daily,
         min_daily_hours=int(cfg.get_path("transfer.min_daily_hours", 12)),
+        onehot_specs=onehot_specs,
     )

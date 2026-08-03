@@ -23,7 +23,7 @@ from data.dataset import (
     load_lookback_offsets,
     load_scalers,
     make_loader,
-    resolve_static_columns,
+    resolve_static_spec,
 )
 from data.index import load_stations, select_prefixes
 from eval.evaluate import evaluate_model
@@ -74,7 +74,9 @@ def main() -> None:
     logger.info("matched %d regular + %d corrected batches", len(regular), len(corrected))
     prefixes = (regular[: args.batches] + corrected[:2]) or regular[: args.batches]
 
-    static_keep, static_names = resolve_static_columns(cfg.data.root, cfg.data.get("static_exclude"))
+    static_keep, onehot_specs, static_names = resolve_static_spec(
+        cfg.data.root, cfg.data.get("static_exclude"), cfg.data.get("onehot_static")
+    )
     dataset = PreparedBatchDataset(
         root=cfg.data.root,
         split="training",
@@ -84,6 +86,7 @@ def main() -> None:
         allowed_stations=stations,
         with_daily=True,
         min_daily_hours=int(cfg.get_path("transfer.min_daily_hours", 18)),
+        onehot_specs=onehot_specs,
     )
     item = dataset[0]
     occupancy = item["daily_mask"].sum(dim=1)
@@ -103,6 +106,19 @@ def main() -> None:
     assert item["x"]["H"].shape[1] == k_h
     assert item["x"]["D"].shape[1] == offsets["seq_len"]
     assert item["x"]["S"].shape[1] == len(static_names)
+    if onehot_specs:
+        # Every row must land in exactly one category of each one-hot block.
+        offset = len(static_keep)
+        for spec in onehot_specs:
+            width = len(spec.categories)
+            block = item["x"]["S"][:, offset : offset + width]
+            assert bool((block.sum(dim=1) == 1).all()), (
+                f"{spec.name}: {int((block.sum(dim=1) != 1).sum())} rows fell outside "
+                f"the declared categories {list(spec.categories)}"
+            )
+            offset += width
+        logger.info("OK: one-hot blocks %s sum to 1 per row",
+                    {s.name: len(s.categories) for s in onehot_specs})
     assert torch.allclose(item["x"]["H"], item["x"]["D"][:, -k_h:, :]), "H must be the tail of D"
 
     # --- 3. model + losses ---------------------------------------------------

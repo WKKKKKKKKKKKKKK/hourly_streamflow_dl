@@ -22,16 +22,62 @@ data:
   # Setting this false drops them entirely (~0.5% of samples).
   include_corrected: true
 
-  # Static columns to drop from the 42 provided by the prepared batches.
-  # Plan.md 3.3: socio-economic proxies are a defensible thing to exclude.
-  static_exclude: []
-  # static_exclude: [GDP_5arcmin_2015, GDP_30arcsec_2015, HDI_2015, GDP_percapita_2015,
-  #                  pedigree_of_HDI_2015, pedigree_of_GDP_per_capita_2015,
-  #                  gpw_v4_rev11_2000, gpw_v4_rev11_2005, gpw_v4_rev11_2010,
-  #                  gpw_v4_rev11_2015, gpw_v4_rev11_2020,
-  #                  globpop_density_30arc_2022, globpop_density_30arc_2020,
-  #                  globpop_density_30arc_2010, globpop_density_30arc_2000,
-  #                  globpop_density_30arc_1990]
+  # Static columns dropped from the 42 the prepared batches carry, leaving 25.
+  # The 100-station experiment used 27 (static_h_topo_priority27.csv) and PLAN.md
+  # 3.3 asks for 27-35 with socio-economic proxies treated with suspicion. Note
+  # those 27 are GAGES-II/CAMELS names that only exist for US basins, so they are
+  # not a subset of these 42 -- the trim below is the global equivalent.
+  #
+  # Measured over 350 stations spread across all six sources:
+  #   * 16 of the 42 are socio-economic (GDP x4, HDI x2, pedigree x2, gpw_v4 x5,
+  #     globpop x5). A regional model will happily learn them as proxies for
+  #     "rich country => better gauge" instead of hydrology.
+  #   * pedigree_of_GDP_per_capita_2015 has ZERO variance (nunique = 1): a dead
+  #     input that only costs parameters.
+  #   * elevation_SRTM_v2.1_GTOPO30 correlates r = 1.000 with
+  #     elevation_1KMmn_GMTEDmn...; one of the pair is redundant.
+  #   * the 10 population columns are mutually |r| > 0.95 -- one variable, ten
+  #     copies across years.
+  # GLOBCOVER_Urban_300m is kept: impervious fraction is hydrology, and it is the
+  # analogue of urb_pc_use in the old 27.
+  static_exclude:
+    - pedigree_of_HDI_2015
+    - pedigree_of_GDP_per_capita_2015
+    - GDP_5arcmin_2015
+    - GDP_30arcsec_2015
+    - HDI_2015
+    - GDP_percapita_2015
+    - gpw_v4_rev11_2000
+    - gpw_v4_rev11_2005
+    - gpw_v4_rev11_2010
+    - gpw_v4_rev11_2015
+    - gpw_v4_rev11_2020
+    - globpop_density_30arc_2022
+    - globpop_density_30arc_2020
+    - globpop_density_30arc_2010
+    - globpop_density_30arc_2000
+    - globpop_density_30arc_1990
+    - elevation_SRTM_v2.1_GTOPO30
+
+  # Categorical codes to one-hot encode instead of feeding as ordered numbers
+  # (PLAN.md 3.3 asks for "KGZ one-hot"). Only these two are genuine class codes:
+  # over 600 stations they are EXACTLY integer-valued (max |raw - round| = 0),
+  # KGZ_major spanning 0-4 (the Koeppen-Geiger A/B/C/D/E groups) and KGZ_detailed
+  # 0-21. The other class-looking columns (UMD_1km_landcover, GLiM_V01_Export,
+  # GlobCover_majority, Lakes_Dams_Wetlands_GLWD_3) are NOT integer-valued -- the
+  # source already area-averaged the class codes over each basin, so there is no
+  # category left to recover.
+  #
+  # The ranges below are deliberately wider than what has been observed; an
+  # unlisted code raises rather than silently encoding as an all-zero row, and a
+  # never-used category is just a constant-zero input that costs nothing.
+  # KGZ_major alone takes the static width 25 -> 29; both take it to 59.
+  # Left off by default so the architecture matches what has been tested.
+  onehot_static: {}
+  # onehot_static:
+  #   KGZ_major: [0, 1, 2, 3, 4]
+  #   KGZ_detailed: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
+  #                  18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
 
 folds:
   file: folds/folds_random.csv   # written by scripts/make_folds.py

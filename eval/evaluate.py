@@ -24,7 +24,7 @@ import torch
 from common.config import add_common_args, load_config, resolve
 from common.metrics import StationAccumulator, summarize
 from common.utils import get_device, setup_logging
-from data.dataset import build_dataset, load_dataset_config, load_scalers, make_loader, resolve_static_columns
+from data.dataset import build_dataset, load_dataset_config, load_scalers, make_loader, resolve_static_spec
 from data.folds import domain_stations, load_folds
 from models.losses import daily_aggregate_prediction
 from models.mtslstm import build_model
@@ -140,7 +140,9 @@ def main() -> None:
 
     device = get_device()
     scalers = load_scalers(cfg.data.root)
-    static_keep, static_names = resolve_static_columns(cfg.data.root, cfg.data.get("static_exclude"))
+    static_keep, onehot_specs, static_names = resolve_static_spec(
+        cfg.data.root, cfg.data.get("static_exclude"), cfg.data.get("onehot_static")
+    )
     dyn_size = len(load_dataset_config(cfg.data.root)["dyn_features"])
 
     model = build_model(cfg, dyn_input_size=dyn_size, static_input_size=len(static_names)).to(device)
