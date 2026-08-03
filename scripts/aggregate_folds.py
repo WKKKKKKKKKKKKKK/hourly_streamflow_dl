@@ -89,9 +89,17 @@ def main() -> None:
     valid = paired.loc[both_ok]
     logger.info("pooled target stations: %d scored / %d total", len(valid), len(paired))
 
-    rows = []
+    # Wilcoxon on a handful of stations says nothing, so small groups are skipped.
+    MIN_GROUP = 5
+    COLUMNS = [
+        "group", "n_stations", "median_kge_M0", "median_kge_M1", "median_delta_kge",
+        "frac_improved", "median_nse_M0", "median_nse_M1", "median_delta_nse",
+        "wilcoxon_stat", "p_value", "p_value_bh",
+    ]
+    rows, skipped_groups = [], []
     for name, group in [("ALL", valid)] + list(valid.groupby("source")):
-        if len(group) < 5:
+        if len(group) < MIN_GROUP:
+            skipped_groups.append((name, len(group)))
             continue
         stat, pvalue = stats.wilcoxon(group["kge_M1"], group["kge_M0"], zero_method="wilcox")
         rows.append({
@@ -107,11 +115,25 @@ def main() -> None:
             "wilcoxon_stat": float(stat),
             "p_value": float(pvalue),
         })
-    stats_frame = pd.DataFrame(rows)
-    per_source = stats_frame["group"].ne("ALL")
-    stats_frame.loc[per_source, "p_value_bh"] = benjamini_hochberg(stats_frame.loc[per_source, "p_value"].to_numpy())
+    if skipped_groups:
+        logger.info("groups with fewer than %d scored stations, not tested: %s", MIN_GROUP, skipped_groups)
+
+    # Declare the columns explicitly: an empty `rows` would otherwise give a
+    # frame with no columns at all, and the BH step below would fail on lookup.
+    stats_frame = pd.DataFrame(rows, columns=COLUMNS)
+    if len(stats_frame):
+        per_source = stats_frame["group"].ne("ALL")
+        if per_source.any():
+            stats_frame.loc[per_source, "p_value_bh"] = benjamini_hochberg(
+                stats_frame.loc[per_source, "p_value"].to_numpy()
+            )
+        logger.info("M1 vs M0 (paired Wilcoxon):\n%s", stats_frame.to_string(index=False))
+    else:
+        logger.warning(
+            "no group had %d+ scored stations, so no significance test was run. "
+            "per_station_M0_vs_M1.csv still holds the paired values.", MIN_GROUP,
+        )
     stats_frame.to_csv(out_dir / "significance_M1_vs_M0.csv", index=False)
-    logger.info("M1 vs M0 (paired Wilcoxon):\n%s", stats_frame.to_string(index=False))
 
     # Step 3: source-domain degradation, pooled across folds.
     degradation = []
