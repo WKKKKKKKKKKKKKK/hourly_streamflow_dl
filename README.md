@@ -11,8 +11,13 @@ only 24-hour aggregates. Can daily-only supervision recover hourly skill at thos
 | Step 1 | `train.pretrain_source` — MTS-LSTM on the 80% source domain (hourly targets), then the same checkpoint scored on the 20% target domain | **M0**, zero-shot target hourly KGE/NSE |
 | Step 2 | `train.transfer_target` — fine-tune on the target domain using **only** daily aggregates, early-stopped on daily KGE | **M1**, target hourly KGE/NSE |
 | Step 3 | same script — M_src vs M_transfer on the source domain, paired per station | source-domain degradation |
-| Step 4 | `scripts.aggregate_folds` — pool all 5 folds | every station scored once, Wilcoxon + BH-FDR |
-| Step 5 | Africa comparison vs ERA5-Land | **not implemented** (see [Not done yet](#not-done-yet)) |
+| Step 4 | `scripts.aggregate_folds` — pool all 5 folds; `eval.africa` — the 5 models on African daily data vs prior work | every station scored once, Wilcoxon + BH-FDR; African daily KGE/NSE |
+| Step 5 | `eval.africa` — same run, adding ERA5-Land daily runoff as the physical baseline | three-way comparison table |
+
+All five steps are implemented and exercised end to end. Steps 1–3 on a 30-station fold
+table, Step 4's pooling on the same, and Steps 4–5' Africa arm via `eval.africa --self-test`.
+What is still missing is **data, not code**: the ERA5-Land download is in flight, and no run
+has happened on a GPU yet, so the sizing defaults below are arithmetic rather than measured.
 
 ---
 
