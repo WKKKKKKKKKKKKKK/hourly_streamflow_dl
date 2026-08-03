@@ -31,12 +31,23 @@ source "${CONDA_ENV_SETUP:-/dev/null}" 2>/dev/null || true
 PYTHON_BIN="${PYTHON_BIN:-$(command -v python3)}"
 
 FOLD="${SLURM_ARRAY_TASK_ID:-0}"
-export WANDB_DIR="${WANDB_DIR:-$REPO_ROOT/wandb}"
+# W&B logs live outside $HOME: it sits at 191 G against a 180 G soft quota.
+export WANDB_DIR="${WANDB_DIR:-/ibex/user/kongw0a/global_mtslstm_wandb}"
 mkdir -p "$WANDB_DIR"
+# Say plainly whether live monitoring will work. ibex compute nodes DO reach
+# api.wandb.ai; without a key the run silently drops to offline and you would
+# only find out when nothing appears in the dashboard.
+if [[ -n "${WANDB_API_KEY:-}" ]]; then
+  echo "W&B: key present, online monitoring enabled (dir $WANDB_DIR)"
+else
+  echo "W&B: WANDB_API_KEY is NOT set -> the run will fall back to OFFLINE." >&2
+  echo "     Live monitoring will not work. Fix with 'export WANDB_API_KEY=...'" >&2
+  echo "     in ~/.bashrc, or sync afterwards with 'wandb sync $WANDB_DIR/offline-run-*'." >&2
+fi
 
 echo "fold=$FOLD python=$PYTHON_BIN node=$(hostname)"
 
 "$PYTHON_BIN" -u -m train.transfer_target \
   --fold "$FOLD" \
   --peek-hourly \
-  --set "wandb.group=phase1_transfer" "${EXTRA_SET[@]}"
+  --set "wandb.group=phase1_transfer" ${EXTRA_SET[@]+"${EXTRA_SET[@]}"}
