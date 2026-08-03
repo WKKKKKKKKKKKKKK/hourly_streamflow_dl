@@ -439,6 +439,7 @@ def build_dataset(
     stations: set[str],
     with_daily: bool = False,
     max_batches_per_station: int = 0,
+    exclude_prefixes: set[str] | None = None,
     logger=None,
 ) -> PreparedBatchDataset:
     """Assemble a dataset for one temporal split restricted to ``stations``."""
@@ -450,6 +451,13 @@ def build_dataset(
     regular, corrected = select_prefixes(
         index_dir, split, stations, include_corrected=bool(cfg.data.include_corrected)
     )
+    if exclude_prefixes:
+        # Keep the reported metric off the very batches early stopping chose on.
+        before = len(regular)
+        regular = [p for p in regular if p not in exclude_prefixes]
+        corrected = [p for p in corrected if p not in exclude_prefixes]
+        if logger:
+            logger.info("%s: excluded %d batches used for model selection", split, before - len(regular))
     if max_batches_per_station > 0:
         before = len(regular)
         regular = cap_per_station(regular, max_batches_per_station, seed=0)

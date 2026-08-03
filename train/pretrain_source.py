@@ -138,10 +138,6 @@ def main() -> None:
 
     train_ds = build_dataset(cfg, "training", source_stations, with_daily=False, logger=logger)
     val_ds = build_dataset(cfg, "validation", source_stations, with_daily=False, logger=logger)
-    report_ds = build_dataset(
-        cfg, "validation", source_stations, with_daily=False,
-        max_batches_per_station=int(cfg.get_path("eval.max_batches_per_station", 0)), logger=logger,
-    )
 
     scalers = load_scalers(cfg.data.root)
     ds_config = load_dataset_config(cfg.data.root)
@@ -164,6 +160,18 @@ def main() -> None:
         max_stations=int(cfg.train.val_max_stations),
     )
     val_loader = make_loader(val_ds, num_workers=num_workers, pin_memory=pin_memory, subset=val_subset)
+    # The final source report must not be read off the batches the epoch was
+    # selected on. Same temporal block -- the prepared data has only two -- but at
+    # least disjoint batches, which costs nothing. Selection and reporting still
+    # share the period, so the source number is in-domain skill rather than an
+    # independent test estimate; that can be recomputed later from any held-back
+    # slice without retraining, since it is purely an evaluation-side choice.
+    selection_prefixes = {val_ds.prefixes[i] for i in val_subset}
+    report_ds = build_dataset(
+        cfg, "validation", source_stations, with_daily=False,
+        max_batches_per_station=int(cfg.get_path("eval.max_batches_per_station", 0)),
+        exclude_prefixes=selection_prefixes, logger=logger,
+    )
     # Report the station count actually covered, not the config value: 0 means
     # "all of them", and echoing the 0 read as if nothing were selected.
     n_val_stations = len({station_of(val_ds.prefixes[i]) for i in val_subset} - {""})
