@@ -156,11 +156,26 @@ neither is a full evaluation pass (a 1,800-station domain has ~150k validation b
 ~930 GB). Three knobs control this, and **all three should be recalibrated once you see the
 wall-clock of the first real run**:
 
-| knob | default | meaning |
+**Measured**, V100-SXM2-32GB, `scripts/benchmark_gpu.py` (job 49948056):
+
+```
+train step  0.067 s/batch      eval step (forward only)  0.025 s/batch
+IO alone    0.007 s/batch  ->  923 MiB/s: GPU-bound with 10x headroom
+peak GPU memory  3.2 / 6.2 / 5.2 GiB at hidden 64 / 128 / 256, out of 32 GiB
+```
+
+Reading 6 MB batch files off Lustre is **not** the constraint — the opposite of what
+the first guess assumed — so an epoch is sized by GPU time, not I/O:
+
+| knob | value | meaning |
 |---|---|---|
-| `train.batches_per_epoch` | 4000 | random files per epoch, redrawn each time → 2.0M samples, ~25 GB |
-| `train.val_max_stations` × `val_batches_per_station` | 1000 × 2 | **fixed** early-stopping set, ~1.0M samples |
-| `eval.max_batches_per_station` | 12 | final reporting → ~6,100 samples/station, ~1.5% of the I/O |
+| `train.batches_per_epoch` | 20000 | 22.4 min/epoch; 30 epochs shows the model 307M of the 671M source samples (46%) |
+| `train.val_max_stations` × `val_batches_per_station` | 0 (=all 7191) × 1 | **fixed** early-stopping set; 3.0 min/epoch, so every source station gets a vote |
+| `eval.max_batches_per_station` | 12 | final reporting → ~6,100 samples/station |
+
+That is 25.4 min/epoch → **12.7 h per fold**, against `--time=18:00:00`. The first,
+uncalibrated guess would have used 2.7 h of a 24 h allocation and shown the model only 9%
+of the data.
 
 Why the validation set is fixed and station-*balanced* rather than a random draw: a batch
 holds one station, so 500 random batches would cover 500 of 7,192 stations and a different

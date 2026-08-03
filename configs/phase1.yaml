@@ -99,16 +99,20 @@ model:
 
 train:                      # Phase I Step 1 -- pretrain on the 80% source domain
   epochs: 30
-  # The source pool is ~1.3M batch files (~8 TB), so an epoch is a random sample
-  # of it, redrawn each epoch. 4000 batches = 2.0M samples = ~25 GB of reads.
-  # Raise it once you have seen the wall-clock of the first real run.
-  batches_per_epoch: 4000
-  # Early stopping needs a median-KGE that is comparable across epochs, so the
-  # validation set is FIXED and station-balanced rather than a fresh random draw:
-  # val_max_stations stations x val_batches_per_station batches each.
-  # 1000 x 2 = 2000 batches = ~1.0M samples.
-  val_max_stations: 1000
-  val_batches_per_station: 2
+  # MEASURED on a V100-SXM2-32GB (scripts/benchmark_gpu.py, job 49948056):
+  #   train step   0.067 s/batch     eval step (forward only)  0.025 s/batch
+  #   IO alone     0.007 s/batch  -> 923 MiB/s, i.e. GPU-bound with 10x headroom
+  #   peak GPU memory  3.2 / 6.2 / 5.2 GiB at hidden 64 / 128 / 256, of 32 GiB
+  # Reading batch files is NOT the constraint, so an epoch is sized by GPU time:
+  #   20000 x 0.067 s = 22.4 min train + 7191 x 0.025 s = 3.0 min validate
+  #   = 25.4 min/epoch -> 30 epochs = 12.7 h per fold, inside the 18 h --time.
+  # That has the model see 30 x 20000 x 512 = 307M of the 671M source samples.
+  batches_per_epoch: 20000
+  # Early stopping needs a median-KGE comparable across epochs, so the validation
+  # set is FIXED and station-balanced rather than redrawn. Validation is cheap
+  # enough (3 min) to give EVERY source station a vote: 0 means all of them.
+  val_max_stations: 0
+  val_batches_per_station: 1
   lr: 5.0e-4
   lr_schedule: "1:5e-4,12:1e-4,22:5e-5"
   loss: nse_basin           # nse_basin | mse
@@ -122,7 +126,10 @@ train:                      # Phase I Step 1 -- pretrain on the 80% source domai
 
 transfer:                   # Phase I Step 2 -- daily-only fine-tune on the 20% target domain
   epochs: 12
-  batches_per_epoch: 800
+  # Same measured 0.067 s/batch: 4000 x 12 epochs = 54 min of fitting, plus the
+  # station-balanced daily holdout (~3600 batches x 0.025 s = 1.5 min/epoch) and
+  # the four final evaluation passes, which together dominate at roughly 1.5 h.
+  batches_per_epoch: 4000
   lr: 5.0e-4
   weight_decay: 1.0e-5
   agg_loss_weight: 0.5      # w_agg on NSE_d(mean_24h(H_seq), y_d)
