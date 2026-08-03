@@ -301,8 +301,42 @@ soft quota (200 G hard).
 366 daily steps all stamped 00:00; ×1000 → mm/d with median 0.13 and an annual total of
 233 mm/yr, which is the right order for that region.
 
-**Still open for Step 4.** Running the MTS-LSTM over African basins needs hourly `pet`,
-`pcp`, `temp` for them, and none exists — the processed hourly forcings are basin-averaged
+**Evaluation.** `eval/africa.py` loads each fold's checkpoint, predicts, aggregates its last
+24 hourly outputs into a daily value, and scores all three references on identical
+station-days: observed daily `q_mm`, ERA5-Land daily runoff, and the continent-PUB baseline
+read from its per-basin result file. `--self-test` runs the whole path on synthetic forcing,
+so it can be exercised before the download lands.
+
+**Input packaging is verified, not assumed.** `scripts/verify_africa_inputs.py` rebuilds the
+model input for stations that DO appear in the prepared batches, straight from `6sources.nc`
+plus `static.csv`, and compares value by value against the batches themselves:
+
+```
+STATIC : max |error| over 6 stations x 42 features = 4.8e-07   (float32 rounding)
+DYNAMIC: max |error| over 24 rebuilt (1000 x 3) sequences = 0  (exact)
+```
+
+That covers the lookback offsets, the dynamic and static standardization, the static column
+order, and the Koeppen-Geiger code map — so for the African basins only the forcing data is
+untested, not the code.
+
+**Koeppen-Geiger needed reverse-engineering.** KGZ arrives as a string in `static.csv`
+(`'C'`, `'Cfb'`) but as a numeric code in the prepared batches. The code turns out to be the
+alphabetical index over the values present *in that dataset*, recovered by matching 700
+batches against the hourly static table (one-to-one, reproduces every observed pair) and
+recorded in [`data/kgz_codes.json`](data/kgz_codes.json). Consequence: the training
+vocabulary is not the full Koeppen list, and **40 of the 294 African basins (13.6%) are Cwb
+or Cwc, which have no code in it.** They are mapped to Cwa — same major class, same dry
+winter, differing only in summer warmth. It is an approximation over 13.6% of the basins and
+belongs in the writeup.
+
+Separately verified on the 4,161 stations shared between the hourly and daily static tables:
+41 of the 42 training features agree to the last digit, so taking African statics from the
+daily table is consistent with training. The exception is `reservoir_impact_GRanD_v1_3`,
+which differs on 17% of shared stations.
+
+**Still open.** Running the MTS-LSTM over African basins needs hourly `pet`,
+`pcp`, `temp` for them, and none existed — the processed hourly forcings are basin-averaged
 for the 10,423 hourly stations only, and there are no global raw hourly grids under
 `abbaa0a`. ERA5-Land is itself hourly at 0.1°, so the same tiling could produce that forcing
 (~150 GB for 2000–2020 plus the Penman inputs, and days of CDS queue), but it swaps the
