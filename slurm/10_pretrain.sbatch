@@ -15,7 +15,15 @@
 #SBATCH -e logs/pretrain_%A_%a.err
 
 set -eo pipefail
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# SLURM copies this script to a node-local spool directory, so BASH_SOURCE does
+# NOT point at the repo. Use the submit directory, or GMTS_REPO if you submit from
+# elsewhere, and verify it really is the repo before touching anything.
+REPO_ROOT="${GMTS_REPO:-${SLURM_SUBMIT_DIR:-$PWD}}"
+if [[ ! -f "$REPO_ROOT/configs/phase1.yaml" ]]; then
+  echo "REPO_ROOT=$REPO_ROOT is not the global_mtslstm repo (no configs/phase1.yaml)." >&2
+  echo "Submit from the repo root, or export GMTS_REPO=/path/to/global_mtslstm." >&2
+  exit 2
+fi
 cd "$REPO_ROOT"
 mkdir -p logs
 
