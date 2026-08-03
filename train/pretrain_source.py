@@ -30,7 +30,7 @@ import pandas as pd
 import torch
 
 from common.config import add_common_args, load_config, resolve
-from common.metrics import summarize
+from common.metrics import StationAccumulator, summarize
 from common.utils import (
     EarlyStopping,
     apply_lr_schedule,
@@ -60,10 +60,18 @@ from models.mtslstm import build_model
 
 
 def train_one_epoch(model, loader, optimizer, criterion, device, grad_clip, logger, log_every=100):
+    """Returns (mean losses, rows seen, per-station accumulator of the epoch's own predictions).
+
+    The accumulator makes the TRAINING KGE/NSE available for free -- the
+    predictions already exist -- so train and validation can be read on the same
+    metric instead of only sharing an epoch axis. Note it is measured in train
+    mode, so dropout makes it slightly pessimistic.
+    """
     model.train()
     totals: dict[str, float] = {}
     n_rows = 0
     n_batches = 0
+    accumulator = StationAccumulator()
     started = time.time()
 
     for batch in loader:
@@ -87,6 +95,9 @@ def train_one_epoch(model, loader, optimizer, criterion, device, grad_clip, logg
         n_batches += 1
         for key, value in parts.items():
             totals[key] = totals.get(key, 0.0) + float(value.item()) * rows
+        accumulator.update(
+            batch["stations"], outputs["H"].detach().float().cpu().numpy(), batch["y"].numpy()
+        )
 
         if logger and n_batches % log_every == 0:
             rate = n_batches / max(time.time() - started, 1e-9)
@@ -98,7 +109,7 @@ def train_one_epoch(model, loader, optimizer, criterion, device, grad_clip, logg
                 rate,
             )
 
-    return {key: value / max(n_rows, 1) for key, value in totals.items()}, n_rows
+    return {key: value / max(n_rows, 1) for key, value in totals.items()}, n_rows, accumulator
 
 
 def main() -> None:
@@ -212,16 +223,23 @@ def main() -> None:
         train_loader = make_loader(train_ds, num_workers=num_workers, pin_memory=pin_memory, subset=subset)
 
         t0 = time.time()
-        losses, n_rows = train_one_epoch(
+        losses, n_rows, train_acc = train_one_epoch(
             model, train_loader, optimizer, criterion, device, float(cfg.train.grad_clip), logger
         )
         train_secs = time.time() - t0
+        train_summary = summarize(
+            train_acc.to_frame(scalers["y_mean"], scalers["y_std"],
+                               int(cfg.get_path("eval.min_samples_per_station", 1))),
+            "source_train",
+        )
 
         results = evaluate_model(
             model, val_loader, device, scalers["y_mean"], scalers["y_std"],
             min_samples=int(cfg.get_path("eval.min_samples_per_station", 1)),
+            criterion=criterion,
         )
         val_summary = summarize(results["hourly"], "source_val")
+        val_losses = results.get("losses", {})
 
         row = {
             "epoch": epoch,
@@ -229,15 +247,24 @@ def main() -> None:
             "train_samples": n_rows,
             "train_secs": round(train_secs, 1),
             **{f"train/{k}": v for k, v in losses.items()},
+            "train/median_kge": train_summary["median_kge"],
+            "train/median_nse": train_summary["median_nse"],
+            "train/n_stations": train_summary["n_valid_stations"],
+            **{f"val/{k}": v for k, v in val_losses.items()},
             "val/median_kge": val_summary["median_kge"],
             "val/median_nse": val_summary["median_nse"],
             "val/n_valid_stations": val_summary["n_valid_stations"],
+            # The generalisation gap, plotted directly instead of eyeballed.
+            "gap/loss": val_losses.get("loss", float("nan")) - losses["loss"],
+            "gap/median_kge": train_summary["median_kge"] - val_summary["median_kge"],
         }
         history.append(row)
         logger.info(
-            "epoch %d/%d | loss %.5f | val median KGE %.4f NSE %.4f | %d samples in %.0fs",
-            epoch, int(cfg.train.epochs), losses["loss"],
-            val_summary["median_kge"], val_summary["median_nse"], n_rows, train_secs,
+            "epoch %d/%d | loss train %.5f val %.5f | median KGE train %.4f val %.4f "
+            "| NSE val %.4f | %d samples in %.0fs",
+            epoch, int(cfg.train.epochs), losses["loss"], val_losses.get("loss", float("nan")),
+            train_summary["median_kge"], val_summary["median_kge"],
+            val_summary["median_nse"], n_rows, train_secs,
         )
         wandb_log(run, row, step=epoch)
 

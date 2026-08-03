@@ -238,6 +238,7 @@ def main() -> None:
             min_samples=min_samples, daily_window=DAILY_WINDOW,
         )
         daily_summary = summarize(holdout["daily"], "target_holdout_daily")
+        hourly_on_holdout = summarize(holdout["hourly"], "target_holdout_hourly")
 
         row = {
             "epoch": epoch,
@@ -246,6 +247,11 @@ def main() -> None:
             **{f"train/{k}": v for k, v in losses.items()},
             "holdout/daily_median_kge": daily_summary["median_kge"],
             "holdout/daily_median_nse": daily_summary["median_nse"],
+            "holdout/n_stations": daily_summary["n_valid_stations"],
+            # Hourly skill ON THE FIT PERIOD's holdout. Not a test number and not
+            # used for selection -- it is the train-side counterpart of the
+            # untouched target validation period, so the two can be compared.
+            "holdout/hourly_median_kge": hourly_on_holdout["median_kge"],
         }
         if peek_loader is not None:
             peek = evaluate_model(model, peek_loader, device, scalers["y_mean"], scalers["y_std"], min_samples)

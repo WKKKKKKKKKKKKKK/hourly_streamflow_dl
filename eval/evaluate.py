@@ -39,13 +39,20 @@ def evaluate_model(
     y_std: float,
     min_samples: int = 1,
     daily_window: int | None = None,
+    criterion=None,
     logger=None,
 ) -> dict[str, pd.DataFrame]:
-    """Per-station hourly (and optionally daily) NSE/KGE in physical units."""
+    """Per-station hourly (and optionally daily) NSE/KGE in physical units.
+
+    Pass ``criterion`` to also accumulate the objective on this split, so the
+    validation loss is directly comparable with the training loss instead of
+    only sharing an epoch axis with it.
+    """
     model.eval()
     hourly = StationAccumulator()
     daily = StationAccumulator() if daily_window else None
     n_batches = n_rows = 0
+    loss_totals: dict[str, float] = {}
 
     for batch in loader:
         stations = batch["stations"]
@@ -55,6 +62,11 @@ def evaluate_model(
         outputs = model({"D": x["D"], "H": x["H"]}, x["S"])
 
         hourly.update(stations, outputs["H"].float().cpu().numpy(), batch["y"].numpy())
+
+        if criterion is not None:
+            parts = criterion(outputs, batch["y"].to(device), batch["stn_std"].to(device))
+            for key, value in parts.items():
+                loss_totals[key] = loss_totals.get(key, 0.0) + float(value.item()) * len(stations)
 
         if daily is not None:
             y_daily = batch.get("y_daily")
@@ -81,6 +93,8 @@ def evaluate_model(
     result = {"hourly": hourly.to_frame(y_mean, y_std, min_samples)}
     if daily is not None:
         result["daily"] = daily.to_frame(y_mean, y_std, min_samples)
+    if criterion is not None:
+        result["losses"] = {k: v / max(n_rows, 1) for k, v in loss_totals.items()}
     return result
 
 
