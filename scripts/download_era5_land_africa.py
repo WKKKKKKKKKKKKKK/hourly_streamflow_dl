@@ -43,18 +43,34 @@ from common.config import add_common_args, load_config, resolve
 from common.utils import setup_logging
 
 DATASET = "reanalysis-era5-land"
-ALL_VARIABLES = ["runoff", "surface_runoff", "sub_surface_runoff"]
+# The physical-baseline variables (Step 5): accumulated, so 00:00 UTC alone gives daily totals.
+RUNOFF_VARIABLES = ["runoff", "surface_runoff", "sub_surface_runoff"]
+# The model-input variables (Step 4): hourly forcing matching the trained dyn_features
+# pet / pcp / temp. ERA5-Land's own potential_evaporation is used rather than
+# recomputing Penman from 8 variables -- 3x less data and queue, and PET matters
+# far less to an hourly hydrograph than precipitation, which is already being
+# swapped away from MSWEP. Add the Penman inputs explicitly if you want them:
+#   2m_dewpoint_temperature surface_pressure surface_solar_radiation_downwards
+#   surface_thermal_radiation_downwards 10m_u_component_of_wind 10m_v_component_of_wind
+FORCING_VARIABLES = ["2m_temperature", "total_precipitation", "potential_evaporation"]
+PRESETS = {"runoff": RUNOFF_VARIABLES, "forcing": FORCING_VARIABLES}
 DEFAULT_OUT = "/ibex/user/kongw0a/era5_land_africa"
 
 MONTHS = [f"{m:02d}" for m in range(1, 13)]
 DAYS = [f"{d:02d}" for d in range(1, 32)]
 
 
-def build_request(tile: pd.Series, years: list[int], hourly: bool, variables: list[str]) -> dict:
+def build_request(
+    tile: pd.Series,
+    years: list[int],
+    hourly: bool,
+    variables: list[str],
+    months: list[str] | None = None,
+) -> dict:
     return {
         "variable": variables,
         "year": [str(y) for y in years],
-        "month": MONTHS,
+        "month": months or MONTHS,
         "day": DAYS,
         # Accumulations reset at 00 UTC, so 00:00 of day D+1 is the day-D total.
         "time": [f"{h:02d}:00" for h in range(24)] if hourly else ["00:00"],
@@ -63,6 +79,12 @@ def build_request(tile: pd.Series, years: list[int], hourly: bool, variables: li
         "data_format": "netcdf",
         "download_format": "unarchived",
     }
+
+
+def job_name(preset: str, tile: pd.Series, years: list[int], months: list[str]) -> str:
+    span = f"{years[0]}-{years[-1]}"
+    month_tag = "" if len(months) == 12 else f"_m{months[0]}-{months[-1]}"
+    return f"era5land_{preset}_{tile['tile']}_{span}{month_tag}.nc"
 
 
 def year_chunks(start: int, end: int, per_request: int) -> list[list[int]]:
@@ -105,11 +127,24 @@ def main() -> None:
     )
     parser.add_argument("--only-tile", default=None, help="Restrict to one tile id (useful for a first test).")
     parser.add_argument(
-        "--variables", nargs="+", default=ALL_VARIABLES, choices=ALL_VARIABLES,
-        help="Trim to just 'runoff' to cut the download to a third; the surface/sub-surface "
-             "split is only needed if you want to separate fast and slow response.",
+        "--preset", choices=sorted(PRESETS), default="runoff",
+        help="'runoff' = ERA5-Land runoff for the Step-5 physical baseline (daily totals). "
+             "'forcing' = hourly pet/pcp/temp to drive the model over African basins (Step 4).",
+    )
+    parser.add_argument(
+        "--variables", nargs="+", default=None,
+        help="Explicit ERA5-Land variable names, overriding --preset.",
+    )
+    parser.add_argument(
+        "--months-per-request", type=int, default=12,
+        help="Split each year-chunk into month groups. Hourly requests are far bigger, so "
+             "drop this to 1-3 if CDS rejects a request as too large.",
     )
     args = parser.parse_args()
+    if args.variables is None:
+        args.variables = PRESETS[args.preset]
+    if args.preset == "forcing" and not args.hourly:
+        args.hourly = True     # forcing is only useful at hourly resolution
 
     cfg = load_config(args.config, args.set)
     out_dir = Path(args.out_dir)
@@ -123,10 +158,17 @@ def main() -> None:
             raise SystemExit(f"tile {args.only_tile!r} not in {args.tiles}")
 
     chunks = year_chunks(args.start_year, args.end_year, args.years_per_request)
-    jobs = [(tile, years) for _, tile in tiles.iterrows() for years in chunks]
+    month_groups = [MONTHS[i : i + args.months_per_request] for i in range(0, 12, args.months_per_request)]
+    jobs = [
+        (tile, years, months)
+        for _, tile in tiles.iterrows()
+        for years in chunks
+        for months in month_groups
+    ]
     logger.info(
-        "%d tiles x %d year-chunks = %d CDS requests | %s | %d-%d",
-        len(tiles), len(chunks), len(jobs), "hourly" if args.hourly else "daily totals (00:00 UTC)",
+        "%d tiles x %d year-chunks x %d month-groups = %d CDS requests | %s | %d-%d",
+        len(tiles), len(chunks), len(month_groups), len(jobs),
+        "hourly" if args.hourly else "daily totals (00:00 UTC)",
         args.start_year, args.end_year,
     )
     total_cells = int(tiles["n_cells"].sum())
@@ -139,11 +181,11 @@ def main() -> None:
     manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
 
     if args.dry_run:
-        example = build_request(tiles.iloc[0], chunks[0], args.hourly, args.variables)
+        example = build_request(tiles.iloc[0], chunks[0], args.hourly, args.variables, month_groups[0])
         logger.info("example request for tile %s:\n%s", tiles.iloc[0]["tile"], json.dumps(example, indent=2))
         logger.info("targets would be written to %s", out_dir)
-        for tile, years in jobs[:5]:
-            logger.info("  %s", out_dir / f"era5land_{tile['tile']}_{years[0]}-{years[-1]}.nc")
+        for job in jobs[:5]:
+            logger.info("  %s", out_dir / job_name(args.preset, *job))
         logger.info("... %d more", max(0, len(jobs) - 5))
         return
 
@@ -154,22 +196,22 @@ def main() -> None:
 
     pending = []
     skipped = 0
-    for tile, years in jobs:
-        name = f"era5land_{tile['tile']}_{years[0]}-{years[-1]}.nc"
+    for tile, years, months in jobs:
+        name = job_name(args.preset, tile, years, months)
         target = out_dir / name
         if target.exists() and target.stat().st_size > 0 and manifest.get(name, {}).get("complete"):
             skipped += 1
             continue
-        pending.append((name, tile, years))
+        pending.append((name, tile, years, months))
     logger.info("%d already complete, %d to fetch, %d worker(s)", skipped, len(pending), args.workers)
 
     lock = Lock()
     counter = {"done": 0, "failed": 0}
 
     def fetch(job) -> None:
-        name, tile, years = job
+        name, tile, years, months = job
         target = out_dir / name
-        request = build_request(tile, years, args.hourly, args.variables)
+        request = build_request(tile, years, args.hourly, args.variables, months)
         # One client per worker: cdsapi.Client is not documented as thread-safe.
         client = cdsapi.Client(progress=False, quiet=True)
         started = time.time()
@@ -187,6 +229,7 @@ def main() -> None:
             "complete": True,
             "tile": tile["tile"],
             "years": [years[0], years[-1]],
+            "months": [months[0], months[-1]],
             "area": request["area"],
             "variables": args.variables,
             "hourly": bool(args.hourly),

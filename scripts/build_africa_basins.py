@@ -241,7 +241,12 @@ def main() -> None:
     geo.loc[have].to_file(out_dir / "africa_basins.gpkg", driver="GPKG")
 
     tiles = merge_tiles(boxes, tile_deg=args.tile_deg)
-    tiles.to_csv(out_dir / "africa_era5_tiles.csv", index=False)
+    # Keep one file per grouping: the download's request count is proportional to
+    # the tile count, and CDS costs by field count not area, so coarser grouping
+    # trades disk for a much shorter queue.
+    tiles.to_csv(out_dir / f"africa_era5_tiles_{args.tile_deg:g}deg.csv", index=False)
+    if args.tile_deg == 10.0:
+        tiles.to_csv(out_dir / "africa_era5_tiles.csv", index=False)
 
     total_cells = int(tiles["n_cells"].sum())
     logger.info("download tiles: %d covering %d ERA5-Land cells", len(tiles), total_cells)

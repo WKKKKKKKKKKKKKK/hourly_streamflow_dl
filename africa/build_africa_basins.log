@@ -63,3 +63,19 @@ t-02+00         1   10.2 -11.1    8.9 -10.3      9     14      126
 t+02-01         1   -9.7  29.4  -10.1  29.9      6      5       30
 10:54:46 INFO estimated volume for ONE daily variable 1980-2024: 2.8 GiB (45494 cells x 16436 days x 4 B). Basin-averaged output is ~18 MiB.
 10:54:46 INFO wrote /home/kongw0a/global_mtslstm/africa
+15:33:51 INFO using the 294 basins scored by the continent-PUB baseline
+15:33:52 INFO daily static: 37972 stations x 76 columns
+15:33:52 INFO African basins: 294 | by source: {'GRDCCaravan': 126, 'GRDC': 119, 'restricted_ADHI': 49}
+15:33:52 INFO area km2: min 19  median 759  max 9839
+15:33:55 INFO polygon area vs static area: median ratio 0.998 | 2 outside 0.5-2x
+15:33:55 WARNING suspect polygons (area ratio far from 1): ['GRDC__1591800', 'GRDC__1547202']
+15:33:55 INFO polygons resolved for 294/294 basins: {'station_boundary': 294}
+15:34:00 INFO Created 294 records
+15:34:00 INFO download tiles: 3 covering 229419 ERA5-Land cells
+15:34:00 INFO 
+   tile  n_basins  north  west  south  east  n_lon  n_lat  n_cells
+t+00+00        33   36.7  -0.1    3.9  39.2    394    329   129626
+t+00-01       216   -6.6  18.4  -34.6  37.8    195    281    54795
+t-01+00        45   35.7 -14.4    6.0   0.6    151    298    44998
+15:34:00 INFO estimated volume for ONE daily variable 1980-2024: 14.0 GiB (229419 cells x 16436 days x 4 B). Basin-averaged output is ~18 MiB.
+15:34:00 INFO wrote /home/kongw0a/global_mtslstm/africa
