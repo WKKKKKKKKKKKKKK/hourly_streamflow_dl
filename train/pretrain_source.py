@@ -51,6 +51,7 @@ from data.dataset import (
     make_loader,
     pick_per_station,
     resolve_static_spec,
+    station_of,
 )
 from data.folds import domain_stations, load_folds
 from eval.evaluate import evaluate_model, write_results
@@ -152,9 +153,12 @@ def main() -> None:
         max_stations=int(cfg.train.val_max_stations),
     )
     val_loader = make_loader(val_ds, num_workers=num_workers, pin_memory=pin_memory, subset=val_subset)
+    # Report the station count actually covered, not the config value: 0 means
+    # "all of them", and echoing the 0 read as if nothing were selected.
+    n_val_stations = len({station_of(val_ds.prefixes[i]) for i in val_subset} - {""})
     logger.info(
-        "early stopping on %d source validation batches (~%d samples) over <=%d stations",
-        len(val_subset), len(val_subset) * 512, int(cfg.train.val_max_stations),
+        "early stopping on %d source validation batches (~%d samples) over %d stations",
+        len(val_subset), len(val_subset) * 512, n_val_stations,
     )
 
     # --- model / optim ---------------------------------------------------
