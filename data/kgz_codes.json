@@ -1,0 +1,41 @@
+{
+  "_note": [
+    "Koeppen-Geiger zones are STRINGS in gscad's static.csv ('C', 'Cfb') but NUMERIC",
+    "codes in the prepared hourly_q_dl batches. The code is the alphabetical index",
+    "over the values present in THAT dataset -- recovered empirically by matching 700",
+    "prepared batches against hourly/dataframes/static.csv, and confirmed to be",
+    "one-to-one and to reproduce every observed pair.",
+    "",
+    "Because the index depends on which values the dataset happens to contain, the",
+    "training vocabulary below is NOT the full Koeppen list. The daily database holds",
+    "eight further values with no code in it: As, Cwb, Cwc, Dfd, Dsd, Dwc, Dwd, Ocean.",
+    "40 of the 294 African basins (13.6%) are Cwb or Cwc, so they cannot be encoded",
+    "without a substitution -- see africa_substitutions."
+  ],
+  "source": "/ibex/project/c2266/abbaa0a/data/gscad_database/processed/20250630/hourly/dataframes/static.csv",
+  "KGZ_major": {"A": 0, "B": 1, "C": 2, "D": 3, "E": 4},
+  "KGZ_detailed": {
+    "Af": 0, "Am": 1, "Aw": 2,
+    "BSh": 3, "BSk": 4, "BWh": 5, "BWk": 6,
+    "Cfa": 7, "Cfb": 8, "Cfc": 9, "Csa": 10, "Csb": 11, "Csc": 12, "Cwa": 13,
+    "Dfa": 14, "Dfb": 15, "Dfc": 16, "Dsb": 17, "Dsc": 18, "Dwa": 19, "Dwb": 20,
+    "ET": 21
+  },
+  "africa_substitutions": {
+    "_note": [
+      "Zones present in African basins but absent from the training vocabulary.",
+      "Cwb and Cwc are mapped to Cwa: all three are C (temperate) with a dry winter,",
+      "differing only in summer warmth, so the substitution keeps both the major class",
+      "and the dry-winter attribute. It affects 40 of 294 basins and must be reported",
+      "as an approximation, not hidden."
+    ],
+    "KGZ_detailed": {"Cwb": "Cwa", "Cwc": "Cwa"}
+  },
+  "african_zone_counts": {
+    "KGZ_major": {"C": 160, "A": 92, "B": 42},
+    "KGZ_detailed": {
+      "Aw": 91, "Cwa": 50, "Cwb": 37, "BSh": 31, "Cfb": 28, "Csa": 16,
+      "Cfa": 13, "Csb": 13, "BSk": 9, "Cwc": 3, "BWh": 2, "Am": 1
+    }
+  }
+}
