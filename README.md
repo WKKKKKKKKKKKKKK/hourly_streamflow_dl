@@ -226,10 +226,32 @@ the same result.
 
 ## Not done yet
 
-* **Step 4 Africa / Step 5 ERA5-Land.** No Africa stations exist in `6sources.nc` (sources
-  are CAMELSH-US, BOMAustralia, LamaHCE, Japan, Germany, LamaHIce), and Ather's LSTM results
-  and the ERA5-Land baseline aren't wired in. Both need data outside this dataset —
-  tell me where they live and I'll add an `eval/africa.py`.
+* **Step 4 Africa / Step 5 ERA5-Land.** Scanned `/ibex/project/c2266/abbaa0a/` — findings:
+
+  | thing | status |
+  |---|---|
+  | African **hourly** streamflow | **does not exist.** `processed/20250630/hourly/` holds exactly 10,423 stations (CAMELSH 5767, BOMAustralia 2059, LamaHCE 859, Japan 696, Germany 494, CzechRepublic 437, LamaHIce 111). Africa bounding box → 0 stations; the only southern-hemisphere stations are Australian. |
+  | African **hourly forcing** | **not prepared.** Every hourly forcing file (`ERA5_HRES_hourly_{P,Temp,SWd,LWd,Pres,RelHum,Wind}`, `MSWEP_V316`) is dimensioned `stations: 10423` — basin-averaged for that set only. |
+  | African **daily** streamflow | **yes.** `processed/20250630/daily/` has 1,577 stations in the Africa box: GRDC 826, GRDCCaravan 505, `restricted_ADHI` 246 (African Database of Hydrometric Indices). After the QC used by the continent-PUB setup: **294 basins** (GRDCCaravan 126, GRDC 119, ADHI 49). |
+  | prepared African daily batches | pointer `input_data/hydrodeepai/.last_batches_path.pubfoldafrica` → `..._D_15872_38_pubfoldafrica` (16,166 − 15,872 = the 294 held-out basins), but **the batch directory itself is gone** — only the pointer survives. |
+  | **ERA5-Land** | only `gscad_database/raw/HYSETS/HYSETS_2023_update_ERA5Land.nc` — daily, 14,425 HYSETS watersheds (**North America**), with `total_runoff` / `surface_runoff` in mm/d. No global or African ERA5-Land anywhere under `abbaa0a`. |
+
+  So **Step 5 is blocked on two counts** (no African hourly observations, no African
+  ERA5-Land), and **Step 4 needs new preprocessing**: MTS-LSTM consumes an 8760-hour
+  forcing window, which does not exist for African basins.
+
+* **Existing baselines found** (candidates for the "traditional LSTM" comparison — worth
+  confirming with Ather what they actually are, since the run dirs contain
+  `episode_rewards.csv` / `*_test_actions.csv`, i.e. these look like RL/dPL parameter
+  regionalisation rather than a plain rainfall-runoff LSTM):
+  * `results/regionalization/20250630/gscad_continent_lstm/47515076_*` — continent-holdout
+    PUB, **daily**, 16,165 basins pooled, per-basin metrics with 18 scores each.
+    Per-fold median KGE′: africa **0.277**, asia 0.513, europe 0.554, north_america 0.435,
+    oceania 0.280, south_america 0.328; pooled 0.471.
+  * `results/regionalization/hourly_20250630/dpl_hourly_nmul16/` — **hourly** PUB, 10 folds
+    × ~650 basins, median KGE′ 0.5075 / KGE 0.476 / NSE 0.448 / corr 0.775. Same station
+    universe as our hourly data, so this one is **directly comparable to the Phase I main
+    result** and needs no new data.
 * **CV-blocked split** (PLAN.md §2, spatially blocked folds). `data/folds.py` is written so
   a second fold table drops straight in — needs `station_static.csv` for the geographic
   clustering.
