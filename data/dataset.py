@@ -294,15 +294,19 @@ class PreparedBatchDataset(Dataset):
         elif self.static_keep is not None:
             x_static = x_static.index_select(1, self.static_keep)
 
-        seq_len = x_dyn.shape[1]
+        # Reference convention: forcing up to t-1 predicts y at t, so the target
+        # hour itself (the last position, hours_ago 0) is NOT fed in. Dropping it
+        # makes D positions 0..seq_len-2 and H the k_h before that, i.e. exactly
+        # x[t-k_h : t] -- and it keeps this path comparable with the rebuilt one.
+        seq_len = x_dyn.shape[1] - 1
         k_h = self.lookback_hourly
         if k_h <= 0 or k_h > seq_len:
             k_h = seq_len
 
         return {
             "x": {
-                "D": x_dyn.contiguous(),
-                "H": x_dyn[:, -k_h:, :].contiguous(),
+                "D": x_dyn[:, :seq_len, :].contiguous(),
+                "H": x_dyn[:, seq_len - k_h : seq_len, :].contiguous(),
                 "S": x_static.contiguous(),
             },
             "y": y,
