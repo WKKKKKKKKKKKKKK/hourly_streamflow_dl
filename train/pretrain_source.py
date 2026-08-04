@@ -188,6 +188,7 @@ def main() -> None:
         criterion = MTSBasinNSELoss(
             frequency_factor=int(cfg.model.frequency_factor),
             reg_lambda=float(cfg.train.reg_lambda),
+            reg_window=int(cfg.model.get("reg_window", cfg.model.frequency_factor)),
         )
     elif cfg.train.loss == "mse":
         class _MSE(torch.nn.Module):

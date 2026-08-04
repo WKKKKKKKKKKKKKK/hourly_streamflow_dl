@@ -40,11 +40,30 @@ def basin_nse(y_pred: torch.Tensor, y_true: torch.Tensor, stn_std: torch.Tensor,
 
 
 class MTSBasinNSELoss(nn.Module):
-    """Step 1: hourly basin NSE plus a daily/hourly consistency regulariser."""
+    """Step 1: hourly basin NSE plus a daily/hourly consistency regulariser.
 
-    def __init__(self, frequency_factor: int = 1, reg_lambda: float = 1.0, eps: float = NSE_EPS):
+    ``reg_window`` is what D gets trained to mean, and it is deliberately separate
+    from the model's ``frequency_factor``, which only positions the state hand-off.
+    Tying them together forces a choice between two incompatible requirements when
+    the branches are a positional split of one sequence:
+
+      * the hand-off must land where the hourly window starts -> factor 1
+      * D must be a daily mean, matching what step 2 then asks of it -> window 24
+
+    The first run used factor 1 for both, so 13.5 h of pretraining taught D to emit
+    the value at hour t, and the transfer loss then demanded a 24-hour mean from it.
+    """
+
+    def __init__(
+        self,
+        frequency_factor: int = 1,
+        reg_lambda: float = 1.0,
+        eps: float = NSE_EPS,
+        reg_window: int | None = None,
+    ):
         super().__init__()
         self.frequency_factor = int(frequency_factor)
+        self.reg_window = int(reg_window) if reg_window else int(frequency_factor)
         self.reg_lambda = float(reg_lambda)
         self.eps = float(eps)
 
@@ -55,7 +74,7 @@ class MTSBasinNSELoss(nn.Module):
 
         h_seq, d_pred = outputs.get("H_seq"), outputs.get("D")
         if self.reg_lambda > 0 and h_seq is not None and d_pred is not None and h_seq.dim() == 2:
-            k = max(1, self.frequency_factor)
+            k = max(1, self.reg_window)
             if h_seq.size(1) >= k:
                 reg = ((d_pred.reshape(-1) - h_seq[:, -k:].mean(dim=1)) ** 2).mean()
                 total = total + self.reg_lambda * reg

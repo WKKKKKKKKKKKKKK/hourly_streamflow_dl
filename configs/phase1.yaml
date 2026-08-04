@@ -16,7 +16,9 @@ data:
   # branches. D = the whole sequence, H = its last `lookback_hourly` positions.
   # Only the last 228 positions are true 1-hour spacing (see
   # data/lookback_offsets.json), so keep lookback_hourly <= 228.
-  lookback_hourly: 168
+  # 72 = the recent 3 days hourly, with the remaining 928 positions serving as the
+  # coarse view of the rest of the year.
+  lookback_hourly: 72
 
   # corrected_* batches mix 2-3 stations, so they are filtered row-wise.
   # Setting this false drops them entirely (~0.5% of samples).
@@ -93,9 +95,18 @@ model:
   # dropout argument when num_layers == 1, so the 100-station reference trained
   # with none despite dropout=0.4. Set false to reproduce that exactly.
   head_dropout: true
-  # 1, not 24: the two branches are split by position on one sequence, so the
-  # model's transfer index must be len(D) - len(H).
+  # frequency_factor positions the state hand-off ONLY:
+  #   transfer_index = len(D) - len(H)//frequency_factor
+  # With a positional split of one sequence, 1 is what puts the hand-off exactly
+  # at the start of the hourly window (len_H=72 -> transfer_index 928 -> hours_ago
+  # 71, the first hour H sees). 24 would drop it at hours_ago 2, near-useless.
   frequency_factor: 1
+  # reg_window is what D is TRAINED TO MEAN, via reg = (D - mean(H_seq[-k:]))^2.
+  # It must be 24 so D is a daily mean from the first pretraining step, matching
+  # what step 2's NSE(D, y_daily) then asks of it. The first run left these tied
+  # together at 1, which taught D to emit the value at hour t and then demanded a
+  # 24-hour mean from it during transfer -- the two are in direct conflict.
+  reg_window: 24
 
 train:                      # Phase I Step 1 -- pretrain on the 80% source domain
   epochs: 30
@@ -175,4 +186,8 @@ wandb:
   mode: online              # online | offline | disabled
   group: null
 
-output_root: outputs
+# Run A: the prepared batches, with D's semantics fixed (reg_window 24). Run B
+# will be the same model over true 365-daily means rebuilt from 6sources.nc, in
+# outputs/runB_truedaily -- the difference between them isolates what the far-past
+# instantaneous sampling costs.
+output_root: outputs/runA_regwin24
