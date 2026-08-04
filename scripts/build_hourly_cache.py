@@ -113,24 +113,14 @@ def write_memmap(cache_dir: Path, logger, flush_every: int = 200) -> dict:
                 path, len(stations), n_hours, len(FEATURES),
                 len(stations) * n_hours * len(FEATURES) * 4 / 1024**3)
 
-    start = first_unwritten(path, len(stations), logger)
-    if start >= len(stations):
-        logger.info("memmap already complete")
-        with open(cache_dir / "cache_meta.json", "w", encoding="utf-8") as out:
-            json.dump(meta, out, indent=2)
-        handle.close()
-        return meta
-    mode = "r+" if start > 0 else "w+"
-    logger.info("resuming from station %d (mode %s)", start, mode)
-
-    memmap = (
-        np.load(path, mmap_mode="r+")
-        if mode == "r+"
-        else np.lib.format.open_memmap(
-            path, mode="w+", dtype=np.float32, shape=(len(stations), n_hours, len(FEATURES))
-        )
+    # Always a single w+ pass. An earlier attempt resumed in place with
+    # np.load(mmap_mode="r+"); the log said it wrote stations 5857-9180 and yet
+    # every one of them read back as zeros afterwards, on this weka filesystem.
+    # The whole write takes ~4 minutes, so resume is not worth that risk.
+    memmap = np.lib.format.open_memmap(
+        path, mode="w+", dtype=np.float32, shape=(len(stations), n_hours, len(FEATURES))
     )
-    for k in range(start, len(stations)):
+    for k in range(len(stations)):
         block = np.asarray(handle.variables[stations[k]][:, :], dtype=np.float32)
         memmap[k] = block[:, order]
         if (k + 1) % flush_every == 0:
@@ -141,9 +131,22 @@ def write_memmap(cache_dir: Path, logger, flush_every: int = 200) -> dict:
     del memmap
     handle.close()
 
+    # Verify after reopening, every station. A partly-written cache is worse than
+    # a failed build: zeros are finite, so they pass the validity check and would
+    # quietly become thousands of stations of fake all-zero training data.
+    check = np.load(path, mmap_mode="r")
+    empty = [k for k in range(len(stations)) if np.count_nonzero(check[k, ::20000, :]) == 0]
+    del check
+    if empty:
+        raise RuntimeError(
+            f"{len(empty)} stations read back as all zeros after writing, e.g. "
+            f"{empty[:5]} ({stations[empty[0]]}). The cache is unusable -- do not "
+            "build the sample index from it."
+        )
+    logger.info("memmap written and verified: all %d stations non-empty", len(stations))
+
     with open(cache_dir / "cache_meta.json", "w", encoding="utf-8") as out:
         json.dump(meta, out, indent=2)
-    logger.info("memmap written")
     return meta
 
 
@@ -200,7 +203,15 @@ def main() -> None:
     meta_path = cache_dir / "cache_meta.json"
     if args.skip_memmap and meta_path.exists():
         meta = json.loads(meta_path.read_text())
-        logger.info("reusing existing memmap for %d stations", meta["n_stations"])
+        check = np.load(cache_dir / "forcing.f32", mmap_mode="r")
+        empty = [k for k in range(meta["n_stations"]) if np.count_nonzero(check[k, ::20000, :]) == 0]
+        del check
+        if empty:
+            raise RuntimeError(
+                f"--skip-memmap but {len(empty)} stations are all zeros (e.g. {empty[:5]}). "
+                "Rerun without --skip-memmap."
+            )
+        logger.info("reusing existing memmap for %d stations (verified non-empty)", meta["n_stations"])
     else:
         meta = write_memmap(cache_dir, logger)
 
