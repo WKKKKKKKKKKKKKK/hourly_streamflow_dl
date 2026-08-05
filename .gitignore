@@ -15,3 +15,6 @@ logs/
 *.tmp
 folds/folds_itest.csv
 folds/*.log
+
+# SLURM/DCGM GPU monitoring output, written per job by the cluster
+dcgm/
