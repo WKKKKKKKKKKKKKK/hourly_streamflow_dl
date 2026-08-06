@@ -36,6 +36,33 @@ DYN = ("pet", "pcp", "temp")
 DAILY_WINDOW = 24
 
 
+def pick_samples_per_station(
+    station_idx: np.ndarray,
+    per_station: int,
+    seed: int = 0,
+    complement: bool = False,
+) -> np.ndarray:
+    """Boolean mask keeping up to ``per_station`` samples for each station.
+
+    The cache analogue of pick_per_station on the prepared path: a
+    median-across-stations metric needs every station represented, not a random
+    slice of the pool that happens to cover a few hundred of them.
+    ``complement`` returns what the same call would NOT have picked, which is how
+    the reported set stays disjoint from the one early stopping selected on.
+    """
+    rng = np.random.default_rng(seed)
+    keep = np.zeros(station_idx.size, dtype=bool)
+    order = np.argsort(station_idx, kind="stable")
+    ordered = station_idx[order]
+    bounds = np.r_[0, np.flatnonzero(np.diff(ordered)) + 1, ordered.size]
+    for lo, hi in zip(bounds[:-1], bounds[1:]):
+        block = order[lo:hi]
+        if 0 < per_station < block.size:
+            block = block[rng.choice(block.size, size=per_station, replace=False)]
+        keep[block] = True
+    return ~keep if complement else keep
+
+
 def load_cache(cache_dir: str | os.PathLike, stride: int = 24, logger=None) -> dict:
     """Open the memmaps and the sample index written by scripts.build_hourly_cache."""
     cache_dir = Path(cache_dir)
@@ -90,6 +117,7 @@ class HourlyWindowDataset(Dataset):
         with_daily: bool = False,
         min_daily_hours: int = 18,
         rng_seed: int = 0,
+        sample_mask: np.ndarray | None = None,
         logger=None,
     ):
         if split not in {"training", "validation"}:
@@ -108,6 +136,9 @@ class HourlyWindowDataset(Dataset):
         keep_station = np.fromiter((s in stations for s in names), dtype=bool, count=len(names))
         want_train = split == "training"
         mask = keep_station[cache["station_idx"]] & (cache["is_train"] == want_train)
+        if sample_mask is not None:
+            mask &= sample_mask
+        self.sample_mask = mask
 
         self.station_idx = cache["station_idx"][mask]
         self.target_idx = cache["target_idx"][mask]

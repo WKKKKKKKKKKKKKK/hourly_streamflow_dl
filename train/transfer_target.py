@@ -48,15 +48,8 @@ from common.utils import (
     wandb_finish,
     wandb_log,
 )
-from data.dataset import (
-    build_dataset,
-    epoch_subset,
-    load_dataset_config,
-    load_scalers,
-    make_loader,
-    pick_per_station,
-    resolve_static_spec,
-)
+from data.dataset import epoch_subset, make_loader, pick_per_station
+from data.sources import build_eval_set
 from data.folds import domain_stations, load_folds
 from eval.evaluate import evaluate_model, write_results
 from models.losses import DailyAggregateTransferLoss
@@ -144,9 +137,11 @@ def main() -> None:
     source_stations, target_stations = domain_stations(folds, args.fold)
     logger.info("target domain %d stations | source domain %d stations", len(target_stations), len(source_stations))
 
+    from data.dataset import load_dataset_config, load_scalers, resolve_static_spec
+
     scalers = load_scalers(cfg.data.root)
     ds_config = load_dataset_config(cfg.data.root)
-    static_keep, onehot_specs, static_names = resolve_static_spec(
+    _, _, static_names = resolve_static_spec(
         cfg.data.root, cfg.data.get("static_exclude"), cfg.data.get("onehot_static")
     )
     dyn_size = len(ds_config["dyn_features"])
@@ -158,11 +153,10 @@ def main() -> None:
     # --- data --------------------------------------------------------------
     # Fine-tuning and its early-stopping holdout both live in the target
     # TRAINING period; the target validation period is the untouched test set.
-    target_train_ds = build_dataset(cfg, "training", target_stations, with_daily=True, logger=logger)
-    target_test_ds = build_dataset(
-        cfg, "validation", target_stations, with_daily=False,
-        max_batches_per_station=int(cfg.get_path("eval.max_batches_per_station", 0)), logger=logger,
-    )
+    from data.sources import build_bundle
+
+    target_train_ds = build_bundle(cfg, target_stations, with_daily=True, logger=logger).train
+    target_test_ds = build_eval_set(cfg, target_stations, "validation", logger=logger)
 
     rng = np.random.default_rng(int(cfg.transfer.seed) + args.fold)
     n_train_batches = len(target_train_ds)
@@ -171,11 +165,20 @@ def main() -> None:
     # epochs. (It shares the training period with the fit pool and its input
     # windows overlap, so it is a selection set, not a test set -- the target
     # validation period below is the untouched test.)
-    holdout_idx = pick_per_station(
-        target_train_ds.prefixes,
-        per_station=int(cfg.transfer.holdout_batches_per_station),
-        seed=0,
-    )
+    if hasattr(target_train_ds, "prefixes"):
+        holdout_idx = pick_per_station(
+            target_train_ds.prefixes,
+            per_station=int(cfg.transfer.holdout_batches_per_station),
+            seed=0,
+        )
+    else:
+        # The cache path has no batch files; its chunks already mix stations, so
+        # hold out a fixed fraction of chunks instead. Each chunk is 512 samples
+        # drawn across the target domain, so a random slice still covers it evenly.
+        n = len(target_train_ds)
+        holdout_idx = np.random.default_rng(0).choice(
+            n, size=max(1, int(0.05 * n)), replace=False
+        )
     fit_idx = np.setdiff1d(np.arange(n_train_batches), holdout_idx)
     logger.info("target training pool: %d batches -> %d fit / %d daily-KGE holdout",
                 n_train_batches, len(fit_idx), len(holdout_idx))
@@ -292,10 +295,7 @@ def main() -> None:
 
     # --- Step 3: no degradation on the source domain -----------------------
     logger.info("evaluating Step 3 (source-domain degradation) ...")
-    source_test_ds = build_dataset(
-        cfg, "validation", source_stations, with_daily=False,
-        max_batches_per_station=int(cfg.get_path("eval.max_batches_per_station", 0)), logger=logger,
-    )
+    source_test_ds = build_eval_set(cfg, source_stations, "validation", logger=logger)
     source_loader = make_loader(source_test_ds, num_workers=num_workers, pin_memory=pin_memory)
 
     after = evaluate_model(model, source_loader, device, scalers["y_mean"], scalers["y_std"], min_samples, logger=logger)
