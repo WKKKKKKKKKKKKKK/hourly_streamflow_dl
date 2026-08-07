@@ -236,6 +236,12 @@ def main() -> None:
             "gap/loss": val_losses.get("loss", float("nan")) - losses["loss"],
             "gap/median_kge": train_summary["median_kge"] - val_summary["median_kge"],
         }
+        if not np.isfinite(losses["loss"]):
+            raise RuntimeError(
+                f"training loss is {losses['loss']} at epoch {epoch}. Continuing would "
+                "burn hours and still exit COMPLETED with every metric NaN, which is what "
+                "happened before this guard existed. Check the inputs for non-finite values."
+            )
         history.append(row)
         logger.info(
             "epoch %d/%d | loss train %.5f val %.5f | median KGE train %.4f val %.4f "

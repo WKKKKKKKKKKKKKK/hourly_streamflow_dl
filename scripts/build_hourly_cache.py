@@ -161,27 +161,45 @@ def daily_means(block: np.ndarray, n_days: int) -> np.ndarray:
     return block[:usable, :3].reshape(n_days, 24, 3).mean(axis=1)
 
 
-def valid_targets(block: np.ndarray, stride: int) -> np.ndarray:
-    """Target hours whose full 8760-hour window is finite and whose q_mm exists.
+def valid_targets(block: np.ndarray, daily: np.ndarray, stride: int, lookback_daily: int = 365) -> np.ndarray:
+    """Targets whose BOTH branches read only finite values, plus a finite q_mm[t].
 
-    ``block`` is (n_hours, 4) raw. Uses a cumulative-sum difference so the whole
-    station is one vectorised pass instead of a slice per timestep.
+    Checking an 8760-hour window is not enough, and getting this wrong cost a
+    whole 5-fold run to all-NaN losses. A target sits at hour-of-day 23, so
+    ``day_end = t // 24`` and the daily branch reads days
+    ``[day_end-365, day_end)``, i.e. hours ``[t-8783, t-23)`` -- 23 hours FURTHER
+    BACK than ``[t-8760, t)``. Stations whose record starts inside that sliver
+    have NaN there, which flows through the daily branch into the loss.
+
+    So the daily branch is checked against the daily cache it actually reads,
+    rather than against an hour range that stands in for it, and the hourly range
+    is padded by a day.
     """
     n_hours = block.shape[0]
     finite_dyn = np.isfinite(block[:, :3]).all(axis=1)
     csum = np.concatenate([[0], np.cumsum(finite_dyn, dtype=np.int64)])
 
-    # candidate targets: hour-of-day 23, far enough in for a full window
-    first = LOOKBACK_HOURS + ((TARGET_HOUR_OF_DAY - LOOKBACK_HOURS) % stride)
+    span = LOOKBACK_HOURS + 24        # one day of margin over the 8760
+    first = span + ((TARGET_HOUR_OF_DAY - span) % stride)
     candidates = np.arange(first, n_hours, stride, dtype=np.int64)
-    candidates = candidates[candidates >= LOOKBACK_HOURS]
+    candidates = candidates[candidates >= span]
     if candidates.size == 0:
         return candidates
 
-    # window is x[t-8760 : t], i.e. the 8760 hours strictly before t
-    window_finite = (csum[candidates] - csum[candidates - LOOKBACK_HOURS]) == LOOKBACK_HOURS
+    window_finite = (csum[candidates] - csum[candidates - span]) == span
     target_finite = np.isfinite(block[candidates, 3])
-    return candidates[window_finite & target_finite]
+
+    # Exactly what the daily branch will index: days [day_end-365, day_end).
+    day_end = candidates // 24
+    ok_daily = np.ones(candidates.size, dtype=bool)
+    finite_day = np.isfinite(daily).all(axis=1)
+    dcsum = np.concatenate([[0], np.cumsum(finite_day, dtype=np.int64)])
+    in_range = day_end >= lookback_daily
+    ok_daily[~in_range] = False
+    de = day_end[in_range]
+    ok_daily[in_range] = (dcsum[de] - dcsum[de - lookback_daily]) == lookback_daily
+
+    return candidates[window_finite & target_finite & ok_daily]
 
 
 def main() -> None:
@@ -237,8 +255,9 @@ def main() -> None:
     boundaries, stds = np.zeros(len(stations), dtype=np.int64), np.zeros(len(stations), dtype=np.float32)
     for k in range(len(stations)):
         block = np.asarray(forcing[k])
-        daily[k] = daily_means(block, n_days)
-        targets = valid_targets(block, args.stride)
+        day_block = daily_means(block, n_days)
+        daily[k] = day_block
+        targets = valid_targets(block, day_block, args.stride)
         if targets.size == 0:
             continue
 

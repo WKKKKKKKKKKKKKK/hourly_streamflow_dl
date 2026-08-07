@@ -187,6 +187,18 @@ class HourlyWindowDataset(Dataset):
             x_d[i] = self.daily[k, day_end - k_d : day_end]
             y[i] = self.forcing[k, t, 3]
 
+        # A non-finite input makes the loss NaN and training continues to "success":
+        # a first run exited COMPLETED on all five folds with every metric NaN.
+        # Fail here instead, naming the sample so it can be traced.
+        for name, arr in (("H", x_h), ("D", x_d)):
+            if not np.isfinite(arr).all():
+                bad = int(np.argmax(~np.isfinite(arr).all(axis=(1, 2))))
+                raise ValueError(
+                    f"non-finite values in the {name} branch for station "
+                    f"{self.station_names[ks[bad]]} at hour {ts[bad]} -- the sample index "
+                    "and the dataset disagree about what gets read; rebuild the cache index"
+                )
+
         x_h = (x_h - self.dyn_mean) / self.dyn_std
         x_d = (x_d - self.dyn_mean) / self.dyn_std
         y = (y - self.y_mean) / self.y_std

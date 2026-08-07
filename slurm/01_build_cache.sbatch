@@ -22,4 +22,4 @@ PYTHON_BIN="${PYTHON_BIN:-$(command -v python3)}"
 echo "node=$(hostname) python=$PYTHON_BIN"
 df -h /ibex/user | tail -1
 
-"$PYTHON_BIN" -u -m scripts.build_hourly_cache --stride 24
+"$PYTHON_BIN" -u -m scripts.build_hourly_cache --stride 24 --skip-memmap
