@@ -36,6 +36,33 @@ def compute_kge(obs: np.ndarray, sim: np.ndarray) -> float:
     return float(1 - np.sqrt((r - 1) ** 2 + (alpha - 1) ** 2 + (beta - 1) ** 2))
 
 
+def kge_components(obs: np.ndarray, sim: np.ndarray) -> tuple[float, float, float, float]:
+    """KGE split into the three things it penalises separately.
+
+        KGE = 1 - sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2)
+        r     correlation        -- is the timing right
+        alpha std(sim)/std(obs)  -- is the variability right
+        beta  mean(sim)/mean(obs) -- is the volume right
+
+    Worth having because a drop in KGE says nothing about which failed. Daily-only
+    supervision carries no sub-daily information, so if it makes predictions
+    smoother the damage shows up in alpha while r holds -- a different conclusion
+    from the model simply getting the timing wrong.
+    """
+    mask = ~np.isnan(obs) & ~np.isnan(sim)
+    obs, sim = obs[mask], sim[mask]
+    if obs.size < 2:
+        return (float("nan"),) * 4
+    mean_obs, std_obs = np.mean(obs), np.std(obs)
+    if std_obs == 0 or mean_obs == 0:
+        return (float("nan"),) * 4
+    r = np.corrcoef(obs, sim)[0, 1]
+    alpha = np.std(sim) / std_obs
+    beta = np.mean(sim) / mean_obs
+    kge = 1 - np.sqrt((r - 1) ** 2 + (alpha - 1) ** 2 + (beta - 1) ** 2)
+    return float(kge), float(r), float(alpha), float(beta)
+
+
 class StationAccumulator:
     """Collects (obs, sim) pairs per station across batches, in standardized space."""
 
@@ -72,6 +99,10 @@ class StationAccumulator:
                 "kge": float("nan"),
                 "obs_mean": float(np.nanmean(obs)) if obs.size else float("nan"),
                 "obs_std": float(np.nanstd(obs)) if obs.size else float("nan"),
+                "kge_r": float("nan"),
+                "kge_alpha": float("nan"),
+                "kge_beta": float("nan"),
+                "sim_std": float("nan"),
             }
             if obs.size < max(2, min_samples):
                 row["score_status"] = "excluded"
@@ -80,6 +111,7 @@ class StationAccumulator:
                 continue
 
             nse, kge = compute_nse(obs, sim), compute_kge(obs, sim)
+            _, row["kge_r"], row["kge_alpha"], row["kge_beta"] = kge_components(obs, sim)
             if not (np.isfinite(nse) and np.isfinite(kge)):
                 reasons = []
                 if not np.isfinite(row["obs_std"]):
@@ -95,6 +127,7 @@ class StationAccumulator:
                 row["kge"] = float(kge) if np.isfinite(kge) else float("nan")
             else:
                 row["nse"], row["kge"] = float(nse), float(kge)
+            row["sim_std"] = float(np.nanstd(sim))
             rows.append(row)
         return pd.DataFrame(rows)
 
