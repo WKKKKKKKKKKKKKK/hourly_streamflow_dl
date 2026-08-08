@@ -38,13 +38,19 @@ DOMAIN="${DOMAIN:-target}"
 FOLD="${SLURM_ARRAY_TASK_ID:-0}"
 RUN_DIR_ARG=()
 [[ -n "${RUN_DIR:-}" ]] && RUN_DIR_ARG=(--run-dir "$RUN_DIR")
+# INDEX swaps the cache path's sample index for scoring only. The stride-24
+# training index is 23:00-only, so leaving it in place reports an "hourly" KGE
+# over one hour of the day; INDEX=samples_evalhours.npz covers all 24.
+SET_ARG=()
+[[ -n "${INDEX:-}" ]] && SET_ARG=(--set "data.eval_sample_index=$INDEX")
 
-echo "config=$CONFIG domain=$DOMAIN fold=$FOLD merge=${MERGE:-0} node=$(hostname)"
+echo "config=$CONFIG domain=$DOMAIN fold=$FOLD index=${INDEX:-<training>} merge=${MERGE:-0} node=$(hostname)"
 
 if [[ "${MERGE:-0}" == "1" ]]; then
   # Aggregation only -- reads the per-fold CSVs, needs no GPU and no data.
   "$PYTHON_BIN" -u -m scripts.diagnose_kge \
-    --config "$CONFIG" --domain "$DOMAIN" --merge "${RUN_DIR_ARG[@]}"
+    --config "$CONFIG" --domain "$DOMAIN" --merge "${RUN_DIR_ARG[@]}" \
+    ${OUT_ROOT:+--out-dir "$OUT_ROOT"}
   exit $?
 fi
 
@@ -61,4 +67,4 @@ fi
 
 "$PYTHON_BIN" -u -m scripts.diagnose_kge \
   --config "$CONFIG" --domain "$DOMAIN" --folds "$FOLD" \
-  --out-dir "$OUT_ROOT/fold$FOLD" "${RUN_DIR_ARG[@]}"
+  --out-dir "$OUT_ROOT/fold$FOLD" "${RUN_DIR_ARG[@]}" ${SET_ARG[@]+"${SET_ARG[@]}"}
