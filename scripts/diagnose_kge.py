@@ -131,25 +131,90 @@ def summarize_components(table: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def verdict(summary: pd.DataFrame, alpha_tol: float = 0.01, r_tol: float = 0.01) -> str:
-    """State which of the two explanations the numbers actually support."""
+def _kge_from(r, a, b):
+    return 1 - np.sqrt((r - 1) ** 2 + (a - 1) ** 2 + (b - 1) ** 2)
+
+
+def attribute(table: pd.DataFrame, min_obs_std: float = 1e-3) -> dict:
+    """Which term actually caused each station's KGE to drop.
+
+    Medians of the three components move so little (~0.006 each) that comparing
+    them against a tolerance yields no answer. The question is per-station and
+    counterfactual: move ONE term to its M1 value, leave the other two at M0, and
+    see what that alone does to KGE. Whichever hurts most is that station's culprit.
+
+    ``min_obs_std`` drops numerically degenerate stations. alpha and beta divide by
+    std(obs) and mean(obs), so a near-constant record (the worst here has obs_std
+    5e-7 mm/h) sends alpha into the thousands and makes the MEAN delta meaningless
+    (-30 KGE across the target domain). Medians survive it; means do not. Only the
+    exact-zero case is excluded upstream, so it is filtered here and reported.
+    """
+    kept = table.loc[table["obs_std"] >= min_obs_std]
+    cols = ("r", "alpha", "beta")
+    m0 = [kept[f"M0_kge_{c}"].to_numpy() for c in cols]
+    m1 = [kept[f"M1_kge_{c}"].to_numpy() for c in cols]
+
+    base = _kge_from(*m0)
+    # Row i: KGE change from moving only term i.
+    single = np.vstack([
+        _kge_from(*(m1[j] if j == i else m0[j] for j in range(3))) - base
+        for i in range(3)
+    ])
+    delta = _kge_from(*m1) - base
+    worse = delta < 0
+    culprit = np.argmin(single[:, worse], axis=0)
+
+    labels = ["r (timing)", "alpha (variance)", "beta (bias)"]
+    return {
+        "n_stations": int(len(kept)),
+        "n_dropped_degenerate": int(len(table) - len(kept)),
+        "min_obs_std": min_obs_std,
+        "frac_stations_worse": float(worse.mean()),
+        "culprit_share": {
+            labels[i]: float((culprit == i).mean()) for i in range(3)
+        },
+        "solo_effect_median": {
+            labels[i]: float(np.median(single[i])) for i in range(3)
+        },
+        # Share of the KGE deficit each term carries, before and after -- says what
+        # limits hourly skill overall, not just what the transfer step changed.
+        "deficit_share": {
+            tag: {
+                labels[i]: float(np.median((vals[i] - 1) ** 2) / sum(
+                    np.median((vals[j] - 1) ** 2) for j in range(3)))
+                for i in range(3)
+            }
+            for tag, vals in (("M0", m0), ("M1", m1))
+        },
+        "alpha_median": {"M0": float(np.median(m0[1])), "M1": float(np.median(m1[1]))},
+        "frac_under_dispersed": {"M0": float((m0[1] < 1).mean()), "M1": float((m1[1] < 1).mean())},
+    }
+
+
+def verdict(summary: pd.DataFrame, attribution: dict) -> str:
+    """State which explanation the numbers support, and what actually limits skill."""
     get = lambda c, f: float(summary.loc[summary["component"].eq(c), f].iloc[0])  # noqa: E731
-    d_r, d_a, d_b = get("kge_r", "median_delta"), get("kge_alpha", "median_delta"), get("kge_beta", "median_delta")
-    p_r = get("kge_r", "wilcoxon_p")
+    d_kge, d_r = get("kge", "median_delta"), get("kge_r", "median_delta")
+    share = attribution["culprit_share"]
+    r_share = share["r (timing)"]
+    a0 = attribution["alpha_median"]["M0"]
+    under = attribution["frac_under_dispersed"]["M0"]
+    a_deficit = attribution["deficit_share"]["M0"]["alpha (variance)"]
 
-    # alpha moving toward 0 means predictions lost variance relative to obs.
-    a0, a1 = get("kge_alpha", "M0_median"), get("kge_alpha", "M1_median")
-    flattened = abs(a1 - 1) > abs(a0 - 1) and a1 < a0
+    if r_share > 0.4:
+        head = (f"timing is the leading culprit in {r_share:.1%} of the stations that got worse "
+                f"(r {d_r:+.4f}) -- the model genuinely lost hourly dynamics, so something is "
+                f"still fixable; next suspect is agg_loss_weight.")
+    else:
+        head = (f"KGE fell {d_kge:+.4f}, but timing leads in only {r_share:.1%} of the stations "
+                f"that got worse ({share['alpha (variance)']:.1%} variance, "
+                f"{share['beta (bias)']:.1%} bias; r itself moved {d_r:+.4f}). Daily means carry "
+                f"volume but no sub-daily information, so fine-tuning rescales the series rather "
+                f"than forgetting its dynamics -- the inherent cost of daily-only supervision.")
 
-    if d_r < -r_tol and p_r < 0.05:
-        return (f"r fell by {d_r:+.4f} (p={p_r:.2e}) -- timing genuinely degraded, not just "
-                f"smoothing. Something is still fixable; next suspect is agg_loss_weight.")
-    if flattened and abs(d_a) > alpha_tol:
-        return (f"alpha {a0:.4f} -> {a1:.4f} ({d_a:+.4f}) while r moved only {d_r:+.4f} "
-                f"(p={p_r:.2e}) -- predictions were flattened toward the daily mean. This is "
-                f"the inherent cost of daily-only supervision, not a bug.")
-    return (f"neither term moved decisively: r {d_r:+.4f} (p={p_r:.2e}), alpha {d_a:+.4f}, "
-            f"beta {d_b:+.4f}. The KGE change is not attributable to a single component.")
+    return (f"{head} Separately and larger: at M0 already, {under:.1%} of stations are "
+            f"under-dispersed (median alpha {a0:.3f}) and variance carries {a_deficit:.1%} of the "
+            f"KGE deficit. That ceiling predates the transfer step and is the bigger target.")
 
 
 def main() -> None:
@@ -196,7 +261,8 @@ def main() -> None:
 
     summary = summarize_components(table)
     summary.to_csv(out_dir / f"kge_components_summary_{args.domain}.csv", index=False)
-    text = verdict(summary)
+    attribution = attribute(table)
+    text = verdict(summary, attribution)
 
     per_fold = pd.concat(
         [summarize_components(t).assign(fold=t["fold"].iloc[0]) for t in tables], ignore_index=True
@@ -207,9 +273,11 @@ def main() -> None:
         "run_dir": str(run_dir), "domain": args.domain, "folds": folds,
         "n_stations": int(len(table)), "verdict": text,
         "summary": summary.to_dict(orient="records"),
+        "attribution": attribution,
     }, indent=2))
 
     logger.info("\n%s", summary.to_string(index=False, float_format=lambda v: f"{v: .5f}"))
+    logger.info("attribution: %s", json.dumps(attribution, indent=2))
     logger.info("VERDICT: %s", text)
 
 
