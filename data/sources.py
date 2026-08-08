@@ -167,7 +167,13 @@ def build_eval_set(cfg, stations: set[str], split: str, with_daily: bool = False
     )
 
     scalers = load_scalers(cfg.data.root)
-    cache = load_cache(cfg.data.cache_dir, stride=int(cfg.data.get("stride", 24)), logger=logger)
+    # data.eval_sample_index scores a different sample set than training used. The
+    # stride-24 training index is 23:00-only, so leaving it in place reports an
+    # "hourly" KGE over one hour of the day; run A's prepared batches cover all 24.
+    cache = load_cache(
+        cfg.data.cache_dir, stride=int(cfg.data.get("stride", 24)), logger=logger,
+        index_name=cfg.data.get("eval_sample_index"),
+    )
     static, _ = build_static_matrix(cache, scalers, cfg, logger=logger)
     want_train = split == "training"
     mask = cache["is_train"] == want_train

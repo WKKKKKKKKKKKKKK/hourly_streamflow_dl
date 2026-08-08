@@ -63,11 +63,24 @@ def pick_samples_per_station(
     return ~keep if complement else keep
 
 
-def load_cache(cache_dir: str | os.PathLike, stride: int = 24, logger=None) -> dict:
-    """Open the memmaps and the sample index written by scripts.build_hourly_cache."""
+def load_cache(
+    cache_dir: str | os.PathLike,
+    stride: int = 24,
+    logger=None,
+    index_name: str | None = None,
+) -> dict:
+    """Open the memmaps and the sample index written by scripts.build_hourly_cache.
+
+    ``index_name`` swaps in a different sample index over the same memmaps -- used
+    to score an all-hours evaluation set (samples_evalhours.npz) against a model
+    trained on the stride-24 index, without touching the forcing cache.
+    """
     cache_dir = Path(cache_dir)
     meta = json.loads((cache_dir / "cache_meta.json").read_text())
-    samples = np.load(cache_dir / f"samples_stride{stride}.npz", allow_pickle=True)
+    index_path = cache_dir / (index_name or f"samples_stride{stride}.npz")
+    if not index_path.exists():
+        raise FileNotFoundError(f"sample index {index_path} missing")
+    samples = np.load(index_path, allow_pickle=True)
 
     forcing = np.load(cache_dir / "forcing.f32", mmap_mode="r")
     daily_path = cache_dir / "daily.f32"
@@ -91,12 +104,14 @@ def load_cache(cache_dir: str | os.PathLike, stride: int = 24, logger=None) -> d
         "stride": int(samples["stride"]),
     }
     if logger:
+        hours = np.unique(cache["target_idx"] % 24)
         logger.info(
             "cache: %d stations x %d hours | daily %s in RAM (%.2f GiB) | %d samples "
-            "(%d train / %d val)",
+            "(%d train / %d val) | index %s covering %d hour(s)-of-day%s",
             meta["n_stations"], meta["n_hours"], daily.shape, daily.nbytes / 1024**3,
             cache["station_idx"].size, int(cache["is_train"].sum()),
-            int((~cache["is_train"]).sum()),
+            int((~cache["is_train"]).sum()), index_path.name, hours.size,
+            "" if hours.size > 1 else f" ({hours[0]:02d}:00 only)",
         )
     return cache
 
