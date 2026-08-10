@@ -1,0 +1,222 @@
+# ============================================================
+# Phase I -- LSTM defender (Plan.docx), global MTS-LSTM
+# ============================================================
+# Every entry point reads this file. Override any leaf from the
+# command line with dotted keys, e.g.
+#   python -m train.pretrain_source --set model.hidden_size_daily=256 train.epochs=50
+# ============================================================
+
+data:
+  # Root of the pre-batched hourly_q_dl dataset (contains training/, validation/,
+  # config.json, scalers.json).
+  root: /ibex/project/c2266/abbaa0a/data/input_data/hourly_q_dl/6datasets_H_8760_512_temporal_local_19800101_20251231_0.7_0.3_False_ts_func2_1000_5.0_False_10000_s_func2_1095_10000_3_42_penman_MSWEP_V316_test_Past_hourly_10_hourly_9181_42
+  index_dir: index          # written by scripts/build_index.py (repo-relative)
+
+  # === run B ===
+  # Windows rebuilt from 6sources.nc instead of the prepared batches, so the daily
+  # branch gets 365 GENUINE daily means. In run A that branch was fed a power-law
+  # subsample in which 69% of far-past rainy days read as zero, because one sampled
+  # hour cannot stand in for a day of intermittent rain. This is what the
+  # 100-station reference does.
+  source: hourly_cache
+  cache_dir: /ibex/user/kongw0a/hourly_cache
+  stride: 24                # one sample per day at 23:00 (PLAN.md 3.1, Gauch et al.)
+  lookback_daily: 365
+  chunk_size: 512           # matches one prepared batch, so the two paths compare
+
+  # Split of the fixed 1000-step subsampled sequence into the two MTS-LSTM
+  # branches. D = the whole sequence, H = its last `lookback_hourly` positions.
+  # Only the last 228 positions are true 1-hour spacing (see
+  # data/lookback_offsets.json), so keep lookback_hourly <= 228.
+  # 72 = the recent 3 days hourly. The daily branch covers the rest of the year.
+  lookback_hourly: 72
+
+  # corrected_* batches mix 2-3 stations, so they are filtered row-wise.
+  # Setting this false drops them entirely (~0.5% of samples).
+  include_corrected: true
+
+  # Static columns dropped from the 42 the prepared batches carry, leaving 25.
+  # The 100-station experiment used 27 (static_h_topo_priority27.csv) and PLAN.md
+  # 3.3 asks for 27-35 with socio-economic proxies treated with suspicion. Note
+  # those 27 are GAGES-II/CAMELS names that only exist for US basins, so they are
+  # not a subset of these 42 -- the trim below is the global equivalent.
+  #
+  # Measured over 350 stations spread across all six sources:
+  #   * 16 of the 42 are socio-economic (GDP x4, HDI x2, pedigree x2, gpw_v4 x5,
+  #     globpop x5). A regional model will happily learn them as proxies for
+  #     "rich country => better gauge" instead of hydrology.
+  #   * pedigree_of_GDP_per_capita_2015 has ZERO variance (nunique = 1): a dead
+  #     input that only costs parameters.
+  #   * elevation_SRTM_v2.1_GTOPO30 correlates r = 1.000 with
+  #     elevation_1KMmn_GMTEDmn...; one of the pair is redundant.
+  #   * the 10 population columns are mutually |r| > 0.95 -- one variable, ten
+  #     copies across years.
+  # GLOBCOVER_Urban_300m is kept: impervious fraction is hydrology, and it is the
+  # analogue of urb_pc_use in the old 27.
+  static_exclude:
+    - pedigree_of_HDI_2015
+    - pedigree_of_GDP_per_capita_2015
+    - GDP_5arcmin_2015
+    - GDP_30arcsec_2015
+    - HDI_2015
+    - GDP_percapita_2015
+    - gpw_v4_rev11_2000
+    - gpw_v4_rev11_2005
+    - gpw_v4_rev11_2010
+    - gpw_v4_rev11_2015
+    - gpw_v4_rev11_2020
+    - globpop_density_30arc_2022
+    - globpop_density_30arc_2020
+    - globpop_density_30arc_2010
+    - globpop_density_30arc_2000
+    - globpop_density_30arc_1990
+    - elevation_SRTM_v2.1_GTOPO30
+
+  # Categorical codes to one-hot encode instead of feeding as ordered numbers
+  # (PLAN.md 3.3 asks for "KGZ one-hot"). Only these two are genuine class codes:
+  # over 600 stations they are EXACTLY integer-valued (max |raw - round| = 0),
+  # KGZ_major spanning 0-4 (the Koeppen-Geiger A/B/C/D/E groups) and KGZ_detailed
+  # 0-21. The other class-looking columns (UMD_1km_landcover, GLiM_V01_Export,
+  # GlobCover_majority, Lakes_Dams_Wetlands_GLWD_3) are NOT integer-valued -- the
+  # source already area-averaged the class codes over each basin, so there is no
+  # category left to recover.
+  #
+  # The ranges below are deliberately wider than what has been observed; an
+  # unlisted code raises rather than silently encoding as an all-zero row, and a
+  # never-used category is just a constant-zero input that costs nothing.
+  # KGZ_major alone takes the static width 25 -> 29; both take it to 59.
+  # Left off by default so the architecture matches what has been tested.
+  onehot_static: {}
+  # onehot_static:
+  #   KGZ_major: [0, 1, 2, 3, 4]
+  #   KGZ_detailed: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
+  #                  18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+
+folds:
+  file: folds/folds_random.csv   # written by scripts/make_folds.py
+  n_folds: 5
+  seed: 42
+
+model:
+  hidden_size_daily: 128
+  hidden_size_hourly: 128
+  num_layers: 1
+  dropout: 0.4
+  # Apply `dropout` to the LSTM outputs before each head. nn.LSTM ignores its
+  # dropout argument when num_layers == 1, so the 100-station reference trained
+  # with none despite dropout=0.4. Set false to reproduce that exactly.
+  head_dropout: true
+  # frequency_factor positions the state hand-off ONLY:
+  #   transfer_index = len(D) - len(H)//frequency_factor
+  # With a positional split of one sequence, 1 is what puts the hand-off exactly
+  # at the start of the hourly window (len_H=72 -> transfer_index 928 -> hours_ago
+  # 71, the first hour H sees). 24 would drop it at hours_ago 2, near-useless.
+  # With TRUE daily means the two requirements coincide, which is why the reference
+  # never had to separate them: transfer_index = 365 - 72//24 = 362, i.e. the state
+  # is handed over 3 days = 72 h before the target, exactly where the hourly window
+  # starts, AND reg then uses 24 steps so D is a daily mean.
+  frequency_factor: 24
+  # reg_window is what D is TRAINED TO MEAN, via reg = (D - mean(H_seq[-k:]))^2.
+  # It must be 24 so D is a daily mean from the first pretraining step, matching
+  # what step 2's NSE(D, y_daily) then asks of it. The first run left these tied
+  # together at 1, which taught D to emit the value at hour t and then demanded a
+  # 24-hour mean from it during transfer -- the two are in direct conflict.
+  reg_window: 24            # same as frequency_factor here; kept explicit
+
+train:                      # Phase I Step 1 -- pretrain on the 80% source domain
+  epochs: 30
+  # MEASURED on a V100-SXM2-32GB (scripts/benchmark_gpu.py, job 49948056):
+  #   train step   0.067 s/batch     eval step (forward only)  0.025 s/batch
+  #   IO alone     0.007 s/batch  -> 923 MiB/s, i.e. GPU-bound with 10x headroom
+  #   peak GPU memory  3.2 / 6.2 / 5.2 GiB at hidden 64 / 128 / 256, of 32 GiB
+  # Reading batch files is NOT the constraint, so an epoch is sized by GPU time:
+  #   20000 x 0.067 s = 22.4 min train + 7191 x 0.025 s = 3.0 min validate
+  #   = 25.4 min/epoch -> 30 epochs = 12.7 h per fold, inside the 18 h --time.
+  # That has the model see 30 x 20000 x 512 = 307M of the 671M source samples.
+  batches_per_epoch: 20000
+  # Early stopping needs a median-KGE comparable across epochs, so the validation
+  # set is FIXED and station-balanced rather than redrawn. Validation is cheap
+  # enough (3 min) to give EVERY source station a vote: 0 means all of them.
+  val_max_stations: 0
+  val_batches_per_station: 1
+  lr: 5.0e-4
+  lr_schedule: "1:5e-4,12:1e-4,22:5e-5"
+  loss: nse_basin           # nse_basin | mse
+  reg_lambda: 1.0
+  early_stopping: true
+  patience: 6
+  num_workers: 6
+  pin_memory: true
+  seed: 42
+  grad_clip: 1.0
+
+transfer:                   # Phase I Step 2 -- daily-only fine-tune on the 20% target domain
+  epochs: 12
+  # Same measured 0.067 s/batch: 4000 x 12 epochs = 54 min of fitting, plus the
+  # station-balanced daily holdout (~3600 batches x 0.025 s = 1.5 min/epoch) and
+  # the four final evaluation passes, which together dominate at roughly 1.5 h.
+  batches_per_epoch: 4000
+  lr: 5.0e-4
+  weight_decay: 1.0e-5
+  agg_loss_weight: 0.5      # w_agg on NSE_d(mean_24h(H_seq), y_d)
+  # Frozen so the hourly dynamics learned from the source domain survive;
+  # everything else is fine-tuned (Plan.md 1 / reference set_trainable_parameters).
+  freeze_modules: [lstm_hourly]
+  # A row gets a daily target only if at least this many of the 24 hours ending
+  # at it were actually observed. Both the target and the model's daily value
+  # are averaged over exactly those hours, so a partial day is compared like for
+  # like -- but too low a threshold turns "daily aggregate" back into an hourly
+  # observation and breaks the premise of the experiment.
+  # Measured over 500 random training batches (scripts/daily_coverage.py):
+  # CAMELSH/Germany/Japan/LamaHCE/LamaHIce are essentially complete (median 24
+  # h per window); BOMAustralia is the sparse one (median 16, min 3).
+  #   threshold   rows kept   stations with any data
+  #      12         92.8%            99.8%
+  #      18         89.0%            98.6%
+  #      24         84.6%            94.6%
+  min_daily_hours: 18
+
+  # Early stopping uses the DAILY KGE on a held-out slice of the target-domain
+  # TRAINING period. Hourly observations of the target domain are never touched
+  # before the final evaluation (Plan.md 3.2 #4). The holdout is station-balanced
+  # (this many batches per target station) so the median is stable across epochs;
+  # ~1800 target stations x 2 = ~3600 batches.
+  holdout_batches_per_station: 2
+  patience: 4
+  num_workers: 6
+  seed: 42
+  grad_clip: 1.0
+
+  # --- source replay ------------------------------------------------------
+  # Plain daily-only fine-tuning pushes the model onto the TARGET domain's
+  # calibration and abandons the source's: run B lost 0.107 median KGE on the
+  # source domain (0.6435 -> 0.5014, 72% of stations worse), with M1 landing at
+  # nearly the same alpha/beta on both domains -- one global re-scaling, which
+  # the target gains from and the source only pays for.
+  #
+  # So mix source batches WITH their real hourly targets back into the fine-tune.
+  # This is not leakage: the Phase I premise hides the TARGET stations' hourly
+  # observations, and the source domain's hourly data is what Step 1 trained on.
+  # ratio 0.25 -> one source batch after every 3 target batches (25% of steps).
+  # Everything else, including the target-daily early-stopping metric, is
+  # unchanged from run B, so the only difference between the two runs is this mix.
+  source_replay_ratio: 0.25
+  source_replay_weight: 1.0
+eval:
+  # Final reporting reads at most this many batches per station. A 1,800-station
+  # domain has ~150k validation batches (~930 GB); 12 per station is ~6,100
+  # samples each, plenty for a stable per-station KGE, at ~1.5% of the I/O.
+  # 0 = read everything.
+  max_batches_per_station: 12
+  min_samples_per_station: 100
+
+wandb:
+  project: global_mtslstm_phase1
+  entity: null
+  mode: online              # online | offline | disabled
+  group: null
+
+# Run B: the same model and hyperparameters as run A, over true 365-daily means.
+# A minus B isolates what the far-past instantaneous sampling costs, since the
+# hourly branches of the two are value-for-value identical.
+output_root: outputs/runB_replay

@@ -45,9 +45,26 @@ else
   echo "     in ~/.bashrc, or sync afterwards with 'wandb sync $WANDB_DIR/offline-run-*'." >&2
 fi
 
-echo "fold=$FOLD python=$PYTHON_BIN node=$(hostname)"
+CONFIG="${CONFIG:-configs/phase1_runB.yaml}"
+WANDB_GROUP="${WANDB_GROUP:-phase1B_transfer}"
+# A variant run (e.g. source replay) writes to its own output_root but must start
+# from the SAME pretrained weights, otherwise the comparison measures two
+# pretrainings rather than the one thing that changed. PRETRAIN_ROOT points at the
+# run whose fold{N}/pretrain/best_model.pth to load.
+PRETRAINED_ARG=()
+if [[ -n "${PRETRAIN_ROOT:-}" ]]; then
+  CKPT="$PRETRAIN_ROOT/fold$FOLD/pretrain/best_model.pth"
+  if [[ ! -f "$CKPT" ]]; then
+    echo "PRETRAIN_ROOT set but $CKPT does not exist." >&2
+    exit 2
+  fi
+  PRETRAINED_ARG=(--pretrained "$CKPT")
+fi
 
-"$PYTHON_BIN" -u -m train.transfer_target --config configs/phase1_runB.yaml \
+echo "fold=$FOLD config=$CONFIG pretrained=${PRETRAIN_ROOT:-<config default>} python=$PYTHON_BIN node=$(hostname)"
+
+"$PYTHON_BIN" -u -m train.transfer_target --config "$CONFIG" \
   --fold "$FOLD" \
   --peek-hourly \
-  --set "wandb.group=phase1B_transfer" ${EXTRA_SET[@]+"${EXTRA_SET[@]}"}
+  "${PRETRAINED_ARG[@]}" \
+  --set "wandb.group=$WANDB_GROUP" ${EXTRA_SET[@]+"${EXTRA_SET[@]}"}

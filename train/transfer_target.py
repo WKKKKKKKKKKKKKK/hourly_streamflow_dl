@@ -49,19 +49,63 @@ from common.utils import (
     wandb_log,
 )
 from data.dataset import epoch_subset, make_loader, pick_per_station
-from data.sources import build_eval_set
+from data.sources import build_bundle, build_eval_set
 from data.folds import domain_stations, load_folds
 from eval.evaluate import evaluate_model, write_results
-from models.losses import DailyAggregateTransferLoss
+from models.losses import DailyAggregateTransferLoss, MTSBasinNSELoss
 from models.mtslstm import build_model, set_trainable
 
 DAILY_WINDOW = 24
 
 
-def train_one_epoch(model, loader, optimizer, criterion, device, grad_clip, logger, log_every=100):
+def cycle_batches(dataset, make_loader_fn, rng, batches_per_pass: int):
+    """Endless reshuffled stream of batches, so replay never runs out mid-epoch."""
+    while True:
+        order = rng.permutation(len(dataset))
+        if batches_per_pass > 0:
+            order = order[:batches_per_pass]
+        yielded = False
+        for batch in make_loader_fn(order):
+            yielded = True
+            yield batch
+        if not yielded:
+            raise RuntimeError("the source replay dataset produced no batches")
+
+
+def _replay_step(model, batch, optimizer, criterion, device, grad_clip, weight):
+    """One source-domain step with its real hourly targets.
+
+    Fine-tuning only on target daily aggregates pushes the model onto the target's
+    calibration and abandons the source's: run B lost 0.107 median KGE on the source
+    domain, with M1 landing at nearly the same alpha/beta on both domains. Source
+    hourly data is available -- the Phase I premise only hides the TARGET stations'
+    hourly observations -- so mixing it back in is legitimate, not leakage.
+
+    Trains the same unfrozen parameters as the daily objective, so the only
+    difference from a plain transfer run is this data mix.
+    """
+    x = {key: value.to(device, non_blocking=True) for key, value in batch["x"].items()}
+    y = batch["y"].to(device, non_blocking=True)
+    stn_std = batch["stn_std"].to(device, non_blocking=True)
+
+    optimizer.zero_grad(set_to_none=True)
+    outputs = model({"D": x["D"], "H": x["H"]}, x["S"])
+    parts = criterion(outputs, y, stn_std)
+    (weight * parts["loss"]).backward()
+    if grad_clip:
+        torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], grad_clip)
+    optimizer.step()
+    return float(parts["loss"].item()), int(y.shape[0])
+
+
+def train_one_epoch(model, loader, optimizer, criterion, device, grad_clip, logger,
+                    log_every=100, replay=None):
+    """``replay``: dict(stream, criterion, every, weight) to interleave source batches."""
     model.train()
     totals: dict[str, float] = {}
     n_rows = n_batches = n_skipped = 0
+    replay_loss = 0.0
+    replay_rows = replay_steps = 0
     started = time.time()
 
     for batch in loader:
@@ -95,15 +139,31 @@ def train_one_epoch(model, loader, optimizer, criterion, device, grad_clip, logg
         for key, value in parts.items():
             totals[key] = totals.get(key, 0.0) + float(value.item()) * rows
 
+        if replay is not None and n_batches % replay["every"] == 0:
+            loss_value, rows_replay = _replay_step(
+                model, next(replay["stream"]), optimizer, replay["criterion"],
+                device, grad_clip, replay["weight"],
+            )
+            replay_loss += loss_value * rows_replay
+            replay_rows += rows_replay
+            replay_steps += 1
+
         if logger and n_batches % log_every == 0:
             logger.info(
-                "    batch %d | loss %.5f | %.2f batch/s",
-                n_batches, totals["loss"] / max(n_rows, 1), n_batches / max(time.time() - started, 1e-9),
+                "    batch %d | loss %.5f%s | %.2f batch/s",
+                n_batches, totals["loss"] / max(n_rows, 1),
+                f" | replay {replay_loss / max(replay_rows, 1):.5f} ({replay_steps} steps)"
+                if replay is not None else "",
+                n_batches / max(time.time() - started, 1e-9),
             )
 
     if logger and n_skipped:
         logger.info("    skipped %d batches with no complete 24 h window", n_skipped)
-    return {key: value / max(n_rows, 1) for key, value in totals.items()}, n_rows
+    out = {key: value / max(n_rows, 1) for key, value in totals.items()}
+    if replay is not None:
+        out["loss_source_replay"] = replay_loss / max(replay_rows, 1)
+        out["replay_steps"] = float(replay_steps)
+    return out, n_rows
 
 
 def main() -> None:
@@ -153,8 +213,6 @@ def main() -> None:
     # --- data --------------------------------------------------------------
     # Fine-tuning and its early-stopping holdout both live in the target
     # TRAINING period; the target validation period is the untouched test set.
-    from data.sources import build_bundle
-
     target_train_ds = build_bundle(cfg, target_stations, with_daily=True, logger=logger).train
     target_test_ds = build_eval_set(cfg, target_stations, "validation", logger=logger)
 
@@ -204,6 +262,42 @@ def main() -> None:
     )
     stopper = EarlyStopping(patience=int(cfg.transfer.patience), mode="max")
 
+    # --- source replay (optional) ------------------------------------------
+    # Selection stays on the target daily holdout, exactly as without replay, so
+    # the only difference between the two runs is this data mix -- not the
+    # criterion that picks the epoch.
+    replay = None
+    replay_ratio = float(cfg.get_path("transfer.source_replay_ratio", 0.0))
+    if replay_ratio > 0:
+        if not 0 < replay_ratio < 1:
+            raise ValueError(f"transfer.source_replay_ratio must be in (0, 1), got {replay_ratio}")
+        every = max(1, round((1 - replay_ratio) / replay_ratio))
+        source_train_ds = build_bundle(cfg, source_stations, with_daily=False, logger=logger).train
+        replay_rng = np.random.default_rng(int(cfg.transfer.seed) + args.fold + 977)
+        replay = {
+            "stream": cycle_batches(
+                source_train_ds,
+                lambda order: make_loader(source_train_ds, num_workers=num_workers,
+                                          pin_memory=pin_memory, subset=order),
+                replay_rng,
+                int(cfg.transfer.batches_per_epoch),
+            ),
+            "criterion": MTSBasinNSELoss(
+                frequency_factor=int(cfg.model.frequency_factor),
+                reg_lambda=float(cfg.train.reg_lambda),
+                reg_window=cfg.model.get("reg_window"),
+            ).to(device),
+            "every": every,
+            "weight": float(cfg.get_path("transfer.source_replay_weight", 1.0)),
+        }
+        logger.info(
+            "source replay ON: ratio %.2f -> one source batch every %d target batches | "
+            "weight %.2f | pool %d batches over %d source stations",
+            replay_ratio, every, replay["weight"], len(source_train_ds), len(source_stations),
+        )
+    else:
+        logger.info("source replay OFF (transfer.source_replay_ratio = 0)")
+
     run = init_wandb(
         cfg,
         run_name=f"transfer_fold{args.fold}",
@@ -232,7 +326,8 @@ def main() -> None:
 
         t0 = time.time()
         losses, n_rows = train_one_epoch(
-            model, fit_loader, optimizer, criterion, device, float(cfg.transfer.grad_clip), logger
+            model, fit_loader, optimizer, criterion, device, float(cfg.transfer.grad_clip), logger,
+            replay=replay,
         )
         train_secs = time.time() - t0
 
