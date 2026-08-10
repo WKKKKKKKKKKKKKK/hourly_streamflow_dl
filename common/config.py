@@ -75,12 +75,18 @@ def add_common_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         default=str(REPO_ROOT / "configs" / "phase1.yaml"),
         help="Path to the YAML config.",
     )
+    # action="extend" so REPEATED --set flags accumulate. With plain nargs="*" the
+    # last flag silently replaces every earlier one, so
+    #   --set transfer.epochs=2 --set eval.max_batches_per_station=1
+    # applied only the second override and dropped the first without a word.
     parser.add_argument(
         "--set",
         nargs="*",
+        action="extend",
         default=[],
         metavar="KEY=VALUE",
-        help="Dotted-key overrides, e.g. train.epochs=5 model.dropout=0.2",
+        help="Dotted-key overrides, e.g. train.epochs=5 model.dropout=0.2. "
+             "Repeatable; every occurrence is applied.",
     )
     return parser
 
