@@ -67,6 +67,68 @@ larger than the −0.021 the transfer costs. Run B halves the gap on its own (α
 under-dispersed share 68.0%), which is most of where its +0.096 M0 advantage comes
 from. Chasing α is worth more than chasing the transfer loss.
 
+## Source replay: damping the re-scaling, not preventing forgetting
+
+Plain daily-only fine-tuning cost run B 0.107 median KGE on the source domain
+(STEP 3), with M1 landing at nearly the same alpha/beta on BOTH domains -- one
+global re-scaling that the target gains from and the source only pays for. So mix
+source batches, with their real hourly targets, back into the fine-tune
+(`transfer.source_replay_ratio`). This is not leakage: the premise hides the TARGET
+stations' hourly observations, and the source domain's hourly data is what Step 1
+trained on. Same frozen modules, same target-daily early-stopping metric, same
+pretrained weights (`PRETRAIN_ROOT`) -- the data mix is the only difference.
+
+| ratio | target Δ | source Δ | target M1 | source M1 | station-weighted M1 |
+|---|---|---|---|---|---|
+| 0 (run B) | +0.0449 | −0.1064 | 0.5768 | 0.5006 | 0.5159 |
+| **0.25** | **+0.0643** | −0.0668 | 0.5962 | 0.5544 | 0.5628 |
+| 0.5 | +0.0578 | **−0.0502** | 0.5897 | 0.5746 | 0.5776 |
+
+0.25 beats no-replay on BOTH domains, all 5 folds, both metrics. Going to 0.5 keeps
+rescuing the source (5/5 folds) but gives target gain back (4/5 folds) -- the target
+curve peaks near 0.25, the source improves monotonically. Station-weighted (20%
+target + 80% source) still favours more replay, because the source is 80% of the
+stations.
+
+### What replay actually does
+
+Not a general improvement. Grouping target stations by the ΔKGE that plain
+fine-tuning gave them (all-hours paired, obs_std ≥ 1e-3):
+
+| plain-transfer ΔKGE | stations | plain | replay 0.25 | replay's edge |
+|---|---|---|---|---|
+| < −0.1 (damaged) | 2254 | −0.232 | −0.090 | **+0.145** |
+| −0.1 to 0 | 1648 | −0.046 | −0.020 | +0.026 |
+| 0 to 0.05 | 956 | +0.025 | +0.010 | −0.015 |
+| 0.05 to 0.15 | 1376 | +0.096 | +0.065 | −0.029 |
+| > 0.15 (helped a lot) | 2609 | +0.359 | +0.304 | **−0.058** |
+
+Replay rescues the damaged tail and gives up gain where fine-tuning was already
+working. The net is positive only because the damaged group is large (44% of
+stations). Stations badly hurt (ΔKGE < −0.1) fall from 25.5% to 18.3%.
+
+The mechanism is visible in alpha. Plain fine-tuning's global re-scaling is too
+aggressive for a substantial minority: it pushes **6.25%** of stations from
+under-dispersed straight past alpha 1.2 into over-dispersion, wrecking their KGE.
+Replay damps it -- median |Δalpha| 0.180 → 0.131, overshoot share 6.25% → **2.09%**,
+median alpha 0.861 → 0.876 instead of 0.861 → 0.956. Damping costs accuracy where
+the aggressive version happened to be right and saves much more where it was not.
+That also explains the source domain: it was already well calibrated (alpha 0.862,
+beta 1.006), so the aggressive re-scaling there is pure damage.
+
+An earlier reading of the fold-0 numbers as "no trade-off, both sides win" was
+wrong twice over: aggregate-level both domains do improve, but station-level there
+IS a trade, and the mechanism is damping an over-aggressive re-scaling -- not
+regularisation against overfitting the target training period.
+
+### Picking a ratio
+
+| goal | choice |
+|---|---|
+| best hourly forecasts at the daily-only stations (the Phase I question) | **0.25** |
+| one model serving every station | **0.5** or higher -- the source is 80% of stations |
+| reproduce the plain Phase I result | 0 |
+
 ## Two evaluation traps found along the way
 
 **Degenerate stations wreck the mean, not the median.** α and β divide by std(obs)
