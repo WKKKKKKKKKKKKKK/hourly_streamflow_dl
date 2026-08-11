@@ -61,10 +61,29 @@ if [[ -n "${PRETRAIN_ROOT:-}" ]]; then
   PRETRAINED_ARG=(--pretrained "$CKPT")
 fi
 
-echo "fold=$FOLD config=$CONFIG pretrained=${PRETRAIN_ROOT:-<config default>} python=$PYTHON_BIN node=$(hostname)"
+# EXTRA_SET is a whitespace-separated STRING, not a bash array. Arrays do not
+# survive --export=ALL (the environment holds strings only), so an array-valued
+# EXTRA_SET arrives empty and the job silently runs the config's defaults --
+# which, for a variant sharing one output_root, would overwrite finished results.
+#   EXTRA_SET="transfer.source_replay_ratio=0.5" sbatch slurm/20_transfer_runB.sbatch
+read -r -a EXTRA_SET_ARR <<< "${EXTRA_SET:-}"
+
+# Refuse to clobber a finished fold. train.transfer_target writes DONE last, so its
+# presence means this output_root already holds complete results for this fold.
+OUT_ROOT_CFG=$("$PYTHON_BIN" -c "
+from common.config import load_config, resolve
+print(resolve(load_config('$CONFIG', None).output_root))")
+if [[ -f "$OUT_ROOT_CFG/fold$FOLD/transfer/DONE" && "${FORCE:-0}" != "1" ]]; then
+  echo "fold $FOLD already complete under $OUT_ROOT_CFG -- refusing to overwrite." >&2
+  echo "Point the variant at its own output_root, or set FORCE=1 to redo it." >&2
+  exit 3
+fi
+
+echo "fold=$FOLD config=$CONFIG out=$OUT_ROOT_CFG pretrained=${PRETRAIN_ROOT:-<config default>}"
+echo "extra_set=${EXTRA_SET:-<none>} node=$(hostname)"
 
 "$PYTHON_BIN" -u -m train.transfer_target --config "$CONFIG" \
   --fold "$FOLD" \
   --peek-hourly \
   "${PRETRAINED_ARG[@]}" \
-  --set "wandb.group=$WANDB_GROUP" ${EXTRA_SET[@]+"${EXTRA_SET[@]}"}
+  --set "wandb.group=$WANDB_GROUP" ${EXTRA_SET_ARR[@]+"${EXTRA_SET_ARR[@]}"}
