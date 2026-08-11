@@ -55,9 +55,16 @@ def _score(cfg, checkpoint: Path, loader, device, dyn_size, n_static, scalers, m
     return frames["hourly"]
 
 
-def diagnose_fold(cfg, fold: int, domain: str, run_dir: Path, device, logger) -> pd.DataFrame:
-    """Per-station M0 vs M1 components for one fold, inner-joined on station."""
-    m0 = run_dir / f"fold{fold}" / "pretrain" / "best_model.pth"
+def diagnose_fold(cfg, fold: int, domain: str, run_dir: Path, device, logger,
+                  pretrain_dir: Path | None = None) -> pd.DataFrame:
+    """Per-station M0 vs M1 components for one fold, inner-joined on station.
+
+    ``pretrain_dir`` is for variant runs that reuse another run's pretrained
+    weights (e.g. source replay starts from run B's M0 so the only difference is
+    the fine-tune). Without it those runs have no fold{N}/pretrain of their own and
+    there is no M0 to compare against.
+    """
+    m0 = (pretrain_dir or run_dir) / f"fold{fold}" / "pretrain" / "best_model.pth"
     m1 = run_dir / f"fold{fold}" / "transfer" / "best_transfer_model.pth"
     for path in (m0, m1):
         if not path.exists():
@@ -222,6 +229,12 @@ def main() -> None:
     parser.add_argument("--folds", default="0,1,2,3,4")
     parser.add_argument("--domain", default="target", choices=["target", "source"])
     parser.add_argument("--run-dir", default=None, help="Defaults to the config's output_root.")
+    parser.add_argument(
+        "--pretrain-dir",
+        default=None,
+        help="Where to find fold{N}/pretrain/best_model.pth (M0) when this run reused "
+             "another run's pretrained weights. Defaults to --run-dir.",
+    )
     parser.add_argument("--out-dir", default=None)
     parser.add_argument(
         "--merge",
@@ -250,7 +263,10 @@ def main() -> None:
         logger.info("run %s | domain %s | device %s", run_dir, args.domain, device)
         for fold in folds:
             try:
-                tables.append(diagnose_fold(cfg, fold, args.domain, run_dir, device, logger))
+                tables.append(diagnose_fold(
+                cfg, fold, args.domain, run_dir, device, logger,
+                pretrain_dir=Path(args.pretrain_dir) if args.pretrain_dir else None,
+            ))
             except FileNotFoundError as exc:
                 logger.warning("skipping fold %d: %s", fold, exc)
         if not tables:

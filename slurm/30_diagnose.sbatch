@@ -38,6 +38,9 @@ DOMAIN="${DOMAIN:-target}"
 FOLD="${SLURM_ARRAY_TASK_ID:-0}"
 RUN_DIR_ARG=()
 [[ -n "${RUN_DIR:-}" ]] && RUN_DIR_ARG=(--run-dir "$RUN_DIR")
+# A variant that reused another run's pretrained weights has no pretrain/ of its
+# own, so M0 must be read from the run it started FROM.
+[[ -n "${PRETRAIN_ROOT:-}" ]] && RUN_DIR_ARG+=(--pretrain-dir "$PRETRAIN_ROOT")
 # INDEX swaps the cache path's sample index for scoring only. The stride-24
 # training index is 23:00-only, so leaving it in place reports an "hourly" KGE
 # over one hour of the day; INDEX=samples_evalhours.npz covers all 24.
