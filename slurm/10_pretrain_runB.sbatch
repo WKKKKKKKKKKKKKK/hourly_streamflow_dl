@@ -48,7 +48,23 @@ fi
 echo "fold=$FOLD python=$PYTHON_BIN node=$(hostname)"
 nvidia-smi --query-gpu=name,memory.total --format=csv,noheader || true
 
-"$PYTHON_BIN" -u -m train.pretrain_source --config configs/phase1_runB.yaml \
+# The config was hardcoded here, so CONFIG=... sbatch silently ran run B's own
+# config and would have overwritten outputs/runB_truedaily/fold*/pretrain -- the
+# weights every replay variant loads as its M0. Same guard as the transfer script.
+CONFIG="${CONFIG:-configs/phase1_runB.yaml}"
+read -r -a EXTRA_SET_ARR <<< "${EXTRA_SET:-}"
+
+OUT_ROOT_CFG=$("$PYTHON_BIN" -c "
+from common.config import load_config, resolve
+print(resolve(load_config('$CONFIG', None).output_root))")
+if [[ -f "$OUT_ROOT_CFG/fold$FOLD/pretrain/best_model.pth" && "${FORCE:-0}" != "1" ]]; then
+  echo "fold $FOLD already has pretrained weights under $OUT_ROOT_CFG -- refusing to overwrite." >&2
+  echo "Point the variant at its own output_root, or set FORCE=1 to redo it." >&2
+  exit 3
+fi
+echo "config=$CONFIG out=$OUT_ROOT_CFG extra_set=${EXTRA_SET:-<none>}"
+
+"$PYTHON_BIN" -u -m train.pretrain_source --config "$CONFIG" \
   --fold "$FOLD" \
   --resume \
-  --set "wandb.group=phase1B_pretrain" ${EXTRA_SET[@]+"${EXTRA_SET[@]}"}
+  --set "wandb.group=${WANDB_GROUP:-phase1B_pretrain}" ${EXTRA_SET_ARR[@]+"${EXTRA_SET_ARR[@]}"}
