@@ -45,6 +45,7 @@ import xarray as xr
 from common.config import add_common_args, load_config, resolve
 from common.utils import setup_logging
 from scripts.basin_average_era5_land import cell_weights
+from scripts.era5_tiles import assign_basins_to_tiles, group_by_tile, open_tile, union_time_axis
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
@@ -77,23 +78,6 @@ def deaccumulate(values: np.ndarray, hours: np.ndarray) -> np.ndarray:
     return out
 
 
-def open_forcing(era5_dir: Path, logger) -> xr.Dataset:
-    files = sorted(glob.glob(str(era5_dir / "era5land_forcing_*.nc")))
-    if not files:
-        raise SystemExit(f"no era5land_forcing_*.nc under {era5_dir}")
-    logger.info("opening %d hourly ERA5-Land files", len(files))
-    ds = xr.open_mfdataset(files, combine="by_coords", chunks={"valid_time": 744}, parallel=False)
-    for axis, options in (("longitude", ["longitude", "lon", "x"]), ("latitude", ["latitude", "lat", "y"])):
-        for name in options:
-            if name in ds.coords and name != axis:
-                ds = ds.rename({name: axis})
-                break
-    if "valid_time" in ds.coords:
-        ds = ds.rename({"valid_time": "time"})
-    logger.info("grid: %s | variables: %s", dict(ds.sizes), list(ds.data_vars))
-    return ds
-
-
 def main() -> None:
     parser = add_common_args(argparse.ArgumentParser(description="Basin-average ERA5-Land hourly forcing."))
     parser.add_argument("--era5-dir", default="/ibex/user/kongw0a/era5_land_africa_forcing")
@@ -110,55 +94,79 @@ def main() -> None:
     station_ids = basins["station_id"].astype(str).tolist()
     logger.info("basins: %d", len(station_ids))
 
-    ds = open_forcing(era5_dir, logger)
-    mapping = {name: SOURCES[name] for name in ds.data_vars if name in SOURCES}
-    if not mapping:
-        raise SystemExit(f"no recognised forcing variables in {list(ds.data_vars)}")
-    logger.info("mapping: %s", {k: v[0] for k, v in mapping.items()})
-
-    lons = np.asarray(ds["longitude"].values, dtype=np.float64)
-    lats = np.asarray(ds["latitude"].values, dtype=np.float64)
-    times = pd.to_datetime(ds["time"].values)
-    hour_of_day = times.hour.to_numpy()
+    grouped = group_by_tile(era5_dir, "era5land_forcing_*.nc")
+    logger.info("%d files across %d spatial tiles", sum(map(len, grouped.values())), len(grouped))
+    basin_index = assign_basins_to_tiles(basins, grouped, logger)
+    times = union_time_axis(grouped, logger)
     logger.info("time: %s .. %s (%d steps)", times[0], times[-1], len(times))
 
     gaps = np.unique(np.diff(times.to_numpy()).astype("timedelta64[h]").astype(int))
     if not np.array_equal(gaps, np.array([1])):
         logger.warning(
             "time axis is not strictly hourly (gaps seen: %s h) -- de-accumulation "
-            "differences across a gap are invalid and those steps will be wrong. "
-            "Finish the download before trusting the output.", gaps,
+            "differences across a gap are invalid and those steps will be wrong.", gaps,
         )
 
-    out = {target: np.full((len(station_ids), len(times)), np.nan, dtype=np.float32)
-           for _, (target, _) in mapping.items()}
+    out: dict[str, np.ndarray] = {}
     n_cells = np.zeros(len(station_ids), dtype=np.int32)
+    mapping: dict[str, tuple[str, str]] = {}
+    done = 0
 
-    for k, (station_id, geom) in enumerate(zip(station_ids, basins.geometry)):
-        sel = cell_weights(geom, lons, lats)
-        if sel is None:
-            logger.warning("%s: no overlapping cell", station_id)
+    for tile, files in grouped.items():
+        rows_wanted = basin_index[tile]
+        if rows_wanted.size == 0:
+            logger.info("tile %s holds no basins -- skipped", tile)
             continue
-        rows, cols, weights = sel
-        n_cells[k] = len(weights)
+        ds = open_tile(files)
+        tile_mapping = {name: SOURCES[name] for name in ds.data_vars if name in SOURCES}
+        if not tile_mapping:
+            raise SystemExit(f"no recognised forcing variables in {list(ds.data_vars)}")
+        mapping.update(tile_mapping)
+        for _, (target, _) in tile_mapping.items():
+            out.setdefault(target, np.full((len(station_ids), len(times)), np.nan, dtype=np.float32))
 
-        picker = dict(
-            latitude=xr.DataArray(rows, dims="cell"),
-            longitude=xr.DataArray(cols, dims="cell"),
-        )
-        block = ds[list(mapping)].isel(**picker).load()
-        w = xr.DataArray(weights, dims="cell")
+        lons = np.asarray(ds["longitude"].values, dtype=np.float64)
+        lats = np.asarray(ds["latitude"].values, dtype=np.float64)
+        tile_times = pd.to_datetime(ds["time"].values)
+        hour_of_day = tile_times.hour.to_numpy()
+        # Where this tile's steps sit on the shared axis, so tiles with different
+        # spans still land in the right columns instead of silently shifting.
+        slot = times.get_indexer(tile_times)
+        if (slot < 0).any():
+            raise SystemExit(f"tile {tile} has timestamps absent from the shared axis")
 
-        for name, (target, kind) in mapping.items():
-            series = np.asarray((block[name] * w).sum("cell").values, dtype=np.float64)
-            if kind == "accumulated":
-                series = deaccumulate(series, hour_of_day) * MM_PER_M
-            elif target == "temp":
-                series = series - KELVIN
-            out[target][k, :] = series.astype(np.float32)
+        for k in rows_wanted:
+            station_id, geom = station_ids[k], basins.geometry.iloc[k]
+            sel = cell_weights(geom, lons, lats)
+            if sel is None:
+                logger.warning("%s: no overlapping cell in tile %s", station_id, tile)
+                continue
+            rows, cols, weights = sel
+            n_cells[k] = len(weights)
 
-        if (k + 1) % 20 == 0:
-            logger.info("  %d/%d basins", k + 1, len(station_ids))
+            picker = dict(
+                latitude=xr.DataArray(rows, dims="cell"),
+                longitude=xr.DataArray(cols, dims="cell"),
+            )
+            block = ds[list(tile_mapping)].isel(**picker).load()
+            w = xr.DataArray(weights, dims="cell")
+
+            for name, (target, kind) in tile_mapping.items():
+                series = np.asarray((block[name] * w).sum("cell").values, dtype=np.float64)
+                if kind == "accumulated":
+                    series = deaccumulate(series, hour_of_day) * MM_PER_M
+                elif target == "temp":
+                    series = series - KELVIN
+                out[target][k, slot] = series.astype(np.float32)
+
+            done += 1
+            if done % 20 == 0:
+                logger.info("  %d/%d basins", done, len(station_ids))
+        ds.close()
+
+    if not out:
+        raise SystemExit("no basin produced any output")
+    logger.info("mapping: %s", {k: v[0] for k, v in mapping.items()})
 
     # ERA5 fluxes are downward-positive, so evaporation arrives negative.
     if "pet" in out:

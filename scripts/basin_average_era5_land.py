@@ -41,6 +41,7 @@ from shapely.geometry import box
 
 from common.config import add_common_args, load_config, resolve
 from common.utils import setup_logging
+from scripts.era5_tiles import assign_basins_to_tiles, group_by_tile, open_tile, union_time_axis
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
@@ -54,30 +55,14 @@ ALIASES = {
 }
 
 
-def open_era5(era5_dir: Path, logger) -> xr.Dataset:
-    files = sorted(glob.glob(str(era5_dir / "era5land_*.nc")))
-    if not files:
-        raise SystemExit(f"no era5land_*.nc under {era5_dir} -- run scripts.download_era5_land_africa first")
-    logger.info("opening %d ERA5-Land files", len(files))
-    # Tiles overlap in space and split in time, so combine by coordinates.
-    ds = xr.open_mfdataset(files, combine="by_coords", chunks={"valid_time": 512}, parallel=False)
+def normalise_names(ds: xr.Dataset) -> xr.Dataset:
+    """Canonical variable and axis names, whatever the CDS request produced."""
     rename = {}
     for canonical, options in ALIASES.items():
         for name in options:
             if name in ds.variables and name != canonical:
                 rename[name] = canonical
-    ds = ds.rename(rename)
-    for axis, options in (("longitude", ["longitude", "lon", "x"]), ("latitude", ["latitude", "lat", "y"])):
-        for name in options:
-            if name in ds.coords and name != axis:
-                ds = ds.rename({name: axis})
-                break
-    for axis in ("valid_time", "time"):
-        if axis in ds.coords:
-            ds = ds.rename({axis: "time"}) if axis != "time" else ds
-            break
-    logger.info("grid: %s | vars: %s", dict(ds.sizes), [v for v in VARIABLES if v in ds])
-    return ds
+    return ds.rename(rename)
 
 
 def cell_weights(polygon, lons: np.ndarray, lats: np.ndarray, res: float = 0.1):
@@ -128,43 +113,69 @@ def main() -> None:
     basins = gpd.read_file(resolve(args.basins)).to_crs("EPSG:4326")
     logger.info("basins: %d", len(basins))
 
-    ds = open_era5(era5_dir, logger)
-    present = [v for v in VARIABLES if v in ds]
-    if not present:
-        raise SystemExit(f"none of {VARIABLES} found; variables present: {list(ds.data_vars)}")
-
-    lons = np.asarray(ds["longitude"].values, dtype=np.float64)
-    lats = np.asarray(ds["latitude"].values, dtype=np.float64)
-    times = pd.to_datetime(ds["time"].values) + pd.Timedelta(days=args.day_shift)
+    grouped = group_by_tile(era5_dir, "era5land_*.nc")
+    logger.info("%d files across %d spatial tiles", sum(map(len, grouped.values())), len(grouped))
+    basin_index = assign_basins_to_tiles(basins, grouped, logger)
+    raw_times = union_time_axis(grouped, logger)
+    times = raw_times + pd.Timedelta(days=args.day_shift)
     dates = times.normalize()
     logger.info("time axis after %+d day shift: %s .. %s (%d steps)",
                 args.day_shift, dates[0].date(), dates[-1].date(), len(dates))
 
     station_ids = basins["station_id"].astype(str).tolist()
-    out = {v: np.full((len(station_ids), len(dates)), np.nan, dtype=np.float32) for v in present}
+    out: dict[str, np.ndarray] = {}
     n_cells = np.zeros(len(station_ids), dtype=np.int32)
+    present: list[str] = []
+    done = 0
 
-    for k, (station_id, geom) in enumerate(zip(station_ids, basins.geometry), start=0):
-        sel = cell_weights(geom, lons, lats)
-        if sel is None:
-            logger.warning("%s: no overlapping ERA5-Land cell", station_id)
+    for tile, files in grouped.items():
+        rows_wanted = basin_index[tile]
+        if rows_wanted.size == 0:
+            logger.info("tile %s holds no basins -- skipped", tile)
             continue
-        rows, cols, weights = sel
-        n_cells[k] = len(weights)
+        ds = normalise_names(open_tile(files, time_chunk=512))
+        tile_present = [v for v in VARIABLES if v in ds]
+        if not tile_present:
+            raise SystemExit(f"none of {VARIABLES} in tile {tile}; present: {list(ds.data_vars)}")
+        for v in tile_present:
+            if v not in present:
+                present.append(v)
+            out.setdefault(v, np.full((len(station_ids), len(dates)), np.nan, dtype=np.float32))
 
-        # One vectorised pull per basin: (n_time, n_cells) -> weighted mean.
-        picker = dict(
-            latitude=xr.DataArray(rows, dims="cell"),
-            longitude=xr.DataArray(cols, dims="cell"),
-        )
-        block = ds[present].isel(**picker).load()
-        w = xr.DataArray(weights, dims="cell")
-        for v in present:
-            series = (block[v] * w).sum("cell") * MM_PER_M
-            out[v][k, :] = np.asarray(series.values, dtype=np.float32)
+        lons = np.asarray(ds["longitude"].values, dtype=np.float64)
+        lats = np.asarray(ds["latitude"].values, dtype=np.float64)
+        tile_dates = (pd.to_datetime(ds["time"].values)
+                      + pd.Timedelta(days=args.day_shift)).normalize()
+        slot = dates.get_indexer(tile_dates)
+        if (slot < 0).any():
+            raise SystemExit(f"tile {tile} has dates absent from the shared axis")
 
-        if (k + 1) % 25 == 0:
-            logger.info("  %d/%d basins", k + 1, len(station_ids))
+        for k in rows_wanted:
+            station_id, geom = station_ids[k], basins.geometry.iloc[k]
+            sel = cell_weights(geom, lons, lats)
+            if sel is None:
+                logger.warning("%s: no overlapping ERA5-Land cell in tile %s", station_id, tile)
+                continue
+            rows, cols, weights = sel
+            n_cells[k] = len(weights)
+
+            picker = dict(
+                latitude=xr.DataArray(rows, dims="cell"),
+                longitude=xr.DataArray(cols, dims="cell"),
+            )
+            block = ds[tile_present].isel(**picker).load()
+            w = xr.DataArray(weights, dims="cell")
+            for v in tile_present:
+                series = (block[v] * w).sum("cell") * MM_PER_M
+                out[v][k, slot] = np.asarray(series.values, dtype=np.float32)
+
+            done += 1
+            if done % 25 == 0:
+                logger.info("  %d/%d basins", done, len(station_ids))
+        ds.close()
+
+    if not present:
+        raise SystemExit("no basin produced any output")
 
     result = xr.Dataset(
         {v: (("station", "date"), out[v]) for v in present},
