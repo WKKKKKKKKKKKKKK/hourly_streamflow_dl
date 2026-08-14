@@ -54,7 +54,17 @@ CHECKPOINTS = {"pretrain": ("pretrain", "best_model.pth"), "transfer": ("transfe
 
 @torch.no_grad()
 def predict_daily(model, dataset, device, y_mean: float, y_std: float, logger=None) -> pd.DataFrame:
-    """One row per (station, date) with the model's daily prediction in mm/d."""
+    """One row per (station, date) with the model's daily prediction in mm/d.
+
+    The model is trained on hourly targets in mm/h, so averaging its last 24 hourly
+    outputs gives mm/h -- NOT the mm/d the daily observations are in. The two differ
+    by exactly the window length. Verified against seven stations present in both
+    the hourly cache and the daily file: on matching dates,
+    ``daily q_mm == 24 * mean(hourly q_mm/h)`` to within 0.4% (ratio 0.996 over
+    4,500-7,100 common days each). Omitting the factor made the model under-predict
+    ~24-fold and turned Africa's median KGE into -0.41 while the run reported
+    success, so the magnitudes are checked below rather than trusted.
+    """
     model.eval()
     frames = []
     for i in range(len(dataset)):
@@ -68,14 +78,30 @@ def predict_daily(model, dataset, device, y_mean: float, y_std: float, logger=No
                 {
                     "station_id": item["stations"],
                     "date": item["dates"],
-                    "sim": pred * y_std + y_mean,
+                    # mm/h -> mm/d
+                    "sim": (pred * y_std + y_mean) * DAILY_WINDOW,
                     "obs": item["y_daily_obs"].numpy(),
                 }
             )
         )
         if logger and (i + 1) % 200 == 0:
             logger.info("  predicted %d/%d chunks", i + 1, len(dataset))
-    return pd.concat(frames, ignore_index=True)
+    out = pd.concat(frames, ignore_index=True)
+
+    # A units slip is invisible in KGE (it just looks like a bad model), so state
+    # the ratio outright and refuse to report a run that is off by a window length.
+    sim_mean = float(np.nanmean(out["sim"]))
+    obs_mean = float(np.nanmean(out["obs"]))
+    if logger:
+        logger.info("magnitude check: sim mean %.4f mm/d | obs mean %.4f mm/d | ratio %.2f",
+                    sim_mean, obs_mean, obs_mean / sim_mean if sim_mean else float("nan"))
+    if sim_mean > 0 and not 0.05 <= obs_mean / sim_mean <= 20:
+        raise SystemExit(
+            f"observed/simulated mean ratio is {obs_mean / sim_mean:.1f} -- that is a unit "
+            f"error, not a model error (a factor near {DAILY_WINDOW} means the mm/h -> mm/d "
+            "conversion is wrong). Refusing to report."
+        )
+    return out
 
 
 def score_per_station(frame: pd.DataFrame, sim_column: str, min_days: int = 100) -> pd.DataFrame:

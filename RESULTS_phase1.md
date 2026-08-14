@@ -129,6 +129,83 @@ regularisation against overfitting the target training period.
 | one model serving every station | **0.5** or higher -- the source is 80% of stations |
 | reproduce the plain Phase I result | 0 |
 
+## Random vs spatially blocked splits: how much skill is just proximity
+
+CAMELSH alone contributes 5,767 US stations, so under a random split a target
+station almost always keeps a hydrological neighbour in the source domain. Measured:
+**48.1%** of target stations have a source-domain station within 10 km and **96.9%**
+within 50 km, median nearest distance **10.4 km**. `folds/folds_blocked.csv`
+(`scripts/make_folds_blocked.py`, 120 spatial blocks packed into 5 folds) pushes that
+to a median **94.9 km**, with only 22.2% inside 50 km, while keeping fold sizes even
+(1791-1801 target stations vs the random split's 1796-1800). Same run B config, no
+replay, so the split is the only difference.
+
+| split | target M0 | target M1 | ΔKGE | source M0 | source M1 |
+|---|---|---|---|---|---|
+| random | 0.5319 | 0.5768 | +0.0449 | 0.6434 | 0.5006 |
+| **blocked** | **0.4040** | 0.4754 | **+0.0714** | 0.6405 | 0.3188 |
+
+**Zero-shot skill falls 0.128** (all 5 folds, −0.091 to −0.191). About a quarter of
+the random split's hourly KGE was coming from spatial proximity rather than from
+generalising over basin attributes, which is what PLAN.md 2 predicted and why the
+random-split numbers should not be read as regional-extrapolation performance.
+
+Two further readings, one encouraging and one not:
+
+- **Daily-only supervision helps MORE when there are no neighbours** (+0.0714 vs
+  +0.0449). The method is most valuable in precisely the situation that motivates it
+  — a whole region with no hourly gauges.
+- **Forgetting is far worse under blocking**: the source domain falls 0.6405 → 0.3188
+  (−0.32) against −0.14 for random. Source replay was tuned on the random split and
+  should matter more here; that combination has not been run yet.
+
+A caveat that comes with spatial blocking and cannot be removed: removing neighbours
+also removes the region, so fold composition is uneven by construction (6 of 30
+agency-by-fold cells empty; US share 40-73% across folds versus roughly even under
+random). Averaging over 5 folds mitigates it but does not eliminate it. Block count
+was chosen from that trade-off rather than picked: 60 blocks gives 140 km separation
+but a 52% spread in US share, 240 blocks gives 64 km and a 17% spread.
+
+## Train and test periods, stated precisely
+
+Each station's own record is split **70% / 30% in time** — there is no single global
+date, and the boundary's percentiles across stations are 2010-03-11 (25%),
+**2015-07-26 (median)**, 2017-12-21 (75%). The first 365 days of each split are
+burn-in and produce no samples. Training samples span 1981-01-09 to 2024-05-14
+(51.7M), validation samples 1985-07-14 to 2024-12-31 (22.1M).
+
+This is **two blocks, not the three in PLAN.md 2** (`train 2000-2012 / val 2013-2015
+/ test 2016-2020`), because the prepared batches are cut 0.7/0.3 and run B reuses
+that split so the two data paths stay comparable. Consequences, by number:
+
+- **The main result is unaffected.** M0 and M1 are scored on the same untouched
+  target validation period, so any period-sharing bias applies equally to both and
+  cancels in ΔKGE. The transfer step early-stops on a holdout from the target
+  TRAINING period using daily-aggregate KGE only, so the target validation period
+  never informs epoch selection — the fix PLAN.md 3.2 #4 asks for.
+- **Absolute M0/M1 are mildly optimistic.** Pretraining early-stops on the source
+  domain's validation period, which shares a calendar span (though not stations)
+  with target evaluation. Bounded empirically: across folds the best epoch beats the
+  last epoch by only **+0.0063** (random) and **+0.0036** (blocked), with a
+  0.014-0.017 spread over the final ten epochs. So perfect hindsight in epoch
+  selection is worth ≤0.006 — one to two orders of magnitude below the effects being
+  reported (0.128, 0.064, 0.107).
+- **The source-domain STEP 3 number is the weak one**: selection and reporting use
+  the same stations in the same period.
+
+So report these as **held-out samples from the validation period, disjoint from the
+early-stopping subset** — not as a temporally independent test period. Rebuilding a
+three-way split would cost ~3 days of GPU across all runs, shrink the training data,
+and change no comparative conclusion, so it is deliberately not done; if required
+later, only the final configuration needs redoing.
+
+Separately, the early-stopping set is too small and too narrow in time
+(`val_batches_per_station: 1` = 512 samples/station, and on the prepared path those
+come from a single batch file, i.e. one narrow window). That is why the selection
+metric reads median KGE 0.085 where the final report on ~6,100 samples/station gives
+0.433. It is metric noise rather than leakage, and by the bound above it costs at
+most ~0.006, but any future run should widen it.
+
 ## Two evaluation traps found along the way
 
 **Degenerate stations wreck the mean, not the median.** α and β divide by std(obs)
