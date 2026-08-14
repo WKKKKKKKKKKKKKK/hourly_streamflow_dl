@@ -295,3 +295,137 @@ class AfricaDailyDataset(Dataset):
             "dates": self.observed_dates[day],
             "y_daily_obs": torch.from_numpy(self.observed[basin, day].astype(np.float32)),
         }
+
+class AfricaWindowDataset(Dataset):
+    """African daily samples shaped like the hourly-cache path (run B), not the prepared one.
+
+    ``AfricaDailyDataset`` builds its daily branch from the prepared batches' 1000-step
+    power-law subsample. Feeding that to a run B checkpoint is meaningless -- run B was
+    trained with ``frequency_factor: 24`` and a daily branch of 365 GENUINE daily means,
+    so the two inputs are different quantities of different lengths. Scoring run B
+    checkpoints through the prepared-layout dataset produced Africa numbers that looked
+    like a model failure and were really an input-structure mismatch.
+
+    This mirrors ``data.hourly_windows.HourlyWindowDataset`` exactly:
+
+        target hour t = 23:00 of the observed day, so the model's last 24 hourly
+                        outputs cover that calendar day
+        H = forcing[t - lookback_hourly : t]          raw hourly steps, excluding t
+        D = daily[day_of(t) - lookback_daily : day_of(t)]   365 whole days before it
+
+    Daily means are taken over ``h // 24`` blocks (00:00-23:00), the same blocking
+    ``scripts.build_hourly_cache`` used, so the daily branch means the same thing here
+    as it did in training.
+    """
+
+    def __init__(
+        self,
+        forcing: np.ndarray,
+        forcing_times: pd.DatetimeIndex,
+        static: np.ndarray,
+        observed: np.ndarray,
+        observed_dates: pd.DatetimeIndex,
+        station_ids: list[str],
+        lookback_hourly: int = 72,
+        lookback_daily: int = 365,
+        chunk_size: int = 512,
+        logger=None,
+    ):
+        self.forcing = forcing
+        self.static = static
+        self.station_ids = list(station_ids)
+        self.k_h = int(lookback_hourly)
+        self.k_d = int(lookback_daily)
+        self.chunk_size = int(chunk_size)
+
+        # Block into whole 00:00-23:00 days, the same blocking build_hourly_cache used.
+        # The series need not start at 00:00 -- the rescaling step drops the leading
+        # hour that belongs to the day before the record -- so align to the first
+        # midnight rather than assuming index 0 is one, which would shift every daily
+        # mean by an hour.
+        midnights = np.flatnonzero(forcing_times.hour.to_numpy() == 0)
+        if midnights.size == 0:
+            raise ValueError("forcing has no 00:00 stamp; cannot form whole days")
+        self.day0 = int(midnights[0])
+        n_days = (forcing.shape[1] - self.day0) // 24
+        if n_days <= lookback_daily:
+            raise ValueError(
+                f"only {n_days} whole days of forcing after the first midnight, need "
+                f"more than {lookback_daily}"
+            )
+        self.daily = forcing[:, self.day0 : self.day0 + n_days * 24, :3].reshape(
+            forcing.shape[0], n_days, 24, 3
+        ).mean(axis=2)
+
+        hour_pos = {ts: i for i, ts in enumerate(forcing_times)}
+        target_hours = observed_dates + pd.Timedelta(hours=23)
+
+        pairs = []
+        for k in range(len(station_ids)):
+            for d in np.flatnonzero(np.isfinite(observed[k])):
+                it = hour_pos.get(target_hours[d])
+                if it is None:
+                    continue
+                day_end = (it - self.day0) // 24
+                if it < self.k_h or day_end < self.k_d or day_end > self.daily.shape[1]:
+                    continue
+                pairs.append((k, d, it))
+        if not pairs:
+            raise ValueError(
+                "no African sample has both an observation and enough preceding forcing "
+                f"({self.k_d} days + {self.k_h} h) -- check the forcing/observation overlap"
+            )
+        pairs = np.asarray(pairs, dtype=np.int64)
+
+        # Both branches must be finite: a NaN anywhere makes the whole prediction NaN.
+        basin, _, target = pairs[:, 0], pairs[:, 1], pairs[:, 2]
+        day_end = (target - self.day0) // 24
+        h_ok = np.array([
+            np.isfinite(forcing[b, t - self.k_h : t, :3]).all() for b, t in zip(basin, target)
+        ])
+        d_ok = np.array([
+            np.isfinite(self.daily[b, e - self.k_d : e]).all() for b, e in zip(basin, day_end)
+        ])
+        keep = h_ok & d_ok
+        dropped = int((~keep).sum())
+        self.pairs = pairs[keep]
+        self.observed = observed
+        self.observed_dates = observed_dates
+
+        self.chunks = [
+            self.pairs[i : i + self.chunk_size]
+            for i in range(0, len(self.pairs), self.chunk_size)
+        ]
+        if logger:
+            logger.info(
+                "Africa windows (run B layout): %d samples over %d basins | D=%d daily means, "
+                "H=%d hourly | %d dropped for a non-finite window -> %d chunks of <=%d",
+                len(self.pairs), len(set(self.pairs[:, 0].tolist())), self.k_d, self.k_h,
+                dropped, len(self.chunks), self.chunk_size,
+            )
+
+    def __len__(self) -> int:
+        return len(self.chunks)
+
+    def __getitem__(self, idx: int) -> dict:
+        chunk = self.chunks[idx]
+        basin, day, target = chunk[:, 0], chunk[:, 1], chunk[:, 2]
+        n = len(basin)
+
+        x_h = np.empty((n, self.k_h, 3), dtype=np.float32)
+        x_d = np.empty((n, self.k_d, 3), dtype=np.float32)
+        for i, (b, t) in enumerate(zip(basin, target)):
+            x_h[i] = self.forcing[b, t - self.k_h : t, :3]
+            end = (t - self.day0) // 24
+            x_d[i] = self.daily[b, end - self.k_d : end]
+
+        return {
+            "x": {
+                "D": torch.from_numpy(x_d),
+                "H": torch.from_numpy(x_h),
+                "S": torch.from_numpy(self.static[basin]).contiguous(),
+            },
+            "stations": [self.station_ids[b] for b in basin],
+            "dates": self.observed_dates[day],
+            "y_daily_obs": torch.from_numpy(self.observed[basin, day].astype(np.float32)),
+        }

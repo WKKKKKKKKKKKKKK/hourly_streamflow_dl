@@ -35,6 +35,7 @@ from common.metrics import StationAccumulator, compute_kge, compute_nse, summari
 from common.utils import get_device, setup_logging
 from data.africa import (
     AfricaDailyDataset,
+    AfricaWindowDataset,
     apply_onehot,
     build_static_matrix,
     load_hourly_forcing,
@@ -240,17 +241,28 @@ def main() -> None:
         )
 
     forcing, forcing_times = load_hourly_forcing(forcing_path, station_ids, scalers, logger=logger)
-    dataset = AfricaDailyDataset(
-        forcing=forcing,
-        forcing_times=forcing_times,
-        static=static,
-        observed=observed,
-        observed_dates=observed_dates,
-        station_ids=station_ids,
-        lookback_hourly=int(cfg.data.lookback_hourly),
-        chunk_size=args.chunk_size,
+    # The two data paths give the daily branch different meanings and lengths, so the
+    # dataset has to follow the checkpoint. Scoring a run B model (D = 365 genuine daily
+    # means, frequency_factor 24) through the prepared layout (D = a 1000-step power-law
+    # subsample) feeds it a different quantity entirely and looks like a model failure.
+    source = str(cfg.data.get("source", "prepared"))
+    shared = dict(
+        forcing=forcing, forcing_times=forcing_times, static=static, observed=observed,
+        observed_dates=observed_dates, station_ids=station_ids,
+        lookback_hourly=int(cfg.data.lookback_hourly), chunk_size=args.chunk_size,
         logger=logger,
     )
+    if source == "hourly_cache":
+        logger.info("data source %s -> AfricaWindowDataset (D = %d daily means)",
+                    source, int(cfg.data.get("lookback_daily", 365)))
+        dataset = AfricaWindowDataset(
+            lookback_daily=int(cfg.data.get("lookback_daily", 365)), **shared
+        )
+    elif source == "prepared":
+        logger.info("data source %s -> AfricaDailyDataset (prepared 1000-step layout)", source)
+        dataset = AfricaDailyDataset(**shared)
+    else:
+        raise SystemExit(f"data.source must be prepared|hourly_cache, got {source!r}")
 
     folds = args.folds if args.folds is not None else list(range(int(cfg.folds.n_folds)))
     subdir, filename = CHECKPOINTS[args.checkpoint_kind]
