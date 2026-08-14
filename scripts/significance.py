@@ -192,10 +192,27 @@ def main() -> None:
                 improved["median_error_reduction"].median() if len(improved) else float("nan"),
                 degraded["median_error_reduction"].median() if len(degraded) else float("nan"))
 
-    # Pooled test on per-station KGE, for continuity with the headline numbers.
-    pooled = wilcoxon(table["kge_M1"], table["kge_M0"])
-    logger.info("pooled Wilcoxon on per-station KGE: median ΔKGE %+.4f, p = %.3e",
-                (table["kge_M1"] - table["kge_M0"]).median(), float(pooled.pvalue))
+    # Pooled test on per-station KGE, for continuity with the headline numbers. A
+    # single non-finite KGE makes wilcoxon return nan for the whole test, so drop
+    # those pairs and say how many rather than reporting nan.
+    finite = np.isfinite(table["kge_M0"]) & np.isfinite(table["kge_M1"])
+    pooled = wilcoxon(table.loc[finite, "kge_M1"], table.loc[finite, "kge_M0"])
+    logger.info("pooled Wilcoxon on per-station KGE: median ΔKGE %+.4f, p = %.3e "
+                "(%d pairs; %d dropped for a non-finite KGE)",
+                (table.loc[finite, "kge_M1"] - table.loc[finite, "kge_M0"]).median(),
+                float(pooled.pvalue), int(finite.sum()), int((~finite).sum()))
+
+    # KGE and absolute error are not the same question, and here they disagree often
+    # enough that reporting only one would misrepresent the result.
+    from scipy.stats import spearmanr
+
+    delta_kge = (table["kge_M1"] - table["kge_M0"])[finite]
+    delta_err = table["median_error_reduction"][finite]
+    agree = float(((delta_kge > 0) == (delta_err > 0)).mean())
+    rho = float(spearmanr(delta_kge, delta_err).statistic)
+    logger.info("KGE improved at %.1f%% of stations, absolute error improved at %.1f%% "
+                "-- same direction at %.1f%% (Spearman %+.3f)",
+                100 * (delta_kge > 0).mean(), 100 * (delta_err > 0).mean(), 100 * agree, rho)
 
     (out_dir / "significance_summary.json").write_text(json.dumps({
         "n_stations": n, "alpha": args.alpha,
@@ -204,8 +221,13 @@ def main() -> None:
         "n_significant_after_bh": int(len(sig)),
         "n_improved": int(len(improved)), "n_degraded": int(len(degraded)),
         "median_error_reduction": float(table["median_error_reduction"].median()),
-        "pooled_median_delta_kge": float((table["kge_M1"] - table["kge_M0"]).median()),
+        "pooled_median_delta_kge": float(delta_kge.median()),
         "pooled_wilcoxon_p": float(pooled.pvalue),
+        "n_pooled_pairs": int(finite.sum()),
+        "frac_kge_improved": float((delta_kge > 0).mean()),
+        "frac_error_improved": float((delta_err > 0).mean()),
+        "frac_metrics_agree": agree,
+        "spearman_kge_vs_error": rho,
     }, indent=2))
 
 
