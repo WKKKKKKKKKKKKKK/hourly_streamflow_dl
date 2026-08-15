@@ -1,5 +1,5 @@
-# Fold-1 hyperparameter search variant: hidden256
-# Deviation from configs/phase1_runB.yaml: model.hidden_size_daily = 256, model.hidden_size_hourly = 256
+# Fold-1 hyperparameter search variant: r07_bs128_do4_hs128_H168
+# Deviation from configs/phase1_runB.yaml: data.chunk_size = 128, model.dropout = 0.4, model.hidden_size_daily = 128, model.hidden_size_hourly = 128, data.lookback_hourly = 168, train.batches_per_epoch = 80000, transfer.batches_per_epoch = 16000
 data:
   root: /ibex/project/c2266/abbaa0a/data/input_data/hourly_q_dl/6datasets_H_8760_512_temporal_local_19800101_20251231_0.7_0.3_False_ts_func2_1000_5.0_False_10000_s_func2_1095_10000_3_42_penman_MSWEP_V316_test_Past_hourly_10_hourly_9181_42
   index_dir: index
@@ -7,8 +7,8 @@ data:
   cache_dir: /ibex/user/kongw0a/hourly_cache
   stride: 24
   lookback_daily: 365
-  chunk_size: 512
-  lookback_hourly: 72
+  chunk_size: 128
+  lookback_hourly: 168
   include_corrected: true
   static_exclude:
   - pedigree_of_HDI_2015
@@ -34,8 +34,8 @@ folds:
   n_folds: 5
   seed: 42
 model:
-  hidden_size_daily: 256
-  hidden_size_hourly: 256
+  hidden_size_daily: 128
+  hidden_size_hourly: 128
   num_layers: 1
   dropout: 0.4
   head_dropout: true
@@ -43,7 +43,7 @@ model:
   reg_window: 24
 train:
   epochs: 30
-  batches_per_epoch: 20000
+  batches_per_epoch: 80000
   val_max_stations: 0
   val_batches_per_station: 1
   lr: 0.0005
@@ -58,7 +58,7 @@ train:
   grad_clip: 1.0
 transfer:
   epochs: 12
-  batches_per_epoch: 4000
+  batches_per_epoch: 16000
   lr: 0.0005
   weight_decay: 1.0e-05
   agg_loss_weight: 0.5
@@ -78,4 +78,4 @@ wandb:
   entity: null
   mode: online
   group: null
-output_root: outputs/search/hidden256
+output_root: outputs/search/r07_bs128_do4_hs128_H168

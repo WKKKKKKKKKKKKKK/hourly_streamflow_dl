@@ -6,20 +6,14 @@ reported so far used hand-set, frozen hyperparameters, so this exists to answer
 "were they reasonable?" rather than to replace them; adopting a winner would mean
 re-running every comparison, which is a separate decision.
 
-The grid is not generic. The dominant deficit found throughout this work is
-under-dispersion -- alpha = std(sim)/std(obs) below 1 at 76.6% of stations at M0,
-carrying 59.4% of the KGE gap, and collapsing to 0.162 on Africa. Two of the knobs
-here are the ones that could plausibly cause it:
+The grid mirrors the reference 100-station experiment's joint sweep rather than
+varying one knob at a time, so interactions are visible -- a small hidden size may
+only work at low dropout, and one-at-a-time deviations cannot show that.
 
-  dropout        0.4 is high. Training with heavy dropout averages over many
-                 sub-networks, and averaging suppresses output variance. If alpha
-                 rises sharply at lower dropout, the headline deficit is partly a
-                 regularisation artefact rather than an inherent limit.
-  hidden_size    too little capacity forces the model toward the conditional mean,
-                 which also depresses variance.
-
-The rest vary one thing each from the frozen baseline, so every run is interpretable
-against it rather than being a point in an uninterpretable joint space.
+Batches per epoch is rescaled with chunk_size so every variant sees the SAME number
+of samples per epoch (10.24M). Without that, "batch 128" would also silently mean
+"a quarter of the training data per epoch", and batch size could not be separated
+from training volume.
 
     python -m scripts.make_search_configs --out-dir configs/search
 """
@@ -31,26 +25,66 @@ from pathlib import Path
 
 import yaml
 
-# (name, {dotted key: value}) -- one deviation each, except where noted.
+# The reference 100-station experiment tuned a JOINT grid, not one knob at a time:
+# its run directories encode bs {128,256} x do {0.4,0.6} x hs {64,128,256} x
+# H {72,168,336} with D fixed at 365, and its daily-LSTM baseline additionally swept
+# lr {1e-4, 5e-4, 1e-3}. Mirroring that is the defensible choice -- a joint grid can
+# find interactions (small hidden size may only work with low dropout) that
+# one-at-a-time deviations cannot.
+#
+# Two additions to the reference grid, both deliberate:
+#   * dropout 0.0 and 0.2. The reference only tried 0.4 and 0.6, but the dominant
+#     deficit in this work is under-dispersion (alpha < 1 at 76.6% of stations,
+#     59.4% of the KGE gap, 0.162 on Africa). Heavy dropout averages over
+#     sub-networks and averaging suppresses output variance, so low dropout is the
+#     most direct test of whether that deficit is partly a regularisation artefact.
+#   * the frozen baseline itself, so every variant has a like-for-like reference.
+#
+# In this codebase one dataset item IS a chunk of samples, so chunk_size is the
+# effective batch size and the reference's bs maps onto it.
+
+def _spec(bs, do, hs, h, lr=None):
+    out = {
+        "data.chunk_size": bs,
+        "model.dropout": do,
+        "model.hidden_size_daily": hs,
+        "model.hidden_size_hourly": hs,
+        "data.lookback_hourly": h,
+    }
+    if lr is not None:
+        out["train.lr"] = lr
+        exp = {1.0e-3: "1:1e-3,12:2e-4,22:1e-4", 1.0e-4: "1:1e-4,12:5e-5,22:2e-5"}[lr]
+        out["train.lr_schedule"] = exp
+    # Hold samples/epoch fixed: 20000 x 512 in the frozen baseline. A smaller batch
+    # therefore takes proportionally more optimiser steps, which is what changing the
+    # batch size means -- as opposed to quietly training on less data.
+    out["train.batches_per_epoch"] = int(20000 * 512 / bs)
+    out["transfer.batches_per_epoch"] = int(4000 * 512 / bs)
+    return out
+
+
 VARIANTS = [
-    ("baseline", {}),
-    # --- the alpha hypothesis -------------------------------------------------
-    ("dropout00", {"model.dropout": 0.0}),
-    ("dropout02", {"model.dropout": 0.2}),
-    ("dropout06", {"model.dropout": 0.6}),
-    ("hidden64", {"model.hidden_size_daily": 64, "model.hidden_size_hourly": 64}),
-    ("hidden256", {"model.hidden_size_daily": 256, "model.hidden_size_hourly": 256}),
-    # --- capacity / depth -----------------------------------------------------
-    ("layers2", {"model.num_layers": 2}),
-    # --- optimisation ---------------------------------------------------------
-    ("lr1e3", {"train.lr": 1.0e-3, "train.lr_schedule": "1:1e-3,12:2e-4,22:1e-4"}),
-    ("lr2e4", {"train.lr": 2.0e-4, "train.lr_schedule": "1:2e-4,12:5e-5,22:2e-5"}),
-    # --- inputs ---------------------------------------------------------------
-    ("hourly168", {"data.lookback_hourly": 168}),
-    ("hourly24", {"data.lookback_hourly": 24}),
-    # --- the daily-mean regulariser ------------------------------------------
-    ("reglambda03", {"train.reg_lambda": 0.3}),
-    ("reglambda30", {"train.reg_lambda": 3.0}),
+    ("baseline", {}),                                   # frozen: bs512 do0.4 hs128 H72
+    # --- the reference's 12 combinations ---------------------------------------
+    ("r01_bs128_do4_hs64_H72",   _spec(128, 0.4, 64, 72)),
+    ("r02_bs128_do4_hs64_H168",  _spec(128, 0.4, 64, 168)),
+    ("r03_bs256_do4_hs64_H168",  _spec(256, 0.4, 64, 168)),
+    ("r04_bs128_do6_hs64_H168",  _spec(128, 0.6, 64, 168)),
+    ("r05_bs256_do6_hs64_H168",  _spec(256, 0.6, 64, 168)),
+    ("r06_bs256_do4_hs64_H336",  _spec(256, 0.4, 64, 336)),
+    ("r07_bs128_do4_hs128_H168", _spec(128, 0.4, 128, 168)),
+    ("r08_bs256_do4_hs128_H168", _spec(256, 0.4, 128, 168)),
+    ("r09_bs128_do6_hs128_H168", _spec(128, 0.6, 128, 168)),
+    ("r10_bs128_do4_hs128_H336", _spec(128, 0.4, 128, 336)),
+    ("r11_bs128_do4_hs256_H168", _spec(128, 0.4, 256, 168)),
+    ("r12_bs256_do4_hs256_H168", _spec(256, 0.4, 256, 168)),
+    # --- low dropout, to test the under-dispersion hypothesis -------------------
+    ("d00_bs128_hs128_H168", _spec(128, 0.0, 128, 168)),
+    ("d02_bs128_hs128_H168", _spec(128, 0.2, 128, 168)),
+    ("d02_bs128_hs256_H168", _spec(128, 0.2, 256, 168)),
+    # --- learning rate, from the reference's daily-baseline sweep ---------------
+    ("lr1e3_bs128_hs128_H168", _spec(128, 0.4, 128, 168, lr=1.0e-3)),
+    ("lr1e4_bs128_hs128_H168", _spec(128, 0.4, 128, 168, lr=1.0e-4)),
 ]
 
 
