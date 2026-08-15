@@ -35,6 +35,7 @@ class sMTSLSTM(nn.Module):
         dropout: float = 0.0,
         frequency_factor: int = 1,
         head_dropout: bool = True,
+        initial_forget_bias: float | None = None,
     ):
         super().__init__()
         self.hidden_size_daily = int(hidden_size_daily)
@@ -56,6 +57,23 @@ class sMTSLSTM(nn.Module):
         self.dropout = nn.Dropout(dropout) if head_dropout else nn.Identity()
         self.head_daily = nn.Linear(self.hidden_size_daily, 1)
         self.head_hourly = nn.Linear(self.hidden_size_hourly, 1)
+
+        # Gauch et al.'s reference implementation opens the forget gate at
+        # initialisation (neuralhydrology mtslstm.py sets bias_hh_l0 over the forget
+        # slice). With a 365-step daily branch an initially half-closed gate makes the
+        # cell state decay before the sequence ends, so long-memory signals -- snowpack,
+        # groundwater -- never reach the hand-off. This was missing here.
+        # PyTorch packs LSTM gates as [input, forget, cell, output], so the forget
+        # slice is rows hidden_size:2*hidden_size.
+        if initial_forget_bias is not None:
+            self.initial_forget_bias = float(initial_forget_bias)
+            for lstm, hidden in ((self.lstm_daily, self.hidden_size_daily),
+                                 (self.lstm_hourly, self.hidden_size_hourly)):
+                for layer in range(self.num_layers):
+                    bias = getattr(lstm, f"bias_hh_l{layer}")
+                    bias.data[hidden : 2 * hidden] = self.initial_forget_bias
+        else:
+            self.initial_forget_bias = None
 
     def forward(self, x_dict: dict[str, torch.Tensor], x_static: torch.Tensor) -> dict[str, torch.Tensor]:
         x_d, x_h = x_dict["D"], x_dict["H"]
@@ -104,6 +122,7 @@ def build_model(cfg, dyn_input_size: int, static_input_size: int) -> sMTSLSTM:
         dropout=float(model_cfg.dropout),
         frequency_factor=int(model_cfg.frequency_factor),
         head_dropout=bool(model_cfg.get("head_dropout", True)),
+        initial_forget_bias=model_cfg.get("initial_forget_bias"),
     )
 
 

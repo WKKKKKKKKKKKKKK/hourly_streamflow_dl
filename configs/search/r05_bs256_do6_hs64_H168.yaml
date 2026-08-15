@@ -39,6 +39,7 @@ model:
   num_layers: 1
   dropout: 0.6
   head_dropout: true
+  initial_forget_bias: null
   frequency_factor: 24
   reg_window: 24
 train:

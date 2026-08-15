@@ -106,6 +106,9 @@ model:
   # dropout argument when num_layers == 1, so the 100-station reference trained
   # with none despite dropout=0.4. Set false to reproduce that exactly.
   head_dropout: true
+  # Gauch et al. open the forget gate at initialisation (neuralhydrology mtslstm.py).
+  # null keeps PyTorch's default so every result already reported stays reproducible.
+  initial_forget_bias: null
   # frequency_factor positions the state hand-off ONLY:
   #   transfer_index = len(D) - len(H)//frequency_factor
   # With a positional split of one sequence, 1 is what puts the hand-off exactly

@@ -10,6 +10,26 @@ The grid mirrors the reference 100-station experiment's joint sweep rather than
 varying one knob at a time, so interactions are visible -- a small hidden size may
 only work at low dropout, and one-at-a-time deviations cannot show that.
 
+It is also aligned with Gauch et al.'s own MTS-LSTM implementation (neuralhydrology,
+examples/04-Multi-Timescale). Reading that config surfaced three real differences
+from what was frozen here:
+
+  initial_forget_bias = 3   Their model opens the forget gate at initialisation.
+                            This was simply MISSING here and is now implemented; with
+                            a 365-step daily branch a half-closed gate lets the cell
+                            state decay before the hand-off, so snowpack/groundwater
+                            memory never arrives. Plausibly relevant to the
+                            under-dispersion that dominates these results.
+  seq_length 1h = 336       They use 14 days of hourly input; this was frozen at 72.
+  learning rate 1e-2        Twenty times higher than the 5e-4 frozen here. Their loss
+                            is MSE and this one is basin-normalised NSE, so the scales
+                            are not directly comparable -- which is exactly why it
+                            needs testing rather than assuming.
+
+Their other settings already match: hidden_size 64 (paper) vs 128 here, dropout 0.4,
+batch 256, clip_gradient_norm 1, seq_length 1D 365, linear h/c state transfer, and
+the tie_frequencies regulariser (reg_lambda here).
+
 Batches per epoch is rescaled with chunk_size so every variant sees the SAME number
 of samples per epoch (10.24M). Without that, "batch 128" would also silently mean
 "a quarter of the training data per epoch", and batch size could not be separated
@@ -43,7 +63,7 @@ import yaml
 # In this codebase one dataset item IS a chunk of samples, so chunk_size is the
 # effective batch size and the reference's bs maps onto it.
 
-def _spec(bs, do, hs, h, lr=None):
+def _spec(bs, do, hs, h, lr=None, forget_bias=None):
     out = {
         "data.chunk_size": bs,
         "model.dropout": do,
@@ -53,8 +73,16 @@ def _spec(bs, do, hs, h, lr=None):
     }
     if lr is not None:
         out["train.lr"] = lr
-        exp = {1.0e-3: "1:1e-3,12:2e-4,22:1e-4", 1.0e-4: "1:1e-4,12:5e-5,22:2e-5"}[lr]
+        # Gauch et al. decay at epochs 30 and 40 of 50; scaled to the 30 epochs here.
+        exp = {
+            1.0e-2: "1:1e-2,12:5e-3,22:1e-3",
+            5.0e-3: "1:5e-3,12:1e-3,22:5e-4",
+            1.0e-3: "1:1e-3,12:2e-4,22:1e-4",
+            1.0e-4: "1:1e-4,12:5e-5,22:2e-5",
+        }[lr]
         out["train.lr_schedule"] = exp
+    if forget_bias is not None:
+        out["model.initial_forget_bias"] = forget_bias
     # Hold samples/epoch fixed: 20000 x 512 in the frozen baseline. A smaller batch
     # therefore takes proportionally more optimiser steps, which is what changing the
     # batch size means -- as opposed to quietly training on less data.
@@ -65,7 +93,7 @@ def _spec(bs, do, hs, h, lr=None):
 
 VARIANTS = [
     ("baseline", {}),                                   # frozen: bs512 do0.4 hs128 H72
-    # --- the reference's 12 combinations ---------------------------------------
+    # --- the reference 100-station experiment's 12 combinations -----------------
     ("r01_bs128_do4_hs64_H72",   _spec(128, 0.4, 64, 72)),
     ("r02_bs128_do4_hs64_H168",  _spec(128, 0.4, 64, 168)),
     ("r03_bs256_do4_hs64_H168",  _spec(256, 0.4, 64, 168)),
@@ -78,14 +106,28 @@ VARIANTS = [
     ("r10_bs128_do4_hs128_H336", _spec(128, 0.4, 128, 336)),
     ("r11_bs128_do4_hs256_H168", _spec(128, 0.4, 256, 168)),
     ("r12_bs256_do4_hs256_H168", _spec(256, 0.4, 256, 168)),
+    # --- Gauch et al.'s own settings -------------------------------------------
+    # hidden 64, batch 256, dropout 0.4, 336 hourly steps, forget gate opened.
+    ("g01_gauch_hs64_H336",      _spec(256, 0.4, 64, 336, forget_bias=3.0)),
+    ("g02_gauch_hs128_H336",     _spec(256, 0.4, 128, 336, forget_bias=3.0)),
+    # Is the forget-gate init what matters, or the 336-step window? Vary one.
+    ("g03_forgetbias_H72",       _spec(256, 0.4, 128, 72, forget_bias=3.0)),
+    ("g04_forgetbias_H168",      _spec(256, 0.4, 128, 168, forget_bias=3.0)),
+    # Their learning rate, which is 20x this one's. Tested with and without the
+    # forget-gate init because a high LR and a saturated gate can interact.
+    ("g05_lr1e2",                _spec(256, 0.4, 128, 336, lr=1.0e-2)),
+    ("g06_lr1e2_forgetbias",     _spec(256, 0.4, 128, 336, lr=1.0e-2, forget_bias=3.0)),
+    ("g07_lr5e3_forgetbias",     _spec(256, 0.4, 128, 336, lr=5.0e-3, forget_bias=3.0)),
     # --- low dropout, to test the under-dispersion hypothesis -------------------
     ("d00_bs128_hs128_H168", _spec(128, 0.0, 128, 168)),
     ("d02_bs128_hs128_H168", _spec(128, 0.2, 128, 168)),
     ("d02_bs128_hs256_H168", _spec(128, 0.2, 256, 168)),
+    ("d02_forgetbias_H336",  _spec(256, 0.2, 128, 336, forget_bias=3.0)),
     # --- learning rate, from the reference's daily-baseline sweep ---------------
     ("lr1e3_bs128_hs128_H168", _spec(128, 0.4, 128, 168, lr=1.0e-3)),
     ("lr1e4_bs128_hs128_H168", _spec(128, 0.4, 128, 168, lr=1.0e-4)),
 ]
+
 
 
 def set_path(tree: dict, dotted: str, value):
