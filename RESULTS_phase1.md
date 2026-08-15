@@ -240,6 +240,179 @@ convective peaks are systematically under-predicted, in both M0 and M1.
 Coverage cost worth noting separately: 531,717,759 valid all-hour targets exist;
 stride 24 uses 73,808,280 of them (13.9%), all at the same clock hour.
 
+## Africa: the same experiment on a continent with no training station
+
+The 294 African basins have daily discharge and no hourly discharge — Phase I's
+premise, occurring naturally. None appears anywhere in the training data, so this is
+the only genuinely external test here. The model is driven by ERA5-Land hourly
+forcing, its last 24 hourly outputs are averaged into a daily value, and that is
+scored against observed daily `q_mm` over 1980–1995 (the forcing span; 282 of 294
+basins have >365 observed days inside it, median 3,926).
+
+| | KGE | r | α | β | KGE>0 |
+|---|---|---|---|---|---|
+| **M0 zero-shot** | −0.032 | 0.686 | **0.162** | 0.597 | 42.4% |
+| **M1 daily-only fine-tune** | **+0.143** | 0.685 | **0.561** | 0.397 | 64.0% |
+| replay 0.25 | +0.080 | 0.690 | 0.501 | 0.360 | 60.1% |
+| blocked M0 / M1 | −0.066 / +0.078 | 0.678 / 0.675 | 0.144 / 0.492 | | 39.2% / 59.0% |
+| ERA5-Land runoff | −0.334 | 0.403 | 1.595 | 1.107 | 24.7% |
+| continent-PUB baseline | +0.279 | | | | |
+
+**Paired ΔKGE = +0.165, 72.4% of basins improved (p = 3.7e-16)** — more than double
+the global gain (+0.026 random, +0.071 blocked). Daily-only supervision is worth
+*more*, not less, on a continent the model has never seen.
+
+Three things line up with everything else in this document:
+
+- **r is untouched again** (0.686 → 0.685). Across five cases — two data paths, two
+  splits, three replay ratios, and now a different continent — daily-aggregate
+  supervision never moves timing. That is the robust result.
+- **α is the whole story and Africa is its extreme.** Zero-shot α = 0.162: the model
+  reproduces 16% of the observed variability. Fine-tuning lifts it to 0.561, and that
+  is where the +0.165 comes from. Compare run A 0.72, run B 0.86, Africa 0.16 — the
+  further out of domain, the worse the under-dispersion.
+- **Replay is slightly worse here (−0.016), which confirms the damping mechanism
+  rather than contradicting it.** Replay damps the re-scaling; that helps where the
+  model overshoots (6.25% of global stations) and costs where the model needs the
+  full re-scaling (Africa, α far below 1).
+
+M1 beats the physical baseline decisively (+0.143 vs −0.334) and loses to a model
+trained specifically for continent holdout (+0.279), which is the expected place for
+a model that has never seen an African basin.
+
+The blocked-split models are slightly *worse* on Africa than the random-split ones
+(+0.078 vs +0.143), which is counter-intuitive; the uneven fold composition that
+spatial blocking forces (6 of 30 agency-by-fold cells empty) is the likeliest
+explanation, but this is recorded rather than explained.
+
+### Getting there took four wrong answers
+
+Africa is the only part of this work that had never run on real data, and it showed:
+a missing dependency, then tiles that cannot be assembled into a hypercube, then an
+mm/h vs mm/d factor of 24, then — worst — feeding run B's checkpoints the *prepared*
+1000-step subsample as their daily branch when they were trained on 365 genuine daily
+means. Each produced a completed job and plausible-looking numbers. The fourth
+yielded M0 = 0.001, M1 = −0.418 and an entire mechanistic story about "over-shooting
+into over-dispersion" that was pure artefact — the corrected numbers above have the
+opposite sign. `eval/africa.py` now dispatches on `cfg.data.source`, and
+`predict_daily` refuses to report when the simulated/observed ratio is off by a
+window length.
+
+## Where the gain lands, and where it does not (PLAN.md 5.1–5.3)
+
+`scripts/stratify_gain.py` cuts the per-station gain by 16 covariates.
+
+**The gain does not depend on how close the nearest training station is.** This is
+the opposite of what the blocked-split headline might suggest:
+
+| nearest station in another fold | M0 | gain |
+|---|---|---|
+| random split, 2.5 km | 0.564 | +0.029 |
+| random split, 31.8 km | 0.454 | +0.025 |
+| blocked split, 31 km | 0.603 | +0.031 |
+| blocked split, 94 km | 0.563 | +0.019 |
+| blocked split, 211 km | 0.342 | +0.031 |
+
+Proximity sets the *base* skill — M0 falls from 0.60 to 0.34 — and does nothing to
+how much daily supervision adds. Neighbour distance ranks last of 16 covariates by
+gain spread (0.011–0.012; Spearman −0.027 and −0.017). Together with the blocked
+split gaining more (+0.071 vs +0.045) and Africa most of all (+0.165), the method
+does not degrade in exactly the data-sparse setting that motivates it.
+
+**Catchment area is the strongest single predictor** (Spearman −0.142, p = 4e-41):
+
+| area | M0 | gain |
+|---|---|---|
+| < 87 km² | 0.429 | **+0.076** |
+| 87–233 | 0.503 | +0.050 |
+| 233–564 | 0.553 | +0.021 |
+| 564–1537 | 0.590 | +0.008 |
+| > 1537 km² | 0.599 | **−0.007** |
+
+Small, fast-responding catchments are where zero-shot does worst (M0 0.43, α 0.758)
+and where a daily total adds most. Large ones are already smooth, already at M0 0.60,
+and gain nothing. By agency: Iceland +0.218, central Europe +0.050, Australia +0.045,
+Germany +0.039, Japan +0.031, US +0.016. By Köppen zone the extremes are Cfc +0.235
+and Dfc +0.158 against BSh −0.021 and Dfa −0.012; arid B zones start at M0 −0.073
+(α 0.664) and daily aggregates do not rescue them.
+
+**Two of PLAN.md 5.3's predictions do not hold.** Reservoir impact has *no* effect on
+the gain (Spearman −0.006, p = 0.58) and `max_lag_corr` almost none (−0.022,
+p = 0.039), where snow/storage-dominated catchments were expected to gain least.
+Snow fraction is in fact positively associated (+0.081).
+
+## No degenerate solution — but M0 is jittery, not smooth (PLAN.md 5.4)
+
+`loss_agg` constrains only the 24-hour mean, so a constant-within-day output would
+satisfy it perfectly while being useless hourly. Stride-24 sampling makes this
+directly measurable: each sample's last 24 hourly outputs are one calendar day, and
+consecutive days stitch into a continuous series. Over 8,432 stations (mm/h):
+
+| | observed | M0 | M1 | M1/obs | M1/M0 |
+|---|---|---|---|---|---|
+| flashiness | 0.0285 | 0.1941 | 0.0572 | 2.01 | **0.30** |
+| intra-day std | 0.0058 | 0.0181 | 0.0088 | 1.52 | **0.49** |
+| intra-day range | 0.0187 | 0.0526 | 0.0285 | 1.53 | 0.54 |
+| q95 events/yr | 11.94 | 19.32 | 21.37 | 1.79 | 1.11 |
+| mean | 0.0483 | 0.0242 | **0.0490** | **1.01** | 2.03 |
+
+Nothing flattens. The failure mode is the reverse: **M0 is jittery and dry** — 3.1×
+too much intra-day variation, 6.8× too much flashiness, and only half the observed
+volume. Fine-tuning fixes the volume almost exactly (1.01×) and halves the excess
+jitter.
+
+This resolves an apparent contradiction with α. Over the whole series α at M0 is
+0.861, i.e. under-dispersed; within a day the model is over-dispersed by 3.1×. Both
+hold at once because M0's *day-to-day* variation is far too small while its
+*within-day* variation is too large — it fidgets without tracking events. Fine-tuning
+improves both.
+
+## Significance with FDR control, and a caveat that changes the claim (PLAN.md 5)
+
+Each of 8,862 stations gets its own paired Wilcoxon on sample-level |error|, then
+Benjamini-Hochberg across stations (at α = 0.05, ~443 stations would look significant
+by chance).
+
+- uncorrected p ≤ 0.05: 8,132 stations (91.8%)
+- **after BH: 8,117 significant (91.6%)** — the effect is real, not multiplicity
+- but the direction splits: **3,712 improved (41.9%) vs 4,405 degraded (49.7%)**
+- median error change across all stations: **−0.00019 mm/h, i.e. slightly worse**
+- pooled Wilcoxon on per-station KGE: median ΔKGE **+0.0214, p = 4.05e-33** (8,849
+  pairs; 13 dropped for a non-finite KGE)
+
+KGE and absolute error disagree often enough that quoting one alone misrepresents the
+result: KGE improves at 54.6% of stations, absolute error at 46.5%, and the two agree
+in direction at only 67.5% (Spearman +0.471). 1,798 stations gain KGE while losing
+accuracy; 1,075 do the reverse.
+
+**So the claim must be stated as calibration, not accuracy.** Daily-only supervision
+makes the hydrograph better calibrated — right volume, better variance ratio, less
+spurious intra-day jitter — while leaving point-wise error slightly worse at more
+stations than it improves. That is mechanistically consistent: raising α toward 1
+improves KGE, and absolute error is minimised by predicting closer to the conditional
+median. The two metrics want opposite things.
+
+## Global map (PLAN.md 5.5)
+
+`scripts/global_map.py` writes four panels (M0, M1, gain, α at M0) over all 8,843
+scored stations — the 5-fold design gives every station exactly one turn as a target,
+so there is a real value at every gauge.
+
+By latitude: >60° (Iceland) M0 0.283 gain **+0.218**; 45–60° 0.601/+0.046; 30–45°
+0.582/+0.015; 0–30° 0.432/**−0.015** (the only negative band); −30–0° 0.171/+0.033;
+<−30° 0.230/+0.055.
+
+The map also makes the honest point that "global" describes the model, not the gauge
+network: CAMELSH 5,059 | BOMAustralia 1,730 | LamaHCE 834 | Japan 690 | Germany 457 |
+LamaHIce 73 — **no African, South American or mainland Asian stations at all**, which
+is precisely why the Africa evaluation is not optional.
+
+A note on the figure itself: the first version was misleading. Plotting in
+value-sorted order puts extremes on top, and at this point density that repainted
+whole regions in the tail colour — the gain panel read as mostly deep red when its
+median is +0.026, and α as mostly deep purple when its median is 0.854. It now plots
+in random order with spans from the 10–90% range and arrows marking clipped values.
+
 ## Reproducing
 
 ```bash
@@ -257,7 +430,21 @@ D=$(CONFIG=configs/phase1_runB.yaml INDEX=samples_evalhours.npz \
 MERGE=1 INDEX=samples_evalhours.npz OUT_ROOT=outputs/runB_truedaily/diagnostics_allhours \
   CONFIG=configs/phase1_runB.yaml sbatch --dependency=afterany:$D --array=0 slurm/30_diagnose.sbatch
 CONFIG=configs/phase1_runB.yaml sbatch slurm/31_by_hour.sbatch
+
+# Africa (needs the rescaled forcing, not raw ERA5-Land)
+PRESET=forcing sbatch slurm/40_basin_average.sbatch
+python -m scripts.rescale_africa_forcing
+CONFIG=configs/phase1_runB.yaml KIND=transfer sbatch slurm/41_africa.sbatch
+
+# analyses, all evaluation-only
+python -m scripts.stratify_gain --run outputs/runB_truedaily/diagnostics_allhours
+python -m scripts.global_map    --run outputs/runB_truedaily/diagnostics_allhours
+CONFIG=configs/phase1_runB.yaml sbatch slurm/32_degenerate.sbatch
+CONFIG=configs/phase1_runB.yaml sbatch slurm/33_significance.sbatch
 ```
+
+Outputs live under `outputs/<run>/` and are **not** version-controlled; the scripts
+that regenerate them are.
 
 ## Open
 
@@ -270,4 +457,13 @@ CONFIG=configs/phase1_runB.yaml sbatch slurm/31_by_hour.sbatch
   always 24 h. The reference uses t-relative trailing means, which is alignment-
   invariant. The by-hour test says this costs little here, but it is a real
   difference from the reference.
-- Steps 4–5 (Africa daily validation) wait on the ERA5-Land forcing download.
+- **M2 (symbolic prior) and the hyperparameter search are not done.** PLAN.md marks
+  M2 optional; the search was to run on fold 1 only. Current hyperparameters are
+  hand-set and frozen so the runs stay comparable, which is fine for every relative
+  conclusion here but must be stated if absolute performance is quoted.
+- The Africa protocol used here applies models fine-tuned on temperate target stations
+  to African basins. The stronger experiment — fine-tune on African daily observations
+  themselves, which is exactly Phase I's premise occurring naturally — needs the
+  transfer machinery to accept African basins as a target domain and has not been run.
+- Blocked-split models underperform random-split ones on Africa (+0.078 vs +0.143).
+  Recorded, not explained.
