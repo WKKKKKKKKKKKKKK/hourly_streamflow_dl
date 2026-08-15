@@ -124,6 +124,21 @@ def main() -> None:
     run.italic = True
     note(doc, "本文所有数值由 scripts/build_report.py 直接从结果文件读取生成，未人工转录。")
 
+    para = doc.add_paragraph()
+    run = para.add_run("状态说明（2026-08-15）：")
+    run.bold = True
+    run.font.size = Pt(9.5)
+    run = para.add_run(
+        "本报告全部数值均在缺少 initial_forget_bias 的情况下产生。Gauch 等人已发表的 MTS-LSTM "
+        "将其设为 3，而本实现及其所依据的 100 站参考实现均无此项。基础配置现已设为 3——它属于"
+        "已发表方法的组成部分，而非调参旋钮；若要精确复现本报告数值，需将其设回 null。"
+        "fold 1 搜索正在分离其单独效应（g03_forgetbias_H72、g04_forgetbias_H168），"
+        "之后将带遗忘门、并结合搜索中明确更优的超参，对核心对比做一次性重跑。"
+        "本报告的对比类结论不受影响（所有运行使用同一初始化），"
+        "可能变动的是绝对水平，以及把 α 解释为根本天花板这一点。"
+    )
+    run.font.size = Pt(9.5)
+
     # ---------------- 1. 实验设置 ----------------
     doc.add_heading("1. 实验设置", level=1)
 

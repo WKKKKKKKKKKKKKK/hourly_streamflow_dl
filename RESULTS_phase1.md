@@ -17,6 +17,17 @@ Two data paths for the daily branch:
   365 *genuine* daily means, `frequency_factor: 24`. What the 100-station reference
   does. Cache: `/ibex/user/kongw0a/hourly_cache`.
 
+
+> **Status note (2026-08-15).** Every number in this document was produced WITHOUT
+> `initial_forget_bias`, which Gauch et al.'s published MTS-LSTM sets to 3 and which
+> was missing from this code and from the 100-station reference it was built on. The
+> base configs now set it to 3, because it is part of the published method rather than
+> a tuning knob; set it back to `null` to reproduce the numbers below exactly. A
+> fold-1 search is running that isolates its effect (`g03_forgetbias_H72`,
+> `g04_forgetbias_H168`), after which the core comparisons will be re-run once, with
+> the forget gate and any hyperparameter clearly shown to be better. Comparative
+> conclusions here are unaffected — all runs shared the same initialisation — but
+> absolute levels and the reading of α as a fundamental ceiling may change.
 ## Headline
 
 | | M0 | M1 | ΔKGE | r | α | β | r is culprit |
