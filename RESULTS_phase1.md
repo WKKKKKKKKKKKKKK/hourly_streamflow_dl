@@ -67,6 +67,32 @@ larger than the −0.021 the transfer costs. Run B halves the gap on its own (α
 under-dispersed share 68.0%), which is most of where its +0.096 M0 advantage comes
 from. Chasing α is worth more than chasing the transfer loss.
 
+### A caveat on this conclusion, not yet resolved
+
+Gauch et al.'s own MTS-LSTM opens the LSTM forget gate at initialisation
+(`initial_forget_bias: 3` in neuralhydrology). **Neither this implementation nor the
+100-station reference it was built from does so** — the deviation is from the paper,
+not between the two experiments here. Every result in this document was produced
+without it.
+
+That matters specifically for the under-dispersion claim. With a half-closed forget
+gate, a 365-step daily branch lets the cell state decay before it reaches the
+hand-off, so long-memory signals — snowpack, groundwater — never arrive at the hourly
+branch. The symptom that predicts is exactly what the intra-day diagnostic measured:
+M0's day-to-day variation far too small while its within-day jitter is 3.1x too large.
+
+So part of what is called a ceiling here may be a missing component rather than an
+inherent limit. The fold-1 search includes `g03_forgetbias_H72` and
+`g04_forgetbias_H168`, which hold the hourly window fixed and change only the forget
+gate, precisely to separate the two. Until those return, this section should be read
+as "α is the dominant deficit **of the model as trained here**", not as a statement
+about the architecture.
+
+Nothing in the comparative results is affected: every run — baseline, run A, run B,
+blocked, all replay ratios, Africa — used the same initialisation, so ΔKGE, the
+random-vs-blocked gap, the replay sweep and the Africa gain all stand. What could
+move is the absolute level, and the interpretation of α as a fundamental limit.
+
 ## Source replay: damping the re-scaling, not preventing forgetting
 
 Plain daily-only fine-tuning cost run B 0.107 median KGE on the source domain
@@ -457,7 +483,18 @@ that regenerate them are.
   always 24 h. The reference uses t-relative trailing means, which is alignment-
   invariant. The by-hour test says this costs little here, but it is a real
   difference from the reference.
-- **M2 (symbolic prior) and the hyperparameter search are not done.** PLAN.md marks
+- **`initial_forget_bias` is unimplemented in every run reported here** (see the
+  caveat under "The bigger lever"). Gauch et al. set it to 3; neither this code nor
+  the 100-station reference does. Comparative conclusions are unaffected; absolute
+  levels and the interpretation of α may be. The fold-1 search tests it directly.
+- **M2 (symbolic prior) is not being ported, deliberately.** Its expression is fitted
+  on CAMELS-US attributes whose global counterparts differ in scale by 2-400x, and one
+  term (`PERMAVE`, average permeability) has no same-quantity column in the global
+  table at all — `NSIDC_permafrost` is permafrost extent, a different variable, and
+  `cos(PERMAVE^2)` is extremely scale-sensitive. Beyond portability, the method
+  corrects **daily-branch bias**, while the deficit diagnosed throughout this work is
+  **hourly variance ratio**; the two do not address the same thing. PLAN.md marks M2
+  optional. The hyperparameter search IS running (fold 1, 26 variants). PLAN.md marks
   M2 optional; the search was to run on fold 1 only. Current hyperparameters are
   hand-set and frozen so the runs stay comparable, which is fine for every relative
   conclusion here but must be stated if absolute performance is quoted.
