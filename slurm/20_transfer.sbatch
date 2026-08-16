@@ -47,7 +47,24 @@ fi
 
 echo "fold=$FOLD python=$PYTHON_BIN node=$(hostname)"
 
+
+# These two scripts had NEITHER a --config flag NOR an overwrite guard: CONFIG=... was
+# silently ignored and the run wrote into whatever output_root the default config named.
+# A v2 submission would therefore have overwritten outputs/runA_regwin24, the source of
+# already-reported results. Same fix as the runB scripts.
+CONFIG="${CONFIG:-configs/phase1.yaml}"
+OUT_ROOT_CFG=$("$PYTHON_BIN" -c "
+from common.config import load_config, resolve
+print(resolve(load_config('$CONFIG', None).output_root))")
+if [[ -f "$OUT_ROOT_CFG/fold$FOLD/transfer/DONE" && "${FORCE:-0}" != "1" ]]; then
+  echo "fold $FOLD already complete under $OUT_ROOT_CFG -- refusing to overwrite." >&2
+  echo "Point the variant at its own output_root, or set FORCE=1 to redo it." >&2
+  exit 3
+fi
+echo "config=$CONFIG out=$OUT_ROOT_CFG fold=$FOLD"
+
 "$PYTHON_BIN" -u -m train.transfer_target \
+  --config "$CONFIG"
   --fold "$FOLD" \
   --peek-hourly \
   --set "wandb.group=phase1_transfer" ${EXTRA_SET[@]+"${EXTRA_SET[@]}"}
