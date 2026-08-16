@@ -52,6 +52,7 @@ STATIC_RENAME = {
 }
 KGZ_COLUMNS = ("KGZ_major", "KGZ_detailed")
 DYN_ORDER = ("pet", "pcp", "temp")
+DAILY_WINDOW = 24
 
 
 def load_kgz_codes() -> dict:
@@ -303,7 +304,13 @@ class AfricaDailyDataset(Dataset):
             # sample here sits at 23:00 with a verified-finite window, so the day is
             # complete and the mask is all-ones -- kept only so the loss signature
             # matches the global path.
-            y_daily = (self.observed[basin, day].astype(np.float32) - self.y_mean) / self.y_std
+            # The observations are mm/d; the model and its y scaler are mm/h. Divide by
+            # the window before standardising, or the target is 24x too large and the
+            # model learns to over-predict by that factor while the loss converges
+            # perfectly well in its own wrong units. (This is the second time a mm/h vs
+            # mm/d slip has reached a run on this path.)
+            daily_mm_per_h = self.observed[basin, day].astype(np.float32) / DAILY_WINDOW
+            y_daily = (daily_mm_per_h - self.y_mean) / self.y_std
             out["y_daily"] = torch.from_numpy(y_daily)
             out["daily_mask"] = torch.ones((n, 24), dtype=torch.bool)
             out["y"] = torch.from_numpy(y_daily)   # unused by the daily loss, kept for shape
@@ -449,7 +456,7 @@ class AfricaWindowDataset(Dataset):
         # Per-basin sigma of the daily observations, for the basin-normalised loss.
         self.station_y_std = np.ones(len(station_ids), dtype=np.float32)
         for b in range(len(station_ids)):
-            vals = observed[b][np.isfinite(observed[b])]
+            vals = observed[b][np.isfinite(observed[b])] / DAILY_WINDOW   # mm/d -> mm/h
             if vals.size > 1:
                 self.station_y_std[b] = max(float(np.std(vals)) / max(self.y_std, 1e-9), 1e-3)
 
@@ -498,7 +505,13 @@ class AfricaWindowDataset(Dataset):
             # sample here sits at 23:00 with a verified-finite window, so the day is
             # complete and the mask is all-ones -- kept only so the loss signature
             # matches the global path.
-            y_daily = (self.observed[basin, day].astype(np.float32) - self.y_mean) / self.y_std
+            # The observations are mm/d; the model and its y scaler are mm/h. Divide by
+            # the window before standardising, or the target is 24x too large and the
+            # model learns to over-predict by that factor while the loss converges
+            # perfectly well in its own wrong units. (This is the second time a mm/h vs
+            # mm/d slip has reached a run on this path.)
+            daily_mm_per_h = self.observed[basin, day].astype(np.float32) / DAILY_WINDOW
+            y_daily = (daily_mm_per_h - self.y_mean) / self.y_std
             out["y_daily"] = torch.from_numpy(y_daily)
             out["daily_mask"] = torch.ones((n, 24), dtype=torch.bool)
             out["y"] = torch.from_numpy(y_daily)   # unused by the daily loss, kept for shape

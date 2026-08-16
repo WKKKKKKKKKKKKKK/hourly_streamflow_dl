@@ -147,6 +147,24 @@ def main() -> None:
     train_ds = AfricaWindowDataset(split="training", with_daily=True, **common)
     valid_ds = AfricaWindowDataset(split="validation", **common)
 
+    # A unit slip in the target is invisible during training: the loss converges
+    # perfectly well in the wrong units and only the final alpha/beta reveal it. The
+    # first run of this script standardised mm/d observations with the mm/h y scaler
+    # and produced alpha 15.9, beta 19.3 while the loss fell from 1.19 to 0.66. So
+    # check the standardised target against the scale the model was trained on before
+    # spending an hour on it.
+    probe = train_ds[0]["y_daily"].numpy()
+    probe = probe[np.isfinite(probe)]
+    if probe.size:
+        logger.info("standardised daily target: mean %+.3f sd %.3f (training targets are ~N(0,1))",
+                    float(probe.mean()), float(probe.std()))
+        if not -5.0 <= float(probe.mean()) <= 5.0:
+            raise SystemExit(
+                f"standardised daily target has mean {probe.mean():+.2f} -- far outside the "
+                f"scale the model was trained on. A factor near {DAILY_WINDOW} means the "
+                "mm/d -> mm/h conversion is missing. Refusing to train."
+            )
+
     num_workers = int(cfg.get_path("transfer.num_workers", 4))
     pin = device.type == "cuda"
     train_loader = make_loader(train_ds, num_workers=num_workers, pin_memory=pin, shuffle=True)
@@ -160,6 +178,11 @@ def main() -> None:
     logger.info("scoring M0 (zero-shot) on the African validation period ...")
     m0 = score(model, valid_loader, device, y_mean, y_std)
     m0_summary = summarise(m0, "M0")
+    if not 0.05 <= m0_summary["median_alpha"] <= 20:
+        raise SystemExit(
+            f"M0 alpha is {m0_summary['median_alpha']:.2f} before any fine-tuning -- that is "
+            "a units or input-structure problem, not a model property. Refusing to continue."
+        )
     logger.info("M0: median KGE %.4f | r %.3f alpha %.3f beta %.3f | %d basins",
                 m0_summary["median_kge"], m0_summary["median_r"],
                 m0_summary["median_alpha"], m0_summary["median_beta"], m0_summary["n_basins"])
