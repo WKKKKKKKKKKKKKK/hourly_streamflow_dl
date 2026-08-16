@@ -1,7 +1,7 @@
 #!/bin/bash
 # Fold-1 hyperparameter search (PLAN.md 2). One variant per submission.
 #   CONFIG=configs/search/dropout00.yaml sbatch slurm/50_search.sbatch
-#SBATCH -N 1 --ntasks=1 --cpus-per-task=8 --mem=96G --time=18:00:00
+#SBATCH -N 1 --ntasks=1 --cpus-per-task=8 --mem=96G --time=36:00:00
 #SBATCH --constraint=v100 --gres=gpu:v100:1
 #SBATCH -J gmts_search -o logs/search_%j.out -e logs/search_%j.err
 set -eo pipefail
