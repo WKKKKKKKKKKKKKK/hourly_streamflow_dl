@@ -294,7 +294,23 @@ class AfricaDailyDataset(Dataset):
             "stations": [self.station_ids[b] for b in basin],
             "dates": self.observed_dates[day],
             "y_daily_obs": torch.from_numpy(self.observed[basin, day].astype(np.float32)),
+            "hours": torch.from_numpy(np.asarray(target, dtype=np.int64)),
+            "stn_std": torch.from_numpy(self.station_y_std[basin]),
         }
+        if self.with_daily:
+            # The transfer loss wants the daily target standardised the same way the
+            # model's outputs are, and a mask over the 24 hours it aggregates. Every
+            # sample here sits at 23:00 with a verified-finite window, so the day is
+            # complete and the mask is all-ones -- kept only so the loss signature
+            # matches the global path.
+            y_daily = (self.observed[basin, day].astype(np.float32) - self.y_mean) / self.y_std
+            out["y_daily"] = torch.from_numpy(y_daily)
+            out["daily_mask"] = torch.ones((n, 24), dtype=torch.bool)
+            out["y"] = torch.from_numpy(y_daily)   # unused by the daily loss, kept for shape
+        else:
+            out["y_daily"] = None
+            out["daily_mask"] = None
+        return out
 
 class AfricaWindowDataset(Dataset):
     """African daily samples shaped like the hourly-cache path (run B), not the prepared one.
@@ -330,7 +346,21 @@ class AfricaWindowDataset(Dataset):
         lookback_daily: int = 365,
         chunk_size: int = 512,
         logger=None,
+        split: str | None = None,
+        train_frac: float = 0.7,
+        scalers: dict | None = None,
+        with_daily: bool = False,
     ):
+        """``split`` / ``with_daily`` turn this into a TRAINING set for the transfer step.
+
+        Africa is Phase I's premise occurring naturally -- daily discharge, no hourly --
+        so the strongest experiment fine-tunes on African daily observations themselves
+        rather than applying a model fine-tuned on temperate target stations. That needs
+        three things the evaluation path does not: a temporal split per basin, the daily
+        target in standardised units, and the per-basin sigma the basin-NSE loss divides
+        by. ``scalers`` is required whenever ``with_daily`` is set, because an unstandardised
+        target would silently be off by the y scaler.
+        """
         self.forcing = forcing
         self.static = static
         self.station_ids = list(station_ids)
@@ -388,9 +418,40 @@ class AfricaWindowDataset(Dataset):
         ])
         keep = h_ok & d_ok
         dropped = int((~keep).sum())
-        self.pairs = pairs[keep]
         self.observed = observed
         self.observed_dates = observed_dates
+        self.with_daily = bool(with_daily)
+        self.y_mean = float(scalers["y_mean"]) if scalers else 0.0
+        self.y_std = float(scalers["y_std"]) if scalers else 1.0
+        if self.with_daily and scalers is None:
+            raise ValueError("with_daily needs scalers -- an unstandardised daily target "
+                             "would be off by the y scaler and the loss would be meaningless")
+        pairs = pairs[keep]
+
+        # Split each basin's OWN record in time, the same 70/30 convention the global
+        # experiment uses. Splitting globally by date would give water-rich basins a
+        # different train/test boundary than sparse ones.
+        if split is not None:
+            if split not in {"training", "validation"}:
+                raise ValueError(f"split must be training|validation, got {split!r}")
+            keep_split = np.zeros(len(pairs), dtype=bool)
+            for b in np.unique(pairs[:, 0]):
+                rows = np.flatnonzero(pairs[:, 0] == b)
+                order = rows[np.argsort(pairs[rows, 2])]
+                cut = int(len(order) * train_frac)
+                chosen = order[:cut] if split == "training" else order[cut:]
+                keep_split[chosen] = True
+            pairs = pairs[keep_split]
+            if len(pairs) == 0:
+                raise ValueError(f"no African samples left in the {split} split")
+
+        self.pairs = pairs
+        # Per-basin sigma of the daily observations, for the basin-normalised loss.
+        self.station_y_std = np.ones(len(station_ids), dtype=np.float32)
+        for b in range(len(station_ids)):
+            vals = observed[b][np.isfinite(observed[b])]
+            if vals.size > 1:
+                self.station_y_std[b] = max(float(np.std(vals)) / max(self.y_std, 1e-9), 1e-3)
 
         self.chunks = [
             self.pairs[i : i + self.chunk_size]
@@ -419,7 +480,7 @@ class AfricaWindowDataset(Dataset):
             end = (t - self.day0) // 24
             x_d[i] = self.daily[b, end - self.k_d : end]
 
-        return {
+        out = {
             "x": {
                 "D": torch.from_numpy(x_d),
                 "H": torch.from_numpy(x_h),
@@ -428,4 +489,20 @@ class AfricaWindowDataset(Dataset):
             "stations": [self.station_ids[b] for b in basin],
             "dates": self.observed_dates[day],
             "y_daily_obs": torch.from_numpy(self.observed[basin, day].astype(np.float32)),
+            "hours": torch.from_numpy(np.asarray(target, dtype=np.int64)),
+            "stn_std": torch.from_numpy(self.station_y_std[basin]),
         }
+        if self.with_daily:
+            # The transfer loss wants the daily target standardised the same way the
+            # model's outputs are, and a mask over the 24 hours it aggregates. Every
+            # sample here sits at 23:00 with a verified-finite window, so the day is
+            # complete and the mask is all-ones -- kept only so the loss signature
+            # matches the global path.
+            y_daily = (self.observed[basin, day].astype(np.float32) - self.y_mean) / self.y_std
+            out["y_daily"] = torch.from_numpy(y_daily)
+            out["daily_mask"] = torch.ones((n, 24), dtype=torch.bool)
+            out["y"] = torch.from_numpy(y_daily)   # unused by the daily loss, kept for shape
+        else:
+            out["y_daily"] = None
+            out["daily_mask"] = None
+        return out
