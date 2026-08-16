@@ -1,7 +1,7 @@
 #!/bin/bash
 # Phase I Steps 4-5 -- African daily validation. Out of sample for every fold.
 #   CONFIG=configs/phase1_runB.yaml sbatch slurm/41_africa.sbatch
-#SBATCH -N 1 --ntasks=1 --cpus-per-task=8 --mem=96G --time=06:00:00
+#SBATCH -N 1 --ntasks=1 --cpus-per-task=8 --mem=96G --time=02:00:00
 #SBATCH --constraint=v100 --gres=gpu:v100:1
 #SBATCH -J gmts_africa -o logs/africa_%j.out -e logs/africa_%j.err
 set -eo pipefail

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Intra-day shape check -- the degenerate-solution diagnostic (PLAN.md 5.4).
 #   CONFIG=configs/phase1_runB.yaml sbatch slurm/32_degenerate.sbatch
-#SBATCH -N 1 --ntasks=1 --cpus-per-task=8 --mem=128G --time=06:00:00
+#SBATCH -N 1 --ntasks=1 --cpus-per-task=8 --mem=128G --time=03:00:00
 #SBATCH --constraint=v100 --gres=gpu:v100:1
 #SBATCH -J gmts_degen -o logs/degen_%j.out -e logs/degen_%j.err
 set -eo pipefail

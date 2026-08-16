@@ -1,7 +1,7 @@
 #!/bin/bash
 # Per-station paired Wilcoxon + Benjamini-Hochberg (PLAN.md 5).
 #   CONFIG=configs/phase1_runB.yaml sbatch slurm/33_significance.sbatch
-#SBATCH -N 1 --ntasks=1 --cpus-per-task=8 --mem=128G --time=06:00:00
+#SBATCH -N 1 --ntasks=1 --cpus-per-task=8 --mem=128G --time=03:00:00
 #SBATCH --constraint=v100 --gres=gpu:v100:1
 #SBATCH -J gmts_signif -o logs/signif_%j.out -e logs/signif_%j.err
 set -eo pipefail

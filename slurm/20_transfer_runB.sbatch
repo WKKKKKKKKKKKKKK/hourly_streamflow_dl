@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=96G
-#SBATCH --time=08:00:00      # measured ~3 h/fold, dominated by the final eval passes
+#SBATCH --time=03:00:00      # measured ~3 h/fold, dominated by the final eval passes
 #SBATCH --constraint=v100
 #SBATCH --gres=gpu:v100:1
 #SBATCH --array=0-4

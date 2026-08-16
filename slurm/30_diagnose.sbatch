@@ -9,7 +9,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=96G
-#SBATCH --time=04:00:00      # two forward passes over the same eval set as the transfer step
+#SBATCH --time=02:00:00      # two forward passes over the same eval set as the transfer step
 #SBATCH --constraint=v100
 #SBATCH --gres=gpu:v100:1
 #SBATCH --array=0-4
