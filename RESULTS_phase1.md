@@ -203,6 +203,44 @@ random). Averaging over 5 folds mitigates it but does not eliminate it. Block co
 was chosen from that trade-off rather than picked: 60 blocks gives 140 km separation
 but a 52% spread in US share, 240 blocks gives 64 km and a 17% spread.
 
+### The drop is not a composition artefact — paired, per station
+
+Spatial blocking necessarily unbalances fold composition, so "M0 falls" invites the
+objection that the two splits scored different mixes of catchments. The 5-fold design
+settles it: every station serves as a target exactly once in EACH split, so the runs
+pair station by station and composition is held fixed by construction.
+
+Over the same **8,709** catchments (`scripts/paired_split_effect.py`):
+
+| statistic | value |
+|---|---|
+| median KGE, random → blocked | 0.5396 → 0.4185 |
+| difference of medians | −0.1212 |
+| **paired median drop** | **−0.0780** (65.6% of stations worse, p = 6.9e-224) |
+
+The two figures are different estimators and both are quoted elsewhere in this
+document; the paired one is the stricter statistic and should be the headline.
+
+**Every agency drops, without exception** — which a composition artefact could not
+produce:
+
+| agency | n | random | blocked | paired drop |
+|---|---|---|---|---|
+| BOMAustralia | 1,607 | 0.2281 | 0.1024 | −0.0746 |
+| CAMELSH (US) | 5,047 | 0.5856 | 0.4794 | −0.0664 |
+| Germany | 458 | 0.6146 | 0.5077 | −0.0627 |
+| Japan | 690 | 0.5697 | 0.4017 | −0.1205 |
+| LamaHCE | 834 | 0.5922 | 0.4504 | −0.1337 |
+| LamaHIce (Iceland) | 73 | 0.3039 | 0.1018 | **−0.2457** |
+
+**The spread across agencies is itself a result: reliance on spatial proximity scales
+inversely with gauge density.** The US contributes 5,767 stations and loses least
+(−0.066) because even after blocking there are still comparable American catchments in
+the source domain. Iceland has 73 stations and is geographically isolated, so removing
+its block leaves nothing similar to learn from — it loses **−0.246**, nearly four times
+as much. Sparse networks are exactly where the random split is most optimistic, and
+exactly where this method is meant to be useful.
+
 ## Train and test periods, stated precisely
 
 Each station's own record is split **70% / 30% in time** — there is no single global
