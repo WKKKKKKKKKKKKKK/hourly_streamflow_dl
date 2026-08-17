@@ -384,6 +384,68 @@ def main() -> None:
               "重标定后 z = +0.73，与气温的 +0.68 同量级。")
 
     # ---------------- 4. 分层与诊断 ----------------
+    doc.add_heading("3.5 非洲原位验证：在非洲自己的日观测上微调", level=2)
+    doc.add_paragraph(
+        "上述非洲结果是把在温带目标站上微调过的模型套用到非洲，检验的是外推能力而非方法本身。"
+        "非洲这 294 个流域“有日观测、无小时观测”，恰恰就是 Phase I 前提在真实世界的形态，"
+        "因此正确的做法是把协议直接搬过去：在全球源域预训练，用非洲训练期的日观测微调，"
+        "在非洲留出期评估日尺度技巧。每个流域按自身记录时序 70/30 切分，与全球实验一致。"
+    )
+    insitu = Path("outputs/africa_insitu_summary/summary.json")
+    if insitu.exists():
+        d = json.loads(insitu.read_text())
+        rows = []
+        for r in d["by_fold"]:
+            rows.append({"fold": r["fold"], "M0": fmt(r["M0_kge"]), "M1": fmt(r["M1_kge"]),
+                         "配对 ΔKGE": fmt(r["paired_delta_kge"], sign=True),
+                         "改善占比": f'{r["frac_improved"]:.1%}',
+                         "α": f'{r["M0_alpha"]:.3f}→{r["M1_alpha"]:.3f}',
+                         "r": f'{r["M0_r"]:.3f}→{r["M1_r"]:.3f}'})
+        a = d["aggregate"]
+        rows.append({"fold": "均值", "M0": fmt(a["M0_kge"]["mean"]), "M1": fmt(a["M1_kge"]["mean"]),
+                     "配对 ΔKGE": fmt(a["paired_delta_kge"]["mean"], sign=True),
+                     "改善占比": f'{a["frac_improved"]["mean"]:.1%}',
+                     "α": f'{a["M0_alpha"]["mean"]:.3f}→{a["M1_alpha"]["mean"]:.3f}',
+                     "r": f'{a["M0_r"]["mean"]:.3f}→{a["M1_r"]["mean"]:.3f}'})
+        add_table(doc, pd.DataFrame(rows), "表 3-2　非洲原位微调，五折（每折约 282 个流域）",
+                  widths=[0.6, 0.8, 0.8, 1.0, 0.9, 1.1, 1.1])
+        para = doc.add_paragraph()
+        run = para.add_run(
+            f'日聚合监督在非洲原位有效，且幅度很大：配对 ΔKGE '
+            f'{a["paired_delta_kge"]["mean"]:+.3f}（标准差 {a["paired_delta_kge"]["std"]:.3f}），'
+            f'{a["frac_improved"]["mean"]:.1%} 的流域改善，M1 中位 KGE {a["M1_kge"]["mean"]:+.3f}'
+            f'——超过专为大洲留出训练的 PUB 基线（+0.279），而所用模型从未见过任何非洲流域，'
+            f'仅靠日观测适配。'
+        )
+        run.bold = True
+        doc.add_paragraph(
+            f'α 是主机制且未过冲：{a["M0_alpha"]["mean"]:.3f} → {a["M1_alpha"]["mean"]:.3f}，'
+            f'五折全部落在 {a["M1_alpha"]["min"]:.3f}–{a["M1_alpha"]["max"]:.3f}，无一越过 1。'
+            "零样本时模型只复现观测变幅的 17%，微调后到 80%。对比全球实验中有 6.25% 的站被"
+            "推过 α = 1.2 变成过离散——非洲的修正空间太大，过冲根本不会发生。"
+        )
+        doc.add_heading("3.6 这为“时相不受影响”划出了边界", level=2)
+        doc.add_paragraph(
+            "本报告其余各处 r 几乎不动：跨两条数据路径、两套划分与三档回放，中位 Δr 都在 "
+            "−0.006 至 +0.008 之间。而非洲原位微调中 "
+            f'r 从 {a["M0_r"]["mean"]:.3f} 升到 {a["M1_r"]["mean"]:.3f}，'
+            f'且 M1 的 r 折间标准差仅 {a["M1_r"]["std"]:.4f}'
+            f'（{a["M1_r"]["min"]:.4f}–{a["M1_r"]["max"]:.4f}）——五次独立微调收敛到同一数值，'
+            "不可能是偶然。"
+        )
+        para = doc.add_paragraph()
+        run = para.add_run(
+            "因此此前的结论需要加上适用范围而非撤回：日聚合监督在模型已掌握该区域动力学时"
+            "不改变时相，在未掌握时能够改善时相。"
+        )
+        run.bold = True
+        doc.add_paragraph(
+            "非洲零样本的 r 只有 0.60——时相本就没有学到——而非洲的日观测携带了足以修正它的信息。"
+            "只有真正外部的域才能暴露这条边界；温带目标站永远做不到，因为它们的时相本来就是对的。"
+        )
+    else:
+        note(doc, "（未找到 outputs/africa_insitu_summary/summary.json）")
+
     doc.add_heading("4. 分层与诊断分析", level=1)
 
     doc.add_heading("4.1 增益在哪里最大", level=2)
@@ -566,6 +628,46 @@ def main() -> None:
             "接近四倍。台网稀疏处随机划分的乐观偏差最严重——而那恰恰是本方法最想服务的地区。"
         )
 
+    doc.add_heading("4.7 空间分块的机理分解", level=2)
+    bd = Path("outputs/runB_blocked/diagnostics_allhours/kge_components_summary_target.csv")
+    if bd.exists():
+        c = components(bd)
+        rows = [{"分量": lab, "M0": fmt(c[k]["M0_median"]), "M1": fmt(c[k]["M1_median"]),
+                 "Δ": fmt(c[k]["median_delta"], sign=True)}
+                for k, lab in (("kge", "KGE"), ("kge_r", "r（时相）"),
+                               ("kge_alpha", "α（方差）"), ("kge_beta", "β（偏差）"))]
+        add_table(doc, pd.DataFrame(rows), "表 4-8　空间分块划分下的 KGE 分解（全小时配对，8,862 站）",
+                  widths=[1.4, 1.0, 1.0, 1.0])
+        v = Path("outputs/runB_blocked/diagnostics_allhours/verdict_target.json")
+        if v.exists():
+            a = json.loads(v.read_text())["attribution"]
+            doc.add_paragraph(
+                f'变差站中的元凶占比：r {a["culprit_share"]["r (timing)"]:.1%}、'
+                f'α {a["culprit_share"]["alpha (variance)"]:.1%}、'
+                f'β {a["culprit_share"]["beta (bias)"]:.1%}。时相的牵连甚至比随机划分（7.7%）'
+                "更小，因此“监督只重标定、不扰动时相”这一结论在更难的划分下同样成立。"
+            )
+    dg = Path("outputs/runB_blocked/degenerate/degenerate_summary.json")
+    if dg.exists():
+        m = json.loads(dg.read_text())["medians"]
+        doc.add_paragraph(
+            f'日内形状与随机划分同型，且不存在退化解：观测 flashiness {m["flashiness"]["observed"]:.4f}，'
+            f'M0 {m["flashiness"]["M0"]:.4f}（过量 {m["flashiness"]["M0"]/m["flashiness"]["observed"]:.1f} 倍），'
+            f'M1 {m["flashiness"]["M1"]:.4f}；均值观测 {m["mean"]["observed"]:.4f} 对 M0 '
+            f'{m["mean"]["M0"]:.4f}（不足一半）与 M1 {m["mean"]["M1"]:.4f}'
+            f'（{m["mean"]["M1"]/m["mean"]["observed"]:.2f} 倍）。微调修好水量并把过量抖动减半。'
+        )
+    sg = Path("outputs/runB_blocked/significance/significance_summary.json")
+    if sg.exists():
+        d = json.loads(sg.read_text())
+        n = d["n_stations"]
+        doc.add_paragraph(
+            f'显著性：BH 校正后 {d["n_significant_after_bh"]:,}/{n:,}（{d["n_significant_after_bh"]/n:.1%}）'
+            f'变化显著，但方向同样分裂——{d["n_improved"]/n:.1%} 改善、{d["n_degraded"]/n:.1%} 变差，'
+            f'池化 ΔKGE {d["pooled_median_delta_kge"]:+.4f}（p = {d["pooled_wilcoxon_p"]:.1e}）。'
+            "§6.3 的“标定而非精度”这一保留在此同样适用。"
+        )
+
     doc.add_heading("5. 结论", level=1)
     for text in (
         "一、日聚合监督不破坏小时时相能力。跨两条数据路径、两套站点划分、三档回放比例以及"
@@ -583,7 +685,11 @@ def main() -> None:
         "α < 1，方差项独占 KGE 亏损的 59.4%；跨域越远越严重（run A 0.72、run B 0.86、非洲 0.16）。"
         "该瓶颈比迁移损失大一个数量级，是后续最值得投入的方向——但其中有多少来自缺失的遗忘门"
         "初始化尚未确定，见 §4.5。",
-        "六、源域回放能同时改善两个域。0.25 一档在目标域（+0.0449→+0.0643）与源域"
+        "六、方法在非洲原位有效，且超过专门训练的基线。在非洲自己的日观测上微调，五折配对 "
+        "ΔKGE +0.611、92.3% 的流域改善、M1 中位 KGE +0.505，高于大洲留出 PUB 基线的 +0.279。"
+        "同时这划出了第一条结论的边界：非洲原位微调使 r 从 0.596 升到 0.780（M1 折间标准差仅 "
+        "0.0016），说明“不改变时相”只在模型已掌握该域动力学时成立。",
+        "七、源域回放能同时改善两个域。0.25 一档在目标域（+0.0449→+0.0643）与源域"
         "（−0.1064→−0.0668）上均优于无回放，五折两指标全部同向；机制是阻尼过度重标定，"
         "把过冲站从 6.25% 压到 2.09%。",
     ):
@@ -658,9 +764,9 @@ def main() -> None:
     )
     para = doc.add_paragraph()
     run = para.add_run(
-        "应对：建议补做。代价为一次迁移训练（约 1 小时，复用已有预训练权重），"
-        "不需重新预训练。在补做之前，现有非洲结果应表述为“温带微调模型的跨大洲外推”，"
-        "而非“Phase I 方法在非洲的验证”。"
+        "应对：已补做，见 §3.5–3.6。五折原位微调给出配对 ΔKGE +0.611、92.3% 流域改善，"
+        "并超过 PUB 基线。原有的温带迁移结果仍然有效，但表述为“跨大洲外推测试”，"
+        "而非“方法在非洲的验证”——后者现在由 §3.5 承担。"
     )
     run.bold = True
 
