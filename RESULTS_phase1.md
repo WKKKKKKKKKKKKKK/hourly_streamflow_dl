@@ -373,6 +373,77 @@ opposite sign. `eval/africa.py` now dispatches on `cfg.data.source`, and
 `predict_daily` refuses to report when the simulated/observed ratio is off by a
 window length.
 
+## Africa, run properly: fine-tuning on African daily observations
+
+Everything above applies models fine-tuned on temperate target stations to African
+basins. That tests extrapolation, not the method. Africa's 294 basins have daily
+discharge and no hourly discharge — Phase I's premise occurring naturally — so the
+protocol belongs there directly: pretrain on the global source domain, fine-tune on the
+**African** training period using African daily observations only, score daily skill on
+the African held-out period. Each basin's own record splits 70/30 in time, as in the
+global experiment. `train/africa_transfer.py`, five folds.
+
+| fold | M0 | M1 | paired ΔKGE | improved | α | r |
+|---|---|---|---|---|---|---|
+| 0 | −0.131 | +0.478 | +0.638 | 97.2% | 0.159→0.793 | 0.612→0.779 |
+| 1 | −0.157 | +0.506 | +0.606 | 91.1% | 0.156→0.783 | 0.579→0.778 |
+| 2 | −0.067 | +0.556 | +0.570 | 85.8% | 0.269→0.877 | 0.660→0.782 |
+| 3 | −0.156 | +0.517 | +0.662 | 94.7% | 0.136→0.820 | 0.535→0.780 |
+| 4 | −0.147 | +0.468 | +0.581 | 92.9% | 0.156→0.736 | 0.592→0.779 |
+| **mean (sd)** | **−0.131** (0.037) | **+0.505** (0.035) | **+0.611** (0.038) | **92.3%** (4.3%) | 0.175→0.802 | 0.596→0.780 |
+
+**Daily-only supervision works in situ, and by a wide margin.** Paired ΔKGE +0.611,
+92.3% of basins improved, and the fold spread is small (0.570–0.662). It also **beats
+the continent-holdout PUB baseline** (+0.505 vs +0.279) using a model that has never
+seen an African basin and only daily observations to adapt with.
+
+**α is the mechanism, and it does not overshoot.** 0.175 → 0.802, every fold landing in
+0.736–0.877, none crossing 1. Zero-shot the model reproduces 17% of observed
+variability; fine-tuning takes it to 80%. Contrast the 6.25% of global stations that
+plain fine-tuning pushed past α 1.2 into over-dispersion — here the correction has so
+much room that overshoot never arises.
+
+### This bounds the "timing is untouched" result
+
+Everywhere else in this document r barely moves: across two data paths, two splits and
+three replay ratios, median Δr sits between −0.006 and +0.008. Here **r rises 0.596 →
+0.780**, and M1's r has a fold standard deviation of **0.0016** (0.7777–0.7822) — five
+independent fine-tunes converging on the same value is not coincidence.
+
+So the earlier claim needs a scope, not a retraction: **daily-aggregate supervision
+leaves timing alone when the model already has the region's dynamics, and improves
+timing when it does not.** Zero-shot on Africa r is only 0.60 — the timing was never
+learned — and African daily observations carry enough information to fix it. Only a
+genuinely external domain could expose that boundary; the temperate target stations
+never could, because their timing was already right.
+
+## Blocked split, mechanistically
+
+The blocked line previously had only M0/M1. Its full diagnostic suite (all-hours paired,
+8,862 stations):
+
+| | M0 | M1 | Δ |
+|---|---|---|---|
+| KGE | 0.4014 | 0.4775 | +0.0473 |
+| r | 0.7589 | 0.7864 | +0.0139 |
+| α | 0.8519 | 0.9493 | +0.0909 |
+| β | 1.0325 | 0.8829 | −0.1413 |
+
+Culprit shares among degraded stations: **r 4.2%**, α 23.1%, β 72.7% — timing is even
+less implicated than under the random split (7.7%), so the "supervision re-scales, it
+does not disturb timing" result holds under the harder split too.
+
+Intra-day shape shows the same pattern as the random split and no degenerate solution:
+observed flashiness 0.0285, M0 0.1697 (6.0× too jittery), M1 0.0747; mean 0.0483 vs M0
+0.0280 (half the volume) and M1 0.0486 (1.01×). Fine-tuning fixes volume and halves the
+excess jitter.
+
+Significance: after BH correction 8,276 of 8,862 stations (93.4%) change significantly,
+but again split in direction — 42.7% improved, 50.7% degraded on absolute error, while
+pooled ΔKGE is +0.0421 (p = 4.4e-42). The calibration-not-accuracy caveat applies
+identically here.
+
+
 ## Where the gain lands, and where it does not (PLAN.md 5.1–5.3)
 
 `scripts/stratify_gain.py` cuts the per-station gain by 16 covariates.
@@ -547,9 +618,10 @@ that regenerate them are.
   M2 optional; the search was to run on fold 1 only. Current hyperparameters are
   hand-set and frozen so the runs stay comparable, which is fine for every relative
   conclusion here but must be stated if absolute performance is quoted.
-- The Africa protocol used here applies models fine-tuned on temperate target stations
-  to African basins. The stronger experiment — fine-tune on African daily observations
-  themselves, which is exactly Phase I's premise occurring naturally — needs the
-  transfer machinery to accept African basins as a target domain and has not been run.
+- ~~The Africa protocol applies temperate-fine-tuned models to African basins.~~ **Done**
+  (see "Africa, run properly"): five folds of in-situ fine-tuning give paired ΔKGE
+  +0.611, 92.3% of basins improved, beating the continent-holdout PUB baseline. The
+  earlier temperate-transfer numbers remain valid as an extrapolation test and are
+  reported as such.
 - Blocked-split models underperform random-split ones on Africa (+0.078 vs +0.143).
   Recorded, not explained.
