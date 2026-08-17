@@ -18,16 +18,14 @@ Two data paths for the daily branch:
   does. Cache: `/ibex/user/kongw0a/hourly_cache`.
 
 
-> **Status note (2026-08-15).** Every number in this document was produced WITHOUT
-> `initial_forget_bias`, which Gauch et al.'s published MTS-LSTM sets to 3 and which
-> was missing from this code and from the 100-station reference it was built on. The
-> base configs now set it to 3, because it is part of the published method rather than
-> a tuning knob; set it back to `null` to reproduce the numbers below exactly. A
-> fold-1 search is running that isolates its effect (`g03_forgetbias_H72`,
-> `g04_forgetbias_H168`), after which the core comparisons will be re-run once, with
-> the forget gate and any hyperparameter clearly shown to be better. Comparative
-> conclusions here are unaffected — all runs shared the same initialisation — but
-> absolute levels and the reading of α as a fundamental ceiling may change.
+> **Status note (2026-08-17).** Two configurations are reported throughout. **v1** is
+> the original: `lookback_hourly: 72` and no `initial_forget_bias`. **v2** applies the
+> fold-1 search result — `lookback_hourly: 336` (168 for run A, a data-layout limit) and
+> `initial_forget_bias: 3`, the latter because it is part of Gauch et al.'s published
+> method and was missing from both this code and the 100-station reference. Nothing else
+> differs. v2 is the primary result; v1 is retained because several conclusions change
+> in magnitude between them and the change is itself informative. run A's v2 is still
+> queued, so the run A vs run B comparison is quoted from v1.
 ## Headline
 
 | | M0 | M1 | ΔKGE | r | α | β | r is culprit |
@@ -36,6 +34,38 @@ Two data paths for the daily branch:
 | run A source (STEP 3) | 0.4429 | 0.4050 | −0.0256 | 0.791→0.779 | 0.731→0.713 | 0.892→0.914 | 10.1% |
 | run B target | 0.5249 | 0.5758 | **+0.0264** | 0.790→0.798 | 0.861→0.956 | 1.016→0.977 | 7.7% |
 | run B source (STEP 3) | 0.6435 | 0.5014 | **−0.1066** | 0.818→0.788 | 0.862→0.955 | 1.006→0.955 | 9.6% |
+| **v2 run B target** | **0.5190** | **0.6210** | **+0.1020** | 0.797→0.812 | 0.813→0.851 | 1.025→0.996 | — |
+
+### v2: what the search bought
+
+Five folds, same folds and data, only `lookback_hourly` and `initial_forget_bias` changed
+(difference of medians from the transfer logs):
+
+| | M0 | M1 | ΔKGE | source Δ |
+|---|---|---|---|---|
+| v1 run B | 0.5319 | 0.5768 | +0.045 | −0.143 |
+| **v2 run B** | 0.5318 | **0.6277** | **+0.096** | **−0.088** |
+| v1 blocked | 0.4040 | 0.4754 | +0.071 | −0.322 |
+| **v2 blocked** | **0.4249** | **0.6210** | **+0.196** | **−0.173** |
+| v1 replay 0.25 | 0.5319 | 0.5962 | +0.064 | −0.089 |
+| v2 replay 0.25 | 0.5318 | 0.6253 | +0.093 | −0.058 |
+
+Three things fall out, and the second is the important one.
+
+**Zero-shot barely moves (0.5319 → 0.5318) while M1 gains 0.051.** A longer hourly window
+and an open forget gate do not make the pretrained model better; they make it more
+*adaptable*. The entire gain is in what fine-tuning can then exploit.
+
+**The blocked split gains nearly three times as much (+0.071 → +0.196), and its M1 comes
+within 0.007 of the random split's** (0.6210 vs 0.6277). Under v1 the two differed by
+0.101. So the penalty for removing hydrological neighbours is largely recoverable —
+provided the hourly branch is long enough to use what the target basin's own daily record
+says. That reframes the headline: proximity dominates *zero-shot* skill (M0 still differs
+by 0.107), but after daily-only fine-tuning it barely matters.
+
+**Source replay stops helping the target domain** (+0.096 → +0.093) while still protecting
+the source (−0.088 → −0.058). Part of what replay bought under v1 was compensation for too
+short a window; give the window and that part disappears.
 
 (Baseline with `reg_window` left equal to `frequency_factor: 1`: target M0 0.4212 →
 M1 0.3828, Δ −0.0384. Superseded by run A.)
@@ -375,47 +405,63 @@ window length.
 
 ## Africa, run properly: fine-tuning on African daily observations
 
-Everything above applies models fine-tuned on temperate target stations to African
-basins. That tests extrapolation, not the method. Africa's 294 basins have daily
+Everything else reported for Africa applies models fine-tuned on temperate target
+stations. That tests extrapolation, not the method. Africa's 294 basins have daily
 discharge and no hourly discharge — Phase I's premise occurring naturally — so the
 protocol belongs there directly: pretrain on the global source domain, fine-tune on the
 **African** training period using African daily observations only, score daily skill on
-the African held-out period. Each basin's own record splits 70/30 in time, as in the
-global experiment. `train/africa_transfer.py`, five folds.
+the African held-out period. Each basin's own record splits 70/30 in time.
+`train/africa_transfer.py`, five folds, both configurations.
 
-| fold | M0 | M1 | paired ΔKGE | improved | α | r |
+| | M0 | M1 | paired ΔKGE | improved | α | r |
 |---|---|---|---|---|---|---|
-| 0 | −0.131 | +0.478 | +0.638 | 97.2% | 0.159→0.793 | 0.612→0.779 |
-| 1 | −0.157 | +0.506 | +0.606 | 91.1% | 0.156→0.783 | 0.579→0.778 |
-| 2 | −0.067 | +0.556 | +0.570 | 85.8% | 0.269→0.877 | 0.660→0.782 |
-| 3 | −0.156 | +0.517 | +0.662 | 94.7% | 0.136→0.820 | 0.535→0.780 |
-| 4 | −0.147 | +0.468 | +0.581 | 92.9% | 0.156→0.736 | 0.592→0.779 |
-| **mean (sd)** | **−0.131** (0.037) | **+0.505** (0.035) | **+0.611** (0.038) | **92.3%** (4.3%) | 0.175→0.802 | 0.596→0.780 |
+| v1 (H=72) | −0.131 | +0.505 | +0.611 | 92.3% | 0.175→0.802 | 0.596→0.780 |
+| **v2 (H=336)** | **+0.031** | **+0.499** | **+0.401** | **82.1%** | 0.448→0.830 | 0.679→0.784 |
 
-**Daily-only supervision works in situ, and by a wide margin.** Paired ΔKGE +0.611,
-92.3% of basins improved, and the fold spread is small (0.570–0.662). It also **beats
-the continent-holdout PUB baseline** (+0.505 vs +0.279) using a model that has never
-seen an African basin and only daily observations to adapt with.
+**M1 is essentially identical between configurations (0.505 vs 0.499) while M0 rises by
+0.162.** The apparent shrinkage of the gain is entirely a shift in the starting point,
+not a loss of what daily observations contribute. Put the other way: **the ceiling
+reached after fine-tuning is set by the African data itself and is indifferent to the
+hourly window length**; the window only decides how far below that ceiling the zero-shot
+model starts.
 
-**α is the mechanism, and it does not overshoot.** 0.175 → 0.802, every fold landing in
-0.736–0.877, none crossing 1. Zero-shot the model reproduces 17% of observed
-variability; fine-tuning takes it to 80%. Contrast the 6.25% of global stations that
-plain fine-tuning pushed past α 1.2 into over-dispersion — here the correction has so
-much room that overshoot never arises.
+So the result stands with a corrected magnitude: **African daily observations are worth
++0.401 KGE (five folds, sd 0.060, range 0.299–0.457), improving 82.1% of basins**, still
+far above the continent-holdout PUB baseline of +0.279 — from a model that has never seen
+an African basin.
 
-### This bounds the "timing is untouched" result
+### The comparison that matters
 
-Everywhere else in this document r barely moves: across two data paths, two splits and
-three replay ratios, median Δr sits between −0.006 and +0.008. Here **r rises 0.596 →
-0.780**, and M1's r has a fold standard deviation of **0.0016** (0.7777–0.7822) — five
-independent fine-tunes converging on the same value is not coincidence.
+Fine-tuning on temperate stations and applying the result to Africa is a different
+operation from fine-tuning on Africa, and v2 separates them cleanly:
 
-So the earlier claim needs a scope, not a retraction: **daily-aggregate supervision
-leaves timing alone when the model already has the region's dynamics, and improves
-timing when it does not.** Zero-shot on Africa r is only 0.60 — the timing was never
-learned — and African daily observations carry enough information to fix it. Only a
-genuinely external domain could expose that boundary; the temperate target stations
-never could, because their timing was already right.
+| | v1 ΔKGE | v2 ΔKGE | retained |
+|---|---|---|---|
+| temperate fine-tune, applied to Africa | +0.165 | **≈0** (0.1451 → 0.1432) | **0%** |
+| **fine-tune on African daily observations** | +0.611 | **+0.401** | **66%** |
+
+The temperate-transfer gain vanishes entirely once the window is long enough; the in-situ
+gain keeps two thirds. **The v1 temperate-transfer "gain" was almost all compensation for
+too short an hourly window. The in-situ gain is the model actually learning from African
+data.** No single number in this document makes the case for in-situ adaptation as
+directly as this contrast does.
+
+### Timing: a bound, and a ceiling that looks physical
+
+Elsewhere r barely moves — across two data paths, two splits and three replay ratios,
+median Δr sits between −0.006 and +0.008. In situ on Africa it rises: +0.184 under v1,
+**+0.105 under v2**. So the earlier claim needs a scope rather than a retraction:
+**daily-aggregate supervision leaves timing alone when the model already has the region's
+dynamics, and improves timing when it does not.** Zero-shot r on Africa is 0.60–0.68 —
+the timing was never learned — and African daily observations carry enough to fix part of
+it.
+
+More striking, **M1's r converges to the same value under both configurations**: 0.777–0.782
+(v1, sd 0.0016) and 0.777–0.790 (v2, sd 0.0060). Ten independent fine-tunes across two
+different hyperparameter sets all land at r ≈ 0.78. That looks less like a property of the
+model than a limit imposed by the forcing: ERA5-Land precipitation timing over these
+basins is plausibly what caps it. Testing that would need a different forcing product,
+which is outside Phase I.
 
 ## Blocked split, mechanistically
 
