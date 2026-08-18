@@ -111,6 +111,11 @@ def diagnose_fold(cfg, fold: int, domain: str, run_dir: Path, device, logger,
     return out.reset_index()
 
 
+# Components whose ideal is 1.0, so distance from 1 -- not the sign of the change --
+# decides whether a station got worse.
+TWO_SIDED = ("kge_alpha", "kge_beta")
+
+
 def summarize_components(table: pd.DataFrame) -> pd.DataFrame:
     """Paired medians and a Wilcoxon test per component."""
     from scipy.stats import wilcoxon
@@ -125,6 +130,20 @@ def summarize_components(table: pd.DataFrame) -> pd.DataFrame:
             p = float(wilcoxon(m1, m0).pvalue) if delta.any() else 1.0
         except ValueError:
             p = float("nan")
+        # "Worse" is not the same test for every component. r, KGE and NSE are
+        # higher-is-better, so a negative delta is a degradation. alpha and beta are
+        # ratios whose ideal is 1.0, and the median beta sits ABOVE 1 (~1.02), so for
+        # those a DECREASE is usually an improvement -- scoring them by the sign of the
+        # delta reported 52-55% of stations as "worse" on beta while its median was
+        # moving toward 1.0, an outright contradiction. Score two-sided components by
+        # whether |value - 1| grew, and record which rule was applied so the column is
+        # never read under the wrong one.
+        if col in TWO_SIDED:
+            worse = float((np.abs(m1 - 1.0) > np.abs(m0 - 1.0)).mean())
+            criterion = "moved away from 1.0"
+        else:
+            worse = float((delta < 0).mean())
+            criterion = "decreased"
         rows.append({
             "component": col,
             "n_stations": int(keep.sum()),
@@ -132,7 +151,8 @@ def summarize_components(table: pd.DataFrame) -> pd.DataFrame:
             "M1_median": float(np.median(m1)),
             "median_delta": float(np.median(delta)),
             "mean_delta": float(np.mean(delta)),
-            "frac_worse": float((delta < 0).mean()),
+            "frac_worse": worse,
+            "worse_criterion": criterion,
             "wilcoxon_p": p,
         })
     return pd.DataFrame(rows)

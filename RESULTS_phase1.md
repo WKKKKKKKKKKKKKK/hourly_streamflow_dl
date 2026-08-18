@@ -913,6 +913,70 @@ experiment, not the history of what was run. Anything that must stay reproducibl
 its parameters captured at launch into the output directory, which `run_meta.json` does --
 and any comparison across versions should read from there.
 
+## How the blocked split catches up: it is a timing repair
+
+The 89.7% recovery established earlier says *that* daily-aggregate fine-tuning undoes
+spatial blocking's penalty; the component decomposition says *how*. Paired per-station
+medians over 8979 target stations, all-hours evaluation index:
+
+| | r (timing) | alpha (variance) | beta (bias) | KGE |
+|---|---|---|---|---|
+| v2 random M0 -> M1 | 0.7970 -> 0.8122 (**+0.0054**) | 0.8133 -> 0.8508 (+0.0370) | 1.0246 -> 0.9960 | 0.5190 -> 0.6210 |
+| v2 blocked M0 -> M1 | 0.7699 -> 0.8077 (**+0.0195**) | 0.8085 -> 0.8646 (+0.0607) | 1.0202 -> 0.9991 | 0.4185 -> 0.6165 |
+| v2 replay M0 -> M1 | 0.7970 -> 0.8131 (+0.0060) | 0.8133 -> 0.8430 (+0.0257) | 1.0246 -> 1.0109 | 0.5190 -> 0.6182 |
+
+Reading it as blocked-minus-random, which is what the 0.007 headline gap is made of:
+
+| component | gap at M0 | gap at M1 | recovered |
+|---|---|---|---|
+| **r (timing)** | **-0.0271** | **-0.0045** | **83%** |
+| alpha (variance) | -0.0048 | **+0.0138** | overshoots -- blocked ends up better |
+| beta (bias) | -0.0044 | +0.0030 | overshoots slightly |
+
+**Spatial blocking costs timing, almost nothing else.** At M0 the blocked model's r is
+0.0271 below the random split's while its alpha and beta are within 0.005 -- removing a
+target basin's neighbours degrades *when* the model thinks the water arrives, not how much
+of it there is or how variable it is. Fine-tuning then recovers 83% of that timing deficit,
+and pushes alpha past the random split's rather than merely matching it.
+
+This is the part worth stating carefully, because it is counter-intuitive: **a 24-hour
+aggregate contains no sub-daily timing information, yet supervising on it recovers most of
+the sub-daily timing deficit.** The route is architectural rather than statistical. The
+hourly branch does not read the daily labels; it inherits its initial hidden and cell state
+from the daily branch through `transfer_h`/`transfer_c` at `transfer_index`. Fine-tuning
+the daily branch on local daily observations gives a better catchment state -- storage and
+wetness -- and a better state changes *when* the hourly branch releases water. Daily data
+fixes hourly timing indirectly, through the state handoff that is the whole point of the
+two-branch design. A single-branch hourly model given the same daily-only supervision has
+no such channel.
+
+It also explains why replay does not help under v2: replay's r gain (+0.0060) is
+indistinguishable from plain run B's (+0.0054), and its alpha gain is smaller (+0.0257 vs
++0.0370). Mixing source batches back in protects the source domain but adds nothing to the
+target's timing.
+
+### A labelling bug found while reading this, fixed
+
+`summarize_components` computed `frac_worse` as `(M1 - M0) < 0` for every component. That
+is right for r, KGE and NSE, which are higher-is-better, but wrong for alpha and beta,
+whose ideal is 1.0 -- and since the median beta sits *above* 1 (~1.02), a decrease there is
+usually an improvement. The column therefore reported 52-55% of stations as "worse" on beta
+while beta's median was moving toward 1.0, a flat contradiction. Corrected to score
+two-sided components by whether `|value - 1|` grew:
+
+| | alpha, as reported | alpha, corrected | beta, as reported | beta, corrected |
+|---|---|---|---|---|
+| v2 run B | 41.2% | **35.0%** | 55.0% | **40.9%** |
+| v2 blocked | 41.1% | **30.0%** | 52.1% | **34.2%** |
+| v2 replay | 42.8% | **35.7%** | 52.6% | **39.6%** |
+
+The old rule overstated degradation everywhere it applied. It was never quoted in this file
+or in the Word report -- `paired_split_effect`'s own `frac_worse` is computed on KGE, where
+higher-is-better makes the sign test correct -- so no published number changes. The summary
+CSVs for all eight diagnostic runs were regenerated from their unchanged per-station tables,
+and each row now carries a `worse_criterion` column naming the rule applied, so the column
+cannot be read under the wrong one again.
+
 ## Reproducing
 
 ```bash
