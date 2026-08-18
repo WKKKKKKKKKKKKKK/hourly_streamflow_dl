@@ -28,6 +28,16 @@ Two data paths for the daily branch:
 > queued, so the run A vs run B comparison is quoted from v1.
 ## Headline
 
+**Every KGE, NSE, r, alpha and beta in this file is a per-station MEDIAN over target
+stations, never a mean.** That is not a stylistic choice and the distinction is large
+enough to invert the sign of a claim: for v2 run B the target-domain KGE median is +0.5322
+at M0 and +0.6281 at M1, while the corresponding *means* are **-6.99** and **-7.88**, with
+single stations reaching -10487 and -17484. Dropping the 140 numerically degenerate
+stations (`obs_std < 1e-3`) pulls the means back to +0.07 and +0.34 -- still far below the
+medians, because a tail down to -130 survives the filter. Quote these numbers as medians
+or not at all; a reader who recomputes a mean from the per-station CSVs will get a negative
+number and be right to.
+
 | | M0 | M1 | ΔKGE | r | α | β | r is culprit |
 |---|---|---|---|---|---|---|---|
 | run A target | 0.4288 | 0.3982 | **−0.0212** | 0.788→0.775 | 0.723→0.708 | 0.890→0.914 | 9.6% |
