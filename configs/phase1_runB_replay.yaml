@@ -115,6 +115,13 @@ model:
   # It was MISSING from this code and from the 100-station reference this was built
   # from, so every result predating 2026-08-15 was produced with `null` (PyTorch's
   # default). Set to null to reproduce those numbers exactly.
+  # WARNING: this field was added AFTER the v1 runs finished, so this file no longer
+  # reproduces them. Every v1 result in RESULTS_phase1.md was produced with NO forget-gate
+  # initialisation (PyTorch's default, effective forget gate 0.500, ~2-step memory). The
+  # authority for what a run actually used is its own
+  # outputs/<run>/fold*/pretrain/run_meta.json, which stores the resolved config; that is
+  # where the v1-vs-v2 tables get their provenance. Re-running this file today gives a
+  # v1 look-back with a v2 forget gate -- a configuration that was never evaluated.
   initial_forget_bias: 3
   # frequency_factor positions the state hand-off ONLY:
   #   transfer_index = len(D) - len(H)//frequency_factor

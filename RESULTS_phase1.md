@@ -880,6 +880,39 @@ against 443 expected by chance.
 Sources: `outputs/v2_runB/degenerate/degenerate_summary.json`,
 `outputs/v2_runB/significance/significance_summary.json`.
 
+## Provenance: the config files are not the authority for v1
+
+`configs/phase1.yaml`, `configs/phase1_runB.yaml`, `configs/phase1_runB_blocked.yaml` and
+`configs/phase1_runB_replay.yaml` all now carry `initial_forget_bias: 3`, but **every v1
+result in this file was produced without it** -- the field was added to those files when
+the forget-gate initialisation was implemented, after the v1 runs had finished, and no
+snapshot was kept. Re-running one of them today produces a v1 look-back (72 h) with a v2
+forget gate: a configuration that was never evaluated and appears nowhere in this file.
+
+Diffing each v1 config against the `run_meta.json` its own run wrote shows the drift is
+exactly one field and nothing else:
+
+| config | field | at runtime | in the file now |
+|---|---|---|---|
+| phase1.yaml | model.initial_forget_bias | `None` | `3` |
+| phase1_runB.yaml | model.initial_forget_bias | `None` | `3` |
+| phase1_runB_blocked.yaml | model.initial_forget_bias | `None` | `3` |
+
+(`phase1_runB_replay.yaml` has no pretrain `run_meta.json` to compare, because replay
+reuses run B's pretrained weights rather than training its own -- the same arrangement as
+`v2_replay025` and `v3_replay025`.)
+
+**The authority for what any run used is `outputs/<run>/fold*/pretrain/run_meta.json`,**
+which stores the fully resolved config at launch. Every v1-vs-v2 comparison in this file
+takes its provenance from there, not from the config files, and the same check is what
+licensed seeding v3 from v2's checkpoints. A warning to this effect is now inline at the
+`initial_forget_bias` line of all four configs.
+
+The general lesson, since this will recur: a config file tracks the *current* intent of an
+experiment, not the history of what was run. Anything that must stay reproducible needs
+its parameters captured at launch into the output directory, which `run_meta.json` does --
+and any comparison across versions should read from there.
+
 ## Reproducing
 
 ```bash
