@@ -814,6 +814,72 @@ fractions are in `outputs/v2_split_effect/recovery_by_agency.csv`.
 `v2_blocked` and `v2_replay025` have no `diagnostics_allhours` yet, so the stratification
 and map above are the random split only.
 
+## Two v1 conclusions revisited under v2
+
+Both analyses were already on disk for `v2_runB`; only the write-up was missing. Neither
+needed a GPU. `v2_blocked` and `v2_replay025` still have no diagnostics, so these are the
+random split.
+
+### The intra-day jitter was a v1 artefact, and it is gone
+
+v1 reported that M0 was "jittery, not smooth" -- the concern being over-dispersion rather
+than the flattening the degenerate check was built to catch. v2 removes it outright.
+Ratios to the observed median, over 8432 stations:
+
+| ratio to observed | v1 runB M0 | v1 runB M1 | v2 runB M0 | v2 runB M1 |
+|---|---|---|---|---|
+| flashiness | **6.80x** | 2.00x | **0.95x** | **1.02x** |
+| within-day std | 3.11x | 1.52x | 0.86x | 0.89x |
+| within-day range | 2.82x | 1.53x | 0.88x | 0.91x |
+| q95 events / year | 1.62x | 1.79x | 0.99x | 1.02x |
+| mean flow | **0.50x** | 1.01x | 1.05x | 1.03x |
+
+v1's zero-shot model was 6.8x too flashy, 3.1x too variable within the day, produced
+1.6-1.8x too many high-flow events, and carried only half the observed mean; fine-tuning
+pulled flashiness down to 2.0x but no further. v2 is calibrated before fine-tuning
+(0.95x, mean 1.05x) and stays calibrated after it (1.02x). The longer hourly look-back
+plus the forget-gate initialisation is what changed -- the same pair that turned M0's
+alpha from 6.8x over-dispersed into 0.808 under-dispersed.
+
+**A gap in the check itself, worth stating:** `degenerate_check` emits the same verdict
+for all three runs -- "intra-day variability survives, so the daily-aggregate term is not
+being satisfied by flattening the day". That is literally true every time, because the
+test only looks for collapse. A model 6.8x too flashy passes it. The verdict string should
+not be quoted as evidence that intra-day behaviour is *correct*; only the ratio table
+supports that, and only for v2.
+
+### KGE-vs-error divergence: the sign reverses, the magnitude gap does not
+
+Per-station paired tests on sample-level absolute error (mm/h), BH-FDR at alpha 0.05,
+8862 stations:
+
+| | v1 runB | v1 blocked | v2 runB |
+|---|---|---|---|
+| significantly improved | 3712 (41.9%) | 3784 (42.7%) | **4712 (53.2%)** |
+| significantly degraded | 4405 (**49.7%**) | 4492 (**50.7%**) | 3337 (37.7%) |
+| median error reduction | **-0.0002** | **-0.0004** | **+0.0003** |
+| pooled median dKGE | +0.0214 | +0.0421 | **+0.0576** |
+
+Under v1 more stations significantly *degraded* than improved and the median error
+reduction was negative: fine-tuning improved KGE while making point-wise error worse for
+the majority. Under v2 that reverses -- 53.2% improved against 37.7% degraded, and the
+median error reduction turns positive.
+
+But the reversal should not be oversold, because the magnitudes are not comparable.
+v2's median error reduction is **+0.00034 mm/h against an observed mean flow of 0.0483
+mm/h -- 0.7% of it** -- while the pooled median KGE gain is +0.0576. So the honest v2
+claim is that daily-aggregate fine-tuning **no longer damages point-wise accuracy**, not
+that it improves it: the KGE gain comes from variance and bias calibration (see the alpha
+column throughout), which KGE rewards and mean absolute error largely does not. The two
+metrics still agree on only 67.9% of stations (Spearman 0.460), so a station-level claim
+should say which metric it is made under.
+
+Pooled Wilcoxon p = 1.5e-256 over 8849 pairs; 8049 of 8862 stations survive BH-FDR
+against 443 expected by chance.
+
+Sources: `outputs/v2_runB/degenerate/degenerate_summary.json`,
+`outputs/v2_runB/significance/significance_summary.json`.
+
 ## Reproducing
 
 ```bash
