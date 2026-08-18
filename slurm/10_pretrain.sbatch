@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=96G
-#SBATCH --time=14:00:00      # measured 12.7 h/fold at batches_per_epoch=20000
+#SBATCH --time=18:00:00      # measured 12.7 h/fold at batches_per_epoch=20000
 #SBATCH --constraint=v100
 #SBATCH --gres=gpu:v100:1
 #SBATCH --array=0-4
@@ -59,7 +59,11 @@ read -r -a EXTRA_SET_ARR <<< "${EXTRA_SET:-}"
 OUT_ROOT_CFG=$("$PYTHON_BIN" -c "
 from common.config import load_config, resolve
 print(resolve(load_config('$CONFIG', None).output_root))")
-if [[ -f "$OUT_ROOT_CFG/fold$FOLD/pretrain/best_model.pth" && "${FORCE:-0}" != "1" ]]; then
+# Guard on DONE, not on best_model.pth: the latter is rewritten every time the metric
+# improves, so it exists mid-run too. Keying the guard on it made a legitimate --resume
+# look like an overwrite, forcing FORCE=1 -- which would also switch off the protection
+# for folds that really are finished.
+if [[ -f "$OUT_ROOT_CFG/fold$FOLD/pretrain/DONE" && "${FORCE:-0}" != "1" ]]; then
   echo "fold $FOLD already complete under $OUT_ROOT_CFG -- refusing to overwrite." >&2
   echo "Point the variant at its own output_root, or set FORCE=1 to redo it." >&2
   exit 3
