@@ -694,6 +694,116 @@ diffed against the checkpoints' `run_meta.json` and differ only in `output_root`
 `train.epochs`, `train.patience` and `wandb.group`.
 
 
+## v2, stratified: who the daily-only signal helps, and the one thing it makes worse
+
+All three analyses below are evaluation-only and were run on v2's finished transfer
+outputs; none of them needed the queued GPU jobs. Numbers are the random-split run
+(`v2_runB`) unless stated. 8843 stations enter, 136 dropped as numerically degenerate.
+
+Global picture: M0 0.527 -> M1 0.626, median gain **+0.062**, 68% of stations improve,
+13% move by more than +-0.50. At M0 the model is **under**-dispersed (median alpha 0.808,
+73% of stations below 1) -- the opposite sign to v1, where M0 over-dispersed by 6.8x, and
+the direct consequence of the longer hourly look-back plus the forget-gate initialisation.
+Fine-tuning pushes alpha up in every stratum, so the gain is largely a variance repair.
+
+Map and latitude bands: `outputs/v2_stratify/maps/`.
+
+### The gain is concentrated where zero-shot transfer was weakest
+
+| stratum | n | M0 | M1 | gain | improved |
+|---|---|---|---|---|---|
+| LamaHIce (Iceland) | 73 | 0.2658 | 0.5937 | **+0.2475** | 89.0% |
+| Japan | 690 | 0.5288 | 0.6219 | +0.0891 | 80.1% |
+| LamaHCE | 834 | 0.6056 | 0.6982 | +0.0687 | 69.9% |
+| Germany | 457 | 0.6172 | 0.6940 | +0.0672 | 67.2% |
+| BOMAustralia | 1730 | 0.2482 | 0.3229 | +0.0574 | 60.4% |
+| CAMELSH | 5059 | 0.5814 | 0.6696 | +0.0559 | 68.4% |
+
+By latitude the same shape: >60 deg gains +0.2475, 0-30 deg +0.1138, 30-45 deg (where
+most stations are) +0.0552.
+
+Ranked by how much the gain varies across a covariate's strata, climate dominates:
+
+| covariate | strata | gain range | spread |
+|---|---|---|---|
+| kgz_detailed | 15 | -0.0137 .. +0.3219 | **0.336** |
+| source | 6 | +0.0559 .. +0.2475 | 0.192 |
+| kgz_major | 5 | +0.0398 .. +0.1824 | 0.143 |
+| area_km2 | 5 | +0.0222 .. +0.1119 | 0.090 |
+
+Catchment area carries the strongest monotone trend (Spearman rho = -0.172, p = 7e-60):
+the gain falls from +0.1119 in the smallest quintile (median 44 km2) to +0.0222 in the
+largest (3200 km2), monotonically across all five bins. Small, fast catchments are where
+the hourly branch has the most to learn and the daily aggregate still constrains it.
+
+### Arid catchments are the exception, and the failure is in the tail
+
+Hot-desert BWh (56 stations) is the only stratum with a negative median gain (-0.0137),
+and its aggregate metrics get materially worse: median KGE -0.2012 at M0 -> **-0.4142** at
+M1, with exactly 50.0% of stations improving. The two statistics disagree because they
+measure different things -- the median *paired* gain is near zero while the *median of
+each distribution* moves by -0.21 -- which means the typical arid station is unchanged and
+a minority collapse. Arid B zone overall stays unusable either way (M1 median -0.0051).
+So the honest claim is not "fine-tuning hurts drylands" but "fine-tuning leaves drylands
+unfixed and destabilises a subset of them"; anything built on this should exclude or
+special-case BWh rather than average over it.
+
+### Daily-only fine-tuning recovers ~90% of the spatial-blocking penalty
+
+Pairing the same 8709 stations across the random and blocked splits (every station is a
+target exactly once in each, so composition is held fixed by construction):
+
+| | paired median drop | stations worse | all agencies negative |
+|---|---|---|---|
+| M0 (zero-shot) | **-0.0594** | 63.7% | yes, 6/6 (p = 1.6e-168) |
+| M1 (after daily-only fine-tune) | **-0.0061** | 52.2% | no -- Germany +0.0012 (p = 4.2e-06) |
+
+**89.7% of the blocked-split penalty is recovered**, and afterwards whether a station
+prefers the random or the blocked split is close to a coin flip (52.2%); the p-value is
+tiny only because n = 8709. Note that `paired_split_effect`'s own verdict line reads
+"the drop is NOT consistent across agencies, so composition cannot be ruled out" for M1 --
+that heuristic just tests whether every agency is negative, and it fires because the drop
+has shrunk until its *sign* is unstable. That instability is the result, not a warning.
+
+Recovery per agency:
+
+| agency | n | M0 drop | M1 drop | recovered |
+|---|---|---|---|---|
+| Germany | 458 | -0.0730 | +0.0012 | 102% |
+| LamaHCE | 834 | -0.1213 | -0.0017 | 99% |
+| CAMELSH | 5047 | -0.0501 | -0.0055 | 89% |
+| BOMAustralia | 1607 | -0.0644 | -0.0076 | 88% |
+| Japan | 690 | -0.0719 | -0.0106 | 85% |
+| **LamaHIce** | 73 | -0.1515 | **-0.0942** | **38%** |
+
+Five of six agencies recover 85-102%; Iceland recovers 38% and holds essentially the whole
+residual. It is tempting to read this as recovery scaling with gauge density, and the v1
+write-up said as much -- but across six agencies that relationship is not established
+(Spearman rho = +0.257, p = 0.623). Iceland is one outlier, not a trend, and the claim
+should be stated as such.
+
+The mechanism is visible directly: under blocked splitting the gain *rises* with isolation,
+from +0.0494 for stations ~62 km from the nearest other fold to +0.0881 at ~211 km
+(rho = +0.047, p = 8e-06), whereas under random splitting it is flat to slightly negative
+(rho = -0.035). Local daily observations substitute for spatial proximity, and they matter
+most exactly where proximity is unavailable. Iceland is where even that substitution falls
+short.
+
+Note the two comparisons are different and both hold for Iceland: it gains the most from
+fine-tuning in absolute terms (+0.2475) *and* keeps the largest residual blocked penalty
+(-0.0942), because its zero-shot dependence on proximity was extreme enough that a large
+gain still does not close the gap.
+
+Reproduce with `python -m scripts.paired_split_effect --random-run v2_runB --blocked-run
+v2_blocked --tag {M0,M1} --out-dir outputs/v2_split_effect`, `python -m
+scripts.stratify_gain --run outputs/v2_runB/diagnostics_allhours --out-dir
+outputs/v2_stratify` and `python -m scripts.global_map --run
+outputs/v2_runB/diagnostics_allhours --out-dir outputs/v2_stratify/maps`. Recovery
+fractions are in `outputs/v2_split_effect/recovery_by_agency.csv`.
+
+`v2_blocked` and `v2_replay025` have no `diagnostics_allhours` yet, so the stratification
+and map above are the random split only.
+
 ## Reproducing
 
 ```bash
