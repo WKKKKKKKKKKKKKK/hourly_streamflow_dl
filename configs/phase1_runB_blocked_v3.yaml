@@ -56,7 +56,7 @@ train:
   loss: nse_basin
   reg_lambda: 1.0
   early_stopping: true
-  patience: 6
+  patience: 10
   num_workers: 6
   pin_memory: true
   seed: 42

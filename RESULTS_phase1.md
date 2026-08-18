@@ -605,6 +605,95 @@ whole regions in the tail colour — the gain panel read as mostly deep red when
 median is +0.026, and α as mostly deep purple when its median is 0.854. It now plots
 in random order with spans from the 10–90% range and arrows marking clipped values.
 
+## Was v2 trained long enough, and does the daily-only signal pick the right epoch?
+
+Two questions that the numbers already on disk can answer without another GPU hour. Both
+were prompted by noticing that the 30-epoch cap is **not** what stopped most v2 folds.
+
+### The epoch cap was not binding; early stopping was, and it truncated the two splits unequally
+
+All ten v2 pretrain folds wrote `DONE`, and every short fold stopped at exactly
+`counter == patience` (6) -- these are legitimate early stops, not timeouts. Selection
+tracks `val/median_kge`.
+
+| run/fold | epochs | best@ | best val | slope over last 10 | counter at stop |
+|---|---|---|---|---|---|
+| v2_runB/fold0 | 30 | 25 | 0.6304 | +0.00059 | 5 |
+| v2_runB/fold1 | 29 | 23 | 0.6328 | +0.00143 | 6 |
+| v2_runB/fold2 | 30 | 27 | 0.6239 | +0.00048 | 3 |
+| v2_runB/fold3 | 30 | 24 | 0.6301 | +0.00029 | 6 |
+| v2_runB/fold4 | 30 | 28 | 0.6352 | +0.00146 | 2 |
+| v2_blocked/fold0 | **20** | 14 | 0.6123 | **+0.00395** | 6 |
+| v2_blocked/fold1 | 30 | 25 | 0.6398 | +0.00011 | 5 |
+| v2_blocked/fold2 | 30 | 30 | 0.6296 | +0.00139 | 0 |
+| v2_blocked/fold3 | 30 | 26 | 0.6323 | +0.00030 | 4 |
+| v2_blocked/fold4 | **20** | 14 | 0.6243 | **+0.00257** | 6 |
+
+The slope is positive in 10/10 folds (median +0.00099/epoch), so validation skill was
+still creeping up everywhere -- but the per-epoch trend is about an eighth of the
+epoch-to-epoch oscillation, so no single fold's stop is evidence of a plateau.
+
+The asymmetry is the point. The two folds truncated earliest (blocked fold0 and fold4,
+cut at epoch 20 with best@14) also carry the **steepest** remaining slopes, 3-13x the
+runB folds'. So v2's early stopping cut the blocked configuration harder than the random
+one. That makes the headline 0.007 gap (random M1 0.6277 vs blocked M1 0.6210) a
+candidate artefact of unequal truncation rather than a cost of spatial blocking, and it
+is why the v3 sensitivity check is worth running at all.
+
+### Choosing the fine-tuning epoch from daily aggregates alone costs less than the noise
+
+The whole premise is that the target domain has no hourly observations, so the transfer
+stage must select its epoch on `holdout/daily_median_kge` -- a daily-aggregate signal.
+`peek/target_hourly_median_kge` records the hidden hourly truth for diagnosis only (it
+never touches selection). The gap between them is the price of the premise.
+
+| config | median loss | mean | max | folds where selected != optimal |
+|---|---|---|---|---|
+| v2_runB (random) | +0.0053 | +0.0061 | +0.0150 | 3/5 |
+| v2_blocked | +0.0000 | +0.0017 | +0.0070 | 2/5 |
+| v2_replay025 | +0.0000 | +0.0027 | +0.0130 | 2/5 |
+| all 15 | **+0.0000** | **+0.0035** | +0.0150 | 7/15 |
+
+In 8 of 15 folds the daily-holdout criterion picks exactly the epoch an oracle with the
+hidden hourly truth would pick. Pooled mean shortfall is +0.0035 KGE against an
+epoch-to-epoch noise floor of 0.0078 (median |diff| of the peek series), so **the loss is
+not measurable above the noise**. The apparent runB-vs-rest difference is not significant
+(Kruskal-Wallis across the three runs p=0.567; the narrower one-sided runB-vs-rest
+Mann-Whitney gives p=0.160, and neither supports a real difference) -- which also means
+selection loss cannot explain the 0.007 gap, leaving unequal truncation as the one live
+candidate.
+
+This is a direct validation of the experimental premise, not a concession to it:
+supervising and selecting with 24-h aggregates alone gives up nothing detectable
+relative to seeing the hourly series.
+
+Reproduce with `python -m scripts.convergence_check`; outputs land in
+`outputs/convergence_check/` (`pretrain_truncation.csv`, `selection_loss.csv`,
+`summary.json`).
+
+### What v3 was changed to, and why it is not the single-variable run it started as
+
+v3 was specified as "v2 with `train.epochs` 50 instead of 30". Given the table above that
+design cannot answer the convergence question: with `patience` still 6 and counters
+already at 2-6, folds terminate on noise rather than on the cap. v3 therefore now raises
+`train.patience` 6 -> 10 as well, so the epoch cap is the binding constraint and the run
+measures headroom instead of luck. It is reported as a **convergence check**, not as a
+single-variable comparison against v2, and it does not enter the main results table.
+
+v3 also resumes from v2's epoch-30 checkpoints rather than retraining from scratch. This
+is exact, not an approximation: `lr_schedule` (`1:5e-4,12:1e-4,22:5e-5`) is keyed on
+absolute epoch and carries no dependence on the total, and `apply_lr_schedule` reads only
+the current epoch, so epochs 1-30 of a from-scratch v3 run are the same computation v2
+already performed. `--resume` restores model, optimizer, `best`, `best_epoch`, `counter`
+and history. One residual difference, stated because it is real: `epoch_subset`'s rng is
+not checkpointed, so epochs 31+ draw a different same-distribution subset of training
+batches than a single-shot 50-epoch run would -- equivalent to a seed change. v2 itself
+has this property, since its sbatch always passes `--resume`. Provenance for every seeded
+fold is in `outputs/v3_*/fold*/pretrain/SEEDED_FROM.txt`; the seeded configs were
+diffed against the checkpoints' `run_meta.json` and differ only in `output_root`,
+`train.epochs`, `train.patience` and `wandb.group`.
+
+
 ## Reproducing
 
 ```bash
