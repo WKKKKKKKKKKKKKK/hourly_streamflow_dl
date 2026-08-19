@@ -91,7 +91,14 @@ print(resolve(load_config('$CONFIG', None).output_root))")
 if [[ -f "$OUT_ROOT_CFG/fold$FOLD/pretrain/DONE" && "${FORCE:-0}" != "1" ]]; then
   echo "fold $FOLD already has pretrained weights under $OUT_ROOT_CFG -- refusing to overwrite." >&2
   echo "Point the variant at its own output_root, or set FORCE=1 to redo it." >&2
-  exit 3
+  # exit 0, not 3. "Already finished" is success for an idempotent job, and a non-zero
+  # code here breaks any downstream --dependency=afterok. That is not hypothetical: the
+  # v3 chunk chain was built on the claim that surplus chunks "exit 0 in seconds", and
+  # when two run A continuation chunks hit this guard they exited 3, failed, and would
+  # have left four transfer jobs waiting on an afterok that could never be satisfied.
+  # The refusal is still visible -- it is on stderr and in the log; the exit code is the
+  # wrong channel for it.
+  exit 0
 fi
 echo "config=$CONFIG out=$OUT_ROOT_CFG extra_set=${EXTRA_SET:-<none>}"
 

@@ -24,7 +24,11 @@ OUT=$("$PYTHON_BIN" -c "
 from common.config import load_config, resolve
 print(resolve(load_config('$CONFIG', None).output_root))")
 if [[ -f "$OUT/fold$FOLD/pretrain/best_model.pth" && "${FORCE:-0}" != "1" ]]; then
-  echo "$NAME fold $FOLD already done under $OUT -- refusing to overwrite." >&2; exit 3
+  # exit 0: "already done" is success for an idempotent job, and a non-zero code here
+  # breaks downstream --dependency=afterok. The two guards in this repo that DO exit
+  # non-zero (41_africa, 40_basin_average) refuse for a different reason -- a required
+  # input is missing -- which is a real failure.
+  echo "$NAME fold $FOLD already done under $OUT -- refusing to overwrite." >&2; exit 0
 fi
 echo "variant=$NAME fold=$FOLD out=$OUT node=$(hostname)"
 
