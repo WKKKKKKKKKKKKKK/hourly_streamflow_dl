@@ -2,7 +2,12 @@
 # Phase I Steps 4-5 -- African daily validation. Out of sample for every fold.
 #   CONFIG=configs/phase1_runB.yaml sbatch slurm/41_africa.sbatch
 #SBATCH -N 1 --ntasks=1 --cpus-per-task=8 --mem=96G --time=02:00:00
-#SBATCH --constraint=v100 --gres=gpu:v100:1
+# GPU type: accept either. v100 is the most contended type on this cluster (85%
+# utilised vs a100's 61%), and pinning it halved the pool of eligible nodes (23 vs 46
+# for a 96G/8-CPU job) and narrowed the partition list. An untyped gres also opens
+# gpu1 and gpu4. Verified on a100 (sm_80, torch 2.7.1+cu118): the model builds and
+# trains there.
+#SBATCH --constraint="v100|a100" --gres=gpu:1
 #SBATCH -J gmts_africa -o logs/africa_%j.out -e logs/africa_%j.err
 set -eo pipefail
 REPO_ROOT="${GMTS_REPO:-${SLURM_SUBMIT_DIR:-$PWD}}"

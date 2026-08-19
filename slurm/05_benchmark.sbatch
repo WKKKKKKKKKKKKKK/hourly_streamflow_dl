@@ -9,8 +9,13 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=96G
 #SBATCH --time=01:30:00
-#SBATCH --gres=gpu:v100:1
-#SBATCH --constraint=v100
+# GPU type: accept either. v100 is the most contended type on this cluster (85%
+# utilised vs a100's 61%), and pinning it halved the pool of eligible nodes (23 vs 46
+# for a 96G/8-CPU job) and narrowed the partition list. An untyped gres also opens
+# gpu1 and gpu4. Verified on a100 (sm_80, torch 2.7.1+cu118): the model builds and
+# trains there.
+#SBATCH --gres=gpu:1
+#SBATCH --constraint="v100|a100"
 #SBATCH -J gmts_bench
 #SBATCH -o logs/benchmark_%j.out
 #SBATCH -e logs/benchmark_%j.err
