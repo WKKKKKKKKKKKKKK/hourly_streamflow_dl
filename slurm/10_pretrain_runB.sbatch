@@ -6,7 +6,24 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=96G
-#SBATCH --time=22:00:00      # measured 12.7 h/fold at batches_per_epoch=20000
+#SBATCH --time=04:00:00
+# 4 hours is not a guess -- it is the gpu4 partition boundary, and that boundary
+# dominates queue latency far more than fairshare does. Partitions on this cluster are
+# tiered by MaxTime: gpu4 (<=4 h) has 95 nodes and the most free CPUs on the machine,
+# while gpu24 / gpu72 / gpu have 46 / 31 / 58. A job asking for even 5 h is excluded
+# from gpu4 and must compete in pools less than half the size. Measured: twelve 2-3 h
+# jobs submitted 2026-08-18 all started within 0-31 min, while 5 h and 9 h jobs from
+# the same account, same fairshare, same day waited over 24 hours.
+#
+# One pass of 30 epochs takes ~9 h, so a full run does NOT fit in one job. Chain
+# several of these instead, each resuming from the last checkpoint:
+#   H=$(sbatch --parsable slurm/10_pretrain.sbatch)
+#   for i in 1 2; do H=$(sbatch --parsable --dependency=afterany:$H slurm/10_pretrain.sbatch); done
+# afterany, not afterok: a chunk hitting the wall exits non-zero by design, and the
+# next chunk is exactly what should handle that. --resume picks up the checkpoint, and
+# the DONE guard makes surplus chunks exit 0 in seconds once the work is finished, so
+# over-provisioning the chain is nearly free. Point any downstream afterok at the LAST
+# chunk.
 # GPU type: accept either. v100 is the most contended type on this cluster (85%
 # utilised vs a100's 61%), and pinning it halved the pool of eligible nodes (23 vs 46
 # for a 96G/8-CPU job) and narrowed the partition list. An untyped gres also opens
