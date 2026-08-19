@@ -29,6 +29,11 @@
 # for a 96G/8-CPU job) and narrowed the partition list. An untyped gres also opens
 # gpu1 and gpu4. Verified on a100 (sm_80, torch 2.7.1+cu118): the model builds and
 # trains there.
+# Observed but do NOT plan around it: this cluster sets OverTimeLimit = 60 min, so a job
+# declaring 4 h is actually killed at 5 h. That is why the v3 chunks show Elapsed of
+# 04:11 and 04:24 against a 04:00 limit and still COMPLETED rather than TIMEOUT. The
+# grace is a site courtesy that can be withdrawn, and the declared limit is what decides
+# gpu4 eligibility, so keep declaring 4 h and keep the chunk chain.
 #SBATCH --constraint="v100|a100"
 #SBATCH --gres=gpu:1
 #SBATCH --array=0-4
