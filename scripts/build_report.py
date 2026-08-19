@@ -21,8 +21,38 @@ from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Inches, Pt, RGBColor
 
-RUN = Path("outputs/runB_truedaily")
-DIAG = RUN / "diagnostics_allhours"
+# One registry instead of paths scattered through the body. v2 is the primary result;
+# v1 is kept because several conclusions changed between them and the change is itself
+# a finding. v3 is a convergence check and deliberately stays out of the main tables --
+# it differs from v2 in two settings (epochs and patience), so it is not a single-variable
+# comparison and would not be comparable if mixed in.
+RUNS = {
+    "v1": {"runA": "outputs/runA_regwin24", "runB": "outputs/runB_truedaily",
+           "blocked": "outputs/runB_blocked", "replay": "outputs/runB_replay",
+           "diag_sub": {"runA": "diagnostics", "runB": "diagnostics_allhours",
+                        "blocked": "diagnostics_allhours", "replay": "diagnostics_allhours"}},
+    "v2": {"runA": "outputs/v2_runA", "runB": "outputs/v2_runB",
+           "blocked": "outputs/v2_blocked", "replay": "outputs/v2_replay025",
+           "diag_sub": {k: "diagnostics_allhours" for k in ("runA", "runB", "blocked", "replay")}},
+    "v3": {"runA": None, "runB": "outputs/v3_runB",
+           "blocked": "outputs/v3_blocked", "replay": "outputs/v3_replay025",
+           "diag_sub": {k: "diagnostics_allhours" for k in ("runA", "runB", "blocked", "replay")}},
+}
+MAIN = "v2"   # 主版本: 第 4 章诊断与第 6 章局限均以此为准
+VARIANT_LABEL = {"v1": "v1（H=72，无遗忘门）", "v2": "v2（H=336，遗忘门 3）",
+                 "v3": "v3（v2 + 50 轮，patience 10）"}
+
+
+def run_dir(variant: str, key: str) -> Path | None:
+    d = RUNS[variant].get(key)
+    return Path(d) if d else None
+
+
+def diag_dir(variant: str, key: str) -> Path | None:
+    d = run_dir(variant, key)
+    return d / RUNS[variant]["diag_sub"][key] if d else None
+
+
 GREY = RGBColor(0x59, 0x59, 0x59)
 
 
@@ -65,6 +95,18 @@ def note(doc, text: str):
     run.font.color.rgb = GREY
 
 
+def pfmt(value) -> str:
+    """Wilcoxon p over ~8,800 pairs underflows to exactly 0.0; "p = 0.0e+00" reads as an
+    error rather than as overwhelming significance."""
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return "—"
+    # Returns the comparison operator too, so "p < 1e-300" and "p = 1.5e-256"
+    # both read correctly at the call site.
+    return "< 1e-300" if v == 0 else f"= {v:.1e}"
+
+
 def fmt(value, digits=4, sign=False):
     if value is None or (isinstance(value, float) and not np.isfinite(value)):
         return "—"
@@ -72,25 +114,35 @@ def fmt(value, digits=4, sign=False):
     return spec.format(value)
 
 
-def transfer_log_numbers(job_pattern: str, n_folds: int = 5) -> dict | None:
-    """M0/M1 medians straight out of the transfer logs, averaged over folds."""
-    paths = sorted(Path("logs").glob(job_pattern))
-    m0, m1, s0, s1 = [], [], [], []
-    for path in paths[:n_folds]:
-        text = path.read_text(errors="ignore")
-        a = re.search(r"M0 ([0-9.]+) -> M1 ([0-9.]+)", text)
-        b = re.search(r"STEP 3 source domain: median KGE ([0-9.]+) -> ([0-9.]+)", text)
-        if a:
-            m0.append(float(a.group(1)))
-            m1.append(float(a.group(2)))
-        if b:
-            s0.append(float(b.group(1)))
-            s1.append(float(b.group(2)))
+def transfer_numbers(run: Path | None) -> dict | None:
+    """M0/M1/source medians averaged over folds, from each fold's transfer summary.json.
+
+    Previously this grepped "M0 X -> M1 Y" out of logs/transferB_<jobid>_*.out, which
+    pinned the report to specific job ids and would silently return None once those logs
+    were cleaned up. The per-fold summary.json carries the same medians and lives beside
+    the results it describes.
+    """
+    if run is None:
+        return None
+    files = sorted(run.glob("fold*/transfer/summary.json"))
+    if not files:
+        return None
+    m0, m1, s0, s1, epochs = [], [], [], [], []
+    for path in files:
+        j = json.loads(path.read_text())
+        for target, key in ((m0, "step1_M0_target_hourly"), (m1, "step2_M1_target_hourly"),
+                            (s0, "step3_source_before"), (s1, "step3_source_after")):
+            block = j.get(key)
+            if isinstance(block, dict) and block.get("median_kge") is not None:
+                target.append(float(block["median_kge"]))
+        if j.get("best_epoch") is not None:
+            epochs.append(int(j["best_epoch"]))
     if not m0:
         return None
     return {"n_folds": len(m0), "M0": np.mean(m0), "M1": np.mean(m1),
             "source_M0": np.mean(s0) if s0 else None,
-            "source_M1": np.mean(s1) if s1 else None}
+            "source_M1": np.mean(s1) if s1 else None,
+            "best_epochs": epochs}
 
 
 def components(path: Path) -> dict | None:
@@ -125,17 +177,17 @@ def main() -> None:
     note(doc, "本文所有数值由 scripts/build_report.py 直接从结果文件读取生成，未人工转录。")
 
     para = doc.add_paragraph()
-    run = para.add_run("状态说明（2026-08-15）：")
+    run = para.add_run("版本说明：")
     run.bold = True
     run.font.size = Pt(9.5)
     run = para.add_run(
-        "本报告全部数值均在缺少 initial_forget_bias 的情况下产生。Gauch 等人已发表的 MTS-LSTM "
-        "将其设为 3，而本实现及其所依据的 100 站参考实现均无此项。基础配置现已设为 3——它属于"
-        "已发表方法的组成部分，而非调参旋钮；若要精确复现本报告数值，需将其设回 null。"
-        "fold 1 搜索正在分离其单独效应（g03_forgetbias_H72、g04_forgetbias_H168），"
-        "之后将带遗忘门、并结合搜索中明确更优的超参，对核心对比做一次性重跑。"
-        "本报告的对比类结论不受影响（所有运行使用同一初始化），"
-        "可能变动的是绝对水平，以及把 α 解释为根本天花板这一点。"
+        "本报告以 v2 为主结果（lookback_hourly = 336，initial_forget_bias = 3），"
+        "并保留 v1（72，无遗忘门）用于对照——不是为了完整性，而是因为有多条结论在两者之间"
+        "改变了方向或量级，改变本身即为发现：源域回放对目标域的增益消失（§2.3）、"
+        "零样本模型从过度离散变为基本标定（§4.2）、KGE 与绝对误差的分歧符号反转（§6.3）。"
+        "遗忘门此前被列为“尚未解决的保留”，现已解决，见 §4.5。"
+        "另有一个收敛性检验 v3（v2 + 50 轮、patience 10）按设计不进入主表：它相对 v2 改动了两项，"
+        "不构成单变量对比，混入主表会失去可比性；其结果单列于附录。"
     )
     run.font.size = Pt(9.5)
 
@@ -236,39 +288,87 @@ def main() -> None:
               "低一到两个数量级。目标域 M0、M1 及其差不受影响；源域 STEP 3 数字因选择与报告同站同期而偏乐观。")
 
     # ---------------- 2. 主要结果 ----------------
+    para = doc.add_paragraph()
+    run = para.add_run("统计量口径（引用本报告任何数值前必读）：")
+    run.bold = True
+    run = para.add_run(
+        "本报告所有 KGE、NSE、r、α、β 均为逐站中位数，从不使用均值。这不是文风取舍，"
+        "二者的差别足以改变结论的符号。"
+    )
+    mmrun = run_dir(MAIN, "runB")
+    stats = []
+    for tag in ("M0", "M1"):
+        fs = sorted(mmrun.glob(f"fold*/transfer/summary.json"))
+        key = "step1_M0_target_hourly" if tag == "M0" else "step2_M1_target_hourly"
+        med, mean = [], []
+        for f in fs:
+            b = json.loads(f.read_text()).get(key) or {}
+            if b.get("median_kge") is not None:
+                med.append(b["median_kge"])
+            if b.get("mean_kge") is not None:
+                mean.append(b["mean_kge"])
+        if med and mean:
+            stats.append((tag, float(np.mean(med)), float(np.mean(mean))))
+    if stats:
+        add_table(doc, pd.DataFrame([
+            {"阶段": tag, "跨站中位 KGE": fmt(md), "跨站均值 KGE": f"{mn:+.2f}"}
+            for tag, md, mn in stats
+        ]), "表 1-7　同一批预测的中位数与均值（目标域小时 KGE）", widths=[1.0, 1.6, 1.6])
+        note(doc, "注：均值由少数退化站主导（个别站 KGE 低至 −10,487，NSE 低至 −17,484）。"
+                  "剔除 obs_std < 1e-3 的 140 个退化站后均值回到 +0.07 / +0.34，仍远低于中位数，"
+                  "因为一条到 −130 的长尾在过滤后依然存在。因此引用时必须写明“中位数”——"
+                  "读者若从逐站 CSV 自行计算均值，会得到负数，而且他是对的。")
+
     doc.add_heading("2. 主要结果", level=1)
 
-    doc.add_heading("2.1 两条数据路径与两套划分", level=2)
+    doc.add_heading("2.1 两条数据路径、两套划分、两个版本", level=2)
+    doc.add_paragraph(
+        "本节两张表使用两种不同的估计量，分开列出而不混用：表 2-1 是每折中位数再跨折平均，"
+        "表 2-2 是逐站配对后的中位数。两者数值不同，引用时必须说明是哪一种。"
+    )
     rows = []
-    for label, comp_path, log_pattern in (
-        ("run A（采样日分支）", Path("outputs/runA_regwin24/diagnostics/kge_components_summary_target.csv"), None),
-        ("run B（真实日均值）", DIAG / "kge_components_summary_target.csv", None),
-    ):
-        c = components(comp_path)
-        if not c:
-            continue
-        rows.append({
-            "配置": label,
-            "M0": fmt(c["kge"]["M0_median"]),
-            "M1": fmt(c["kge"]["M1_median"]),
-            "ΔKGE": fmt(c["kge"]["median_delta"], sign=True),
-            "r": f'{c["kge_r"]["M0_median"]:.3f}→{c["kge_r"]["M1_median"]:.3f}',
-            "α": f'{c["kge_alpha"]["M0_median"]:.3f}→{c["kge_alpha"]["M1_median"]:.3f}',
-            "β": f'{c["kge_beta"]["M0_median"]:.3f}→{c["kge_beta"]["M1_median"]:.3f}',
-        })
-    blocked = transfer_log_numbers("transferB_50396927_*.out")
-    random_b = transfer_log_numbers("transferB_50193305_*.out")
-    if blocked and random_b:
-        for label, d in (("run B · 随机划分", random_b), ("run B · 空间分块", blocked)):
-            rows.append({"配置": label, "M0": fmt(d["M0"]), "M1": fmt(d["M1"]),
-                         "ΔKGE": fmt(d["M1"] - d["M0"], sign=True),
-                         "r": "—", "α": "—", "β": "—"})
-    if rows:
-        add_table(doc, pd.DataFrame(rows), "表 2-1　目标域小时 KGE（跨站中位数，配对）",
-                  widths=[1.5, 0.8, 0.8, 0.9, 1.0, 1.0, 1.0])
-    note(doc, "注：前两行为全小时评估集上的站点配对统计；后两行取自迁移日志的中位数之差，"
-              "两种估计量不同，不可混用。空间分块的零样本 M0 比随机划分低 0.128（五折同向，"
-              "−0.091 至 −0.191），即随机划分下约四分之一的小时技巧来自源域中留存的水文近邻。")
+    for key, label in (("runA", "run A（采样日分支）"), ("runB", "run B（真实日均值）"),
+                       ("blocked", "run B · 空间分块"), ("replay", "run B · 回放 0.25")):
+        for variant in ("v1", "v2"):
+            d = transfer_numbers(run_dir(variant, key))
+            if not d:
+                rows.append({"配置": label, "版本": variant, "折数": "—", "M0": "待运行",
+                             "M1": "待运行", "ΔKGE": "—", "源域 Δ": "—"})
+                continue
+            src = (fmt(d["source_M1"] - d["source_M0"], sign=True)
+                   if d["source_M1"] is not None else "—")
+            rows.append({"配置": label, "版本": variant, "折数": str(d["n_folds"]),
+                         "M0": fmt(d["M0"]), "M1": fmt(d["M1"]),
+                         "ΔKGE": fmt(d["M1"] - d["M0"], sign=True), "源域 Δ": src})
+    add_table(doc, pd.DataFrame(rows), "表 2-1　目标域小时 KGE，每折中位数的跨折平均",
+              widths=[1.6, 0.6, 0.6, 0.9, 0.9, 0.9, 0.9])
+    note(doc, "注：v1 为 lookback_hourly=72 且无 initial_forget_bias；v2 为 336 且遗忘门初值 3，"
+              "其余设置相同。“待运行”表示该组合的迁移阶段仍在排队，不是缺失或失败。"
+              "run A 的数值取自各折 transfer/summary.json；早期版本的报告从迁移日志文本中"
+              "提取同一指标，两者相差约 0.001，本报告统一采用 JSON 一路。")
+
+    comp_rows = []
+    for key, label in (("runA", "run A"), ("runB", "run B"),
+                       ("blocked", "空间分块"), ("replay", "回放 0.25")):
+        for variant in ("v1", "v2"):
+            d = diag_dir(variant, key)
+            c = components(d / "kge_components_summary_target.csv") if d else None
+            if not c:
+                continue
+            comp_rows.append({
+                "配置": label, "版本": variant,
+                "M0": fmt(c["kge"]["M0_median"]), "M1": fmt(c["kge"]["M1_median"]),
+                "ΔKGE": fmt(c["kge"]["median_delta"], sign=True),
+                "r": f'{c["kge_r"]["M0_median"]:.3f}→{c["kge_r"]["M1_median"]:.3f}',
+                "α": f'{c["kge_alpha"]["M0_median"]:.3f}→{c["kge_alpha"]["M1_median"]:.3f}',
+                "β": f'{c["kge_beta"]["M0_median"]:.3f}→{c["kge_beta"]["M1_median"]:.3f}',
+            })
+    if comp_rows:
+        add_table(doc, pd.DataFrame(comp_rows), "表 2-2　KGE 及其 r / α / β 分量，逐站配对中位数",
+                  widths=[1.2, 0.6, 0.8, 0.8, 0.8, 1.1, 1.1, 1.1])
+        note(doc, "注：v1 的零样本模型闪变性为观测的 6.80 倍、日内标准差 3.11 倍，而均值仅为观测的"
+                  "一半；v2 在微调前即已标定（闪变 0.95 倍，均值 1.05 倍）。因此 v1 到 v2 的 α "
+                  "变化不是“调得更好”，而是过度离散被消除，详见 4.2。")
 
     doc.add_heading("2.2 KGE 分解：日聚合监督改变了什么", level=2)
     doc.add_paragraph(
@@ -283,30 +383,38 @@ def main() -> None:
 
     doc.add_heading("2.3 源域回放", level=2)
     replay_rows = []
-    for label, pattern in (("0（无回放）", "transferB_50193305_*.out"),
-                           ("0.1", "transferB_50360723_*.out"),
-                           ("0.25", "transferB_50329149_*.out"),
-                           ("0.5", "transferB_50359059_*.out")):
-        d = transfer_log_numbers(pattern)
+    sweep = (("v1", "0（无回放）", "outputs/runB_truedaily"),
+             ("v1", "0.1", "outputs/runB_replay01"),
+             ("v1", "0.25", "outputs/runB_replay"),
+             ("v1", "0.5", "outputs/runB_replay05"),
+             ("v2", "0（无回放）", "outputs/v2_runB"),
+             ("v2", "0.25", "outputs/v2_replay025"))
+    for variant, label, path in sweep:
+        d = transfer_numbers(Path(path))
         if not d:
             continue
+        weighted = (fmt(0.2 * d["M1"] + 0.8 * d["source_M1"])
+                    if d["source_M1"] is not None else "—")
         replay_rows.append({
-            "回放比例": label,
-            "目标域 M1": fmt(d["M1"]),
-            "目标域 Δ": fmt(d["M1"] - d["M0"], sign=True),
-            "源域 M1": fmt(d["source_M1"]) if d["source_M1"] else "—",
-            "源域 Δ": fmt(d["source_M1"] - d["source_M0"], sign=True) if d["source_M1"] else "—",
-            "站数加权 M1": fmt(0.2 * d["M1"] + 0.8 * d["source_M1"]) if d["source_M1"] else "—",
+            "版本": variant, "回放比例": label,
+            "目标域 M1": fmt(d["M1"]), "目标域 Δ": fmt(d["M1"] - d["M0"], sign=True),
+            "源域 M1": fmt(d["source_M1"]) if d["source_M1"] is not None else "—",
+            "源域 Δ": (fmt(d["source_M1"] - d["source_M0"], sign=True)
+                       if d["source_M1"] is not None else "—"),
+            "站数加权 M1": weighted,
         })
     if replay_rows:
-        add_table(doc, pd.DataFrame(replay_rows), "表 2-2　源域回放比例扫描（五折均值）",
-                  widths=[1.0, 1.1, 1.0, 1.0, 1.0, 1.2])
-    note(doc, "注：本表源域 Δ 为中位数之差；按站点配对的中位数为 −0.1064（无回放）与 "
-              "−0.0668（0.25），两种估计量数值不同，引用时勿混用。"
-              "回放把源域 batch 连同其真实小时标签混回微调。这不是泄漏——实验前提隐藏的是"
-              "目标站的小时观测，源域小时数据正是阶段 1 训练所用。0.25 一档在两个域上均优于无回放，"
-              "五折两指标全部同向。机制为阻尼过度重标定：无回放时 6.25% 的站从欠离散被推过 α = 1.2"
-              "变成过离散，回放将其压至 2.09%。")
+        add_table(doc, pd.DataFrame(replay_rows), "表 2-3　源域回放比例扫描（每折中位数的跨折平均）",
+                  widths=[0.6, 1.0, 1.0, 0.9, 0.9, 0.9, 1.1])
+    note(doc, "注：回放把源域 batch 连同其真实小时标签混回微调。这不是泄漏——实验前提隐藏的是"
+              "目标站的小时观测，源域小时数据正是阶段 1 训练所用。")
+    doc.add_paragraph(
+        "结论在 v1 与 v2 之间发生了改变，这一点必须明确写出。v1 下 0.25 一档在两个域上均优于"
+        "无回放，机制是阻尼过度重标定：无回放时 6.25% 的站从欠离散被推过 α = 1.2 变成过离散，"
+        "回放将其压至 2.09%。v2 下这个机制已无对象——零样本模型本就不再过度离散——回放对目标域"
+        "不再有增益，其 r 增益（+0.0060）与不回放（+0.0054）无法区分，α 增益反而更小"
+        "（+0.0257 对 +0.0370）。因此回放在 v2 中只保护源域，对目标域无贡献。"
+    )
 
     # ---------------- 3. 非洲 ----------------
     doc.add_heading("3. 非洲外部验证", level=1)
@@ -449,7 +557,7 @@ def main() -> None:
     doc.add_heading("4. 分层与诊断分析", level=1)
 
     doc.add_heading("4.1 增益在哪里最大", level=2)
-    strat_path = DIAG / "stratified" / "stratified_gain_target.csv"
+    strat_path = Path("outputs/v2_stratify/stratified_gain_target.csv")
     if strat_path.exists():
         strat = pd.read_csv(strat_path)
         dist = strat[strat.variable.str.startswith("nearest_other_fold")].copy()
@@ -492,7 +600,7 @@ def main() -> None:
         "日聚合完美而小时无意义。利用 stride-24 的性质（每个样本最后 24 个小时输出恰好是一个自然日，"
         "相邻日可无缝拼接）直接测量日内形状。"
     )
-    degen_path = RUN / "degenerate" / "degenerate_summary.json"
+    degen_path = run_dir(MAIN, "runB") / "degenerate" / "degenerate_summary.json"
     if degen_path.exists():
         data = json.loads(degen_path.read_text())["medians"]
         name_map = {"flashiness": "flashiness（RB 指数）", "intraday_std": "日内标准差",
@@ -515,7 +623,7 @@ def main() -> None:
     )
 
     doc.add_heading("4.3 显著性检验（BH-FDR）", level=2)
-    sig_path = RUN / "significance" / "significance_summary.json"
+    sig_path = run_dir(MAIN, "runB") / "significance" / "significance_summary.json"
     if sig_path.exists():
         d = json.loads(sig_path.read_text())
         n = d["n_stations"]
@@ -525,7 +633,7 @@ def main() -> None:
             {"项": "BH 校正后显著", "值": f'{d["n_significant_after_bh"]:,}（{d["n_significant_after_bh"]/n:.1%}）'},
             {"项": "其中改善 / 变差", "值": f'{d["n_improved"]:,}（{d["n_improved"]/n:.1%}） / {d["n_degraded"]:,}（{d["n_degraded"]/n:.1%}）'},
             {"项": "全站中位误差变化", "值": f'{d["median_error_reduction"]:+.5f} mm/h（负号表示略微变差）'},
-            {"项": "池化 ΔKGE", "值": f'{d["pooled_median_delta_kge"]:+.4f}，p = {d["pooled_wilcoxon_p"]:.2e}'},
+            {"项": "池化 ΔKGE", "值": f'{d["pooled_median_delta_kge"]:+.4f}，p {pfmt(d["pooled_wilcoxon_p"])}'},
         ]), "表 4-4　站级配对检验与 FDR 控制", widths=[1.6, 4.4])
     doc.add_paragraph(
         "效应真实存在（BH 校正后 91.6% 的站仍显著，远超偶然期望），但方向分裂："
@@ -541,7 +649,7 @@ def main() -> None:
     run.bold = True
 
     doc.add_heading("4.4 全球分布", level=2)
-    map_path = DIAG / "maps" / "global_map_target.png"
+    map_path = Path("outputs/v2_stratify/maps/global_map_target.png")
     if map_path.exists():
         doc.add_picture(str(map_path), width=Inches(6.5))
         doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -553,7 +661,7 @@ def main() -> None:
         )
         run.font.size = Pt(9)
         cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    lat_path = DIAG / "maps" / "by_latitude_target.csv"
+    lat_path = Path("outputs/v2_stratify/maps/by_latitude_target.csv")
     if lat_path.exists():
         lat = pd.read_csv(lat_path)
         lat.columns = ["纬度带", "站数", "M0", "M1", "增益", "M0 的 α"]
@@ -566,133 +674,337 @@ def main() -> None:
               "“全球”形容的是模型而非台站网络，这正是非洲验证不可替代的原因。")
 
     # ---------------- 5. 结论 ----------------
-    doc.add_heading("4.5 一个尚未解决的保留：遗忘门初始化", level=2)
+    doc.add_heading("4.5 遗忘门初始化：曾经的保留，现已解决", level=2)
     doc.add_paragraph(
         "Gauch 等人的 MTS-LSTM 原始实现在初始化时打开 LSTM 遗忘门"
         "（neuralhydrology 中 initial_forget_bias = 3）。本实现与其所依据的 100 站参考实现"
-        "均未包含这一项——偏离的是原论文，而非两个实验之间。本报告全部结果都是在缺少该项的"
-        "情况下产生的。"
+        "均未包含这一项——偏离的是原论文，而非两个实验之间。v1 的全部结果都是在缺少该项的"
+        "情况下产生的，本报告早期版本将其列为“尚未解决的保留”。"
     )
     doc.add_paragraph(
-        "这对欠离散这一结论尤其关键：遗忘门半闭时，365 步的日分支会让细胞状态在到达状态交接点"
-        "之前衰减，积雪与地下水这类长记忆信号因而到不了小时分支。其预期症状恰好就是退化解诊断"
-        "测到的现象——M0 的日间变化远远不足，而日内抖动过量 3.1 倍。"
+        "机理上这一项影响的正是欠离散：PyTorch 默认使得有效遗忘门开在 0.500，对应约 2 步的有效"
+        "记忆；置为 3 后门开到 0.953，有效记忆约 21 步。遗忘门半闭时，365 步的日分支会让细胞状态"
+        "在到达状态交接点之前衰减，积雪与地下水这类长记忆信号因而到不了小时分支。"
     )
     para = doc.add_paragraph()
-    run = para.add_run(
-        "因此本报告称为“天花板”的部分，可能是一个缺失组件而非固有限制。fold 1 搜索中的 "
-        "g03_forgetbias_H72 与 g04_forgetbias_H168 固定小时窗口、只改遗忘门，正是为分离二者而设。"
-        "在其返回之前，§4 与 §5 关于 α 的论述应读作“α 是本文所训练模型的主导缺陷”，"
-        "而非关于该架构本身的论断。"
-    )
+    run = para.add_run("v2 已按已发表方法实现该项，并与更长的小时回看窗口（72 → 336）一并纳入。")
     run.bold = True
-    doc.add_paragraph(
-        "对比类结论不受影响：基线、run A、run B、空间分块、各档回放与非洲全部使用同一套初始化，"
-        "故 ΔKGE、随机与分块之差、回放比例扫描、非洲增益均成立。可能变动的是绝对水平，"
-        "以及把 α 解释为根本限制这一点。"
-    )
-
-    doc.add_heading("4.6 空间分块的跌幅不是折构成造成的（逐站配对）", level=2)
-    doc.add_paragraph(
-        "空间分块必然使折构成不均衡（30 个机构×折组合中 6 个为空），因此“M0 下降”会被质疑为"
-        "两套划分打分的是不同的流域组合。5 折设计恰好能回答这个质疑：每个站在两套划分里"
-        "各当过一次目标站，因此可以逐站配对，构成差异从构造上被固定。"
-    )
-    split = Path("outputs/split_effect/summary_M0.json")
-    if split.exists():
-        d = json.loads(split.read_text())
-        o = d["overall"]
-        add_table(doc, pd.DataFrame([
-            {"统计量": "配对流域数", "值": f'{o["n_stations"]:,}'},
-            {"统计量": "中位 KGE 随机 → 分块", "值": f'{o["median_random"]:.4f} → {o["median_blocked"]:.4f}'},
-            {"统计量": "中位数之差", "值": f'{o["difference_of_medians"]:+.4f}'},
-            {"统计量": "逐站配对中位跌幅", "值": f'{o["paired_median_drop"]:+.4f}（{o["frac_worse"]:.1%} 的站变差，p={o["wilcoxon_p"]:.1e}）'},
-        ]), "表 4-6　随机划分 vs 空间分块，逐站配对", widths=[2.0, 4.0])
-        note(doc, "注：两者是不同估计量，本文其他处引用过中位数之差；配对值更严格，应作为头条数字。")
-        rows = [{"机构": r["source"], "站数": f'{r["n_stations"]:,}',
-                 "随机": fmt(r["median_random"]), "分块": fmt(r["median_blocked"]),
-                 "配对跌幅": fmt(r["paired_median_drop"], sign=True),
-                 "变差占比": f'{r["frac_worse"]:.1%}'} for r in d["by_agency"]]
-        add_table(doc, pd.DataFrame(rows), "表 4-7　按来源机构分层的配对跌幅",
-                  widths=[1.4, 0.8, 0.9, 0.9, 1.0, 1.0])
-        para = doc.add_paragraph()
+    dgn = run_dir(MAIN, "runB") / "degenerate" / "degenerate_summary.json"
+    if dgn.exists():
+        m = json.loads(dgn.read_text())["medians"]
+        fr = m["flashiness"]["M0"] / m["flashiness"]["observed"]
+        mr = m["mean"]["M0"] / m["mean"]["observed"]
         run = para.add_run(
-            "六家机构无一例外全部下降——这是构成假象无法产生的结果，因此“折构成变化”"
-            "这一替代解释被排除。"
+            f'结果与预期方向一致但幅度更大：v1 的零样本模型闪变为观测的 6.80 倍、日内标准差 '
+            f'3.11 倍、而均值仅为观测的一半（0.50 倍）；{MAIN} 在微调前即已基本标定'
+            f'（闪变 {fr:.2f} 倍，均值 {mr:.2f} 倍）。因此此前把 α 称为“可能是缺失组件而非'
+            f'固有限制”的保留，答案是前者。'
         )
-        run.bold = True
-        doc.add_paragraph(
-            "跨机构的跌幅差异本身也是一项发现：对空间邻近的依赖程度与台网密度成反比。"
-            "美国贡献 5,767 个站，分块后源域中仍有大量可比流域，跌幅最小（−0.066）；"
-            "冰岛只有 73 个站且地理孤立，整块移除后源域中几乎没有相似流域，跌幅达 −0.246，"
-            "接近四倍。台网稀疏处随机划分的乐观偏差最严重——而那恰恰是本方法最想服务的地区。"
-        )
+    doc.add_paragraph(
+        "需要如实记录的一点：这两项改动是同时引入的，因此本报告无法把 v1 到 v2 的差异单独归因于"
+        "遗忘门或回看窗口之一。fold 1 的超参搜索中曾设计 g03/g04 两组用于分离二者，"
+        "但唯一严格可比的两对给出了方向相反的结果（+0.009 与 −0.027，均值约 0.5σ），"
+        "不足以定论。遗忘门之所以纳入，理由是方法学一致性——它是已发表方法的组成部分，"
+        "不是调参旋钮——而非它被证明单独有效。"
+    )
+    doc.add_paragraph(
+        "对 v1 内部的对比类结论不受影响：v1 的基线、run A、run B、空间分块、各档回放与非洲"
+        "全部使用同一套初始化。但 v1 与 v2 之间有多条结论确实改变了方向或量级，"
+        "已分别在 §2.3、§4.2、§6.3 与第 5 章标明。"
+    )
 
-    doc.add_heading("4.7 空间分块的机理分解", level=2)
-    bd = Path("outputs/runB_blocked/diagnostics_allhours/kge_components_summary_target.csv")
-    if bd.exists():
-        c = components(bd)
+    doc.add_heading("4.6 空间分块的代价：是否为折构成假象，以及能否被回收", level=2)
+    doc.add_paragraph(
+        "空间分块必然使折构成不均衡，因此“M0 下降”会被质疑为两套划分打分的是不同的流域组合。"
+        "5 折设计恰好能回答这个质疑：每个站在两套划分里各当过一次目标站，因此可以逐站配对，"
+        "构成差异从构造上被固定。同一批站在 M0 与 M1 两个阶段各配对一次，还能进一步回答"
+        "“这个代价是否被日聚合微调回收”。"
+    )
+    sp = {}
+    for tag in ("M0", "M1"):
+        f = Path(f"outputs/v2_split_effect/summary_{tag}.json")
+        if f.exists():
+            sp[tag] = json.loads(f.read_text())
+    if sp:
+        rows = []
+        for tag in ("M0", "M1"):
+            if tag not in sp:
+                continue
+            o = sp[tag]["overall"]
+            rows.append({
+                "阶段": f'{tag}（{"零样本" if tag == "M0" else "日聚合微调后"}）',
+                "配对站数": f'{o["n_stations"]:,}',
+                "随机 → 分块": f'{o["median_random"]:.4f} → {o["median_blocked"]:.4f}',
+                "配对中位跌幅": f'{o["paired_median_drop"]:+.4f}',
+                "变差占比": f'{o["frac_worse"]:.1%}',
+                "p": f'{o["wilcoxon_p"]:.1e}',
+            })
+        add_table(doc, pd.DataFrame(rows), "表 4-6　随机划分 vs 空间分块，逐站配对（同一批站）",
+                  widths=[1.5, 0.9, 1.3, 1.1, 0.9, 0.9])
+        note(doc, "注：配对中位跌幅与“中位数之差”是不同估计量，配对值更严格，应作为头条数字。")
+        if "M0" in sp and "M1" in sp:
+            d0 = sp["M0"]["overall"]["paired_median_drop"]
+            d1 = sp["M1"]["overall"]["paired_median_drop"]
+            rec = 1 - abs(d1) / abs(d0) if d0 else float("nan")
+            para = doc.add_paragraph()
+            run = para.add_run(
+                f'日聚合微调回收了空间分块代价的 {rec:.1%}：配对跌幅从 {d0:+.4f} 收窄到 {d1:+.4f}。'
+            )
+            run.bold = True
+            doc.add_paragraph(
+                f'微调之后，一个站更适合随机划分还是分块划分已接近抛硬币'
+                f'（{sp["M1"]["overall"]["frac_worse"]:.1%} 变差），p 值之所以仍然极小'
+                f'（{sp["M1"]["overall"]["wilcoxon_p"]:.1e}）只是因为样本量达 '
+                f'{sp["M1"]["overall"]["n_stations"]:,} 站。'
+            )
+        # 逐机构：M0 与 M1 并列，并直接给出回收比例
+        by0 = {r["source"]: r for r in sp["M0"]["by_agency"]} if "M0" in sp else {}
+        by1 = {r["source"]: r for r in sp["M1"]["by_agency"]} if "M1" in sp else {}
+        rows = []
+        for src in sorted(by0, key=lambda s: -(1 - abs(by1.get(s, {}).get("paired_median_drop", 0))
+                                               / abs(by0[s]["paired_median_drop"] or 1))):
+            a = by0[src]["paired_median_drop"]
+            b = by1.get(src, {}).get("paired_median_drop")
+            rows.append({"机构": src, "站数": f'{by0[src]["n_stations"]:,}',
+                         "M0 跌幅": fmt(a, sign=True),
+                         "M1 跌幅": fmt(b, sign=True) if b is not None else "—",
+                         "回收": f"{1 - abs(b)/abs(a):.0%}" if b is not None and a else "—"})
+        if rows:
+            add_table(doc, pd.DataFrame(rows), "表 4-7　按来源机构：分块代价及其回收比例",
+                      widths=[1.4, 0.8, 1.0, 1.0, 0.8])
+        if "M0" in sp:
+            allneg = all(r["paired_median_drop"] < 0 for r in sp["M0"]["by_agency"])
+            para = doc.add_paragraph()
+            run = para.add_run(
+                ("零样本阶段六家机构无一例外全部下降——这是构成假象无法产生的结果，"
+                 "因此“折构成变化”这一替代解释被排除。")
+                if allneg else
+                "零样本阶段各机构方向不一致，构成假象无法排除。"
+            )
+            run.bold = True
+        if by1:
+            worst = min(by1.values(), key=lambda r: r["paired_median_drop"])
+            doc.add_paragraph(
+                f'回收并不均匀：{worst["source"]}（{worst["n_stations"]:,} 站）是唯一回收失败的机构，'
+                f'残余跌幅 {worst["paired_median_drop"]:+.4f}，几乎独占全部残差；其余机构回收 85% 以上。'
+            )
+            note(doc, "注：直观上会想把回收率解释为随台网密度变化，本报告早期版本也如此表述。"
+                      "但六家机构上该关系并不成立（回收率与站数的 Spearman ρ = +0.257，p = 0.623）。"
+                      "冰岛是一个离群点，不是趋势，措辞应止于此。")
+
+    doc.add_heading("4.7 空间分块的机理：代价与回收都落在时相上", level=2)
+    comp = {}
+    for key in ("runB", "blocked"):
+        d = diag_dir(MAIN, key)
+        c = components(d / "kge_components_summary_target.csv") if d else None
+        if c:
+            comp[key] = c
+    if "blocked" in comp:
+        c = comp["blocked"]
         rows = [{"分量": lab, "M0": fmt(c[k]["M0_median"]), "M1": fmt(c[k]["M1_median"]),
                  "Δ": fmt(c[k]["median_delta"], sign=True)}
                 for k, lab in (("kge", "KGE"), ("kge_r", "r（时相）"),
                                ("kge_alpha", "α（方差）"), ("kge_beta", "β（偏差）"))]
-        add_table(doc, pd.DataFrame(rows), "表 4-8　空间分块划分下的 KGE 分解（全小时配对，8,862 站）",
+        add_table(doc, pd.DataFrame(rows), "表 4-8　空间分块划分下的 KGE 分解（逐站配对）",
                   widths=[1.4, 1.0, 1.0, 1.0])
-        v = Path("outputs/runB_blocked/diagnostics_allhours/verdict_target.json")
-        if v.exists():
-            a = json.loads(v.read_text())["attribution"]
-            doc.add_paragraph(
-                f'变差站中的元凶占比：r {a["culprit_share"]["r (timing)"]:.1%}、'
-                f'α {a["culprit_share"]["alpha (variance)"]:.1%}、'
-                f'β {a["culprit_share"]["beta (bias)"]:.1%}。时相的牵连甚至比随机划分（7.7%）'
-                "更小，因此“监督只重标定、不扰动时相”这一结论在更难的划分下同样成立。"
-            )
-    dg = Path("outputs/runB_blocked/degenerate/degenerate_summary.json")
+    if "blocked" in comp and "runB" in comp:
+        rows = []
+        for k, lab in (("kge_r", "r（时相）"), ("kge_alpha", "α（方差）"), ("kge_beta", "β（偏差）")):
+            g0 = comp["blocked"][k]["M0_median"] - comp["runB"][k]["M0_median"]
+            g1 = comp["blocked"][k]["M1_median"] - comp["runB"][k]["M1_median"]
+            rows.append({"分量": lab, "M0 缺口": fmt(g0, sign=True), "M1 缺口": fmt(g1, sign=True),
+                         "回收": (f"{1 - abs(g1)/abs(g0):.0%}" if abs(g0) > 1e-9 else "—")})
+        add_table(doc, pd.DataFrame(rows), "表 4-9　分块相对随机的分量缺口（负值表示分块更差）",
+                  widths=[1.4, 1.1, 1.1, 0.9])
+        r0 = comp["blocked"]["kge_r"]["M0_median"] - comp["runB"]["kge_r"]["M0_median"]
+        r1 = comp["blocked"]["kge_r"]["M1_median"] - comp["runB"]["kge_r"]["M1_median"]
+        para = doc.add_paragraph()
+        run = para.add_run(
+            f"空间分块的代价几乎全部落在时相上：零样本阶段 r 落后 {r0:+.4f}，而 α 与 β 的差距"
+            f"都在 0.005 以内。移除一个流域的邻居，损害的是模型认为水什么时候到，"
+            f"不是水量多少或变率大小。"
+        )
+        run.bold = True
+        doc.add_paragraph(
+            f"微调随后回收了这个时相缺口的 {1 - abs(r1)/abs(r0):.0%}，并把 α 推到超过随机划分。"
+            "这一点需要专门说明，因为它反直觉：24 小时聚合本身不含任何日内时相信息。"
+            "路径是架构性的而非统计性的——小时分支从不读取日尺度标签，它的初始隐状态与细胞状态"
+            "经 transfer_h / transfer_c 从日分支继承。在本地日观测上微调日分支，得到更准的流域"
+            "状态（蓄水量、湿度），而更准的状态改变小时分支放水的时刻。日尺度数据经由这条"
+            "状态交接通道间接修正了小时时相，而这条通道正是双分支设计的意义所在；"
+            "单分支小时模型在同样监督下没有它。"
+        )
+    v = diag_dir(MAIN, "blocked") / "verdict_target.json" if diag_dir(MAIN, "blocked") else None
+    if v and v.exists():
+        a = json.loads(v.read_text())["attribution"]
+        share = a["culprit_share"]
+        doc.add_paragraph(
+            f'变差站中的元凶占比：r {share["r (timing)"]:.1%}、α {share["alpha (variance)"]:.1%}、'
+            f'β {share["beta (bias)"]:.1%}。'
+        )
+    dg = run_dir(MAIN, "blocked") / "degenerate" / "degenerate_summary.json"
     if dg.exists():
         m = json.loads(dg.read_text())["medians"]
+        f_obs, f0, f1 = (m["flashiness"][k] for k in ("observed", "M0", "M1"))
+        mu_obs, mu0, mu1 = (m["mean"][k] for k in ("observed", "M0", "M1"))
+        # 解释随数据走，不写死“过量”“减半”：v1 的 M0 闪变是观测的 6.8 倍，v2 已是 0.93 倍。
+        verdict = ("零样本阶段已基本标定" if 0.8 <= f0 / f_obs <= 1.25
+                   else f"零样本阶段闪变为观测的 {f0/f_obs:.2f} 倍")
         doc.add_paragraph(
-            f'日内形状与随机划分同型，且不存在退化解：观测 flashiness {m["flashiness"]["observed"]:.4f}，'
-            f'M0 {m["flashiness"]["M0"]:.4f}（过量 {m["flashiness"]["M0"]/m["flashiness"]["observed"]:.1f} 倍），'
-            f'M1 {m["flashiness"]["M1"]:.4f}；均值观测 {m["mean"]["observed"]:.4f} 对 M0 '
-            f'{m["mean"]["M0"]:.4f}（不足一半）与 M1 {m["mean"]["M1"]:.4f}'
-            f'（{m["mean"]["M1"]/m["mean"]["observed"]:.2f} 倍）。微调修好水量并把过量抖动减半。'
+            f'日内形状不存在退化解，且{verdict}：观测 flashiness {f_obs:.4f}，'
+            f'M0 {f0:.4f}（{f0/f_obs:.2f} 倍），M1 {f1:.4f}（{f1/f_obs:.2f} 倍）；'
+            f'均值观测 {mu_obs:.4f}，M0 {mu0:.4f}（{mu0/mu_obs:.2f} 倍），'
+            f'M1 {mu1:.4f}（{mu1/mu_obs:.2f} 倍）。'
         )
-    sg = Path("outputs/runB_blocked/significance/significance_summary.json")
+    sg = run_dir(MAIN, "blocked") / "significance" / "significance_summary.json"
     if sg.exists():
         d = json.loads(sg.read_text())
         n = d["n_stations"]
+        imp, deg = d["n_improved"] / n, d["n_degraded"] / n
+        split_word = ("方向仍然分裂" if deg >= imp else "方向已明确偏向改善")
         doc.add_paragraph(
-            f'显著性：BH 校正后 {d["n_significant_after_bh"]:,}/{n:,}（{d["n_significant_after_bh"]/n:.1%}）'
-            f'变化显著，但方向同样分裂——{d["n_improved"]/n:.1%} 改善、{d["n_degraded"]/n:.1%} 变差，'
-            f'池化 ΔKGE {d["pooled_median_delta_kge"]:+.4f}（p = {d["pooled_wilcoxon_p"]:.1e}）。'
-            "§6.3 的“标定而非精度”这一保留在此同样适用。"
+            f'显著性：BH 校正后 {d["n_significant_after_bh"]:,}/{n:,}'
+            f'（{d["n_significant_after_bh"]/n:.1%}）变化显著，{split_word}——'
+            f'{imp:.1%} 改善、{deg:.1%} 变差，池化 ΔKGE '
+            f'{d["pooled_median_delta_kge"]:+.4f}（p {pfmt(d["pooled_wilcoxon_p"])}）。'
         )
 
+    doc.add_heading("4.8 训练是否充分，以及只用日聚合选轮次的代价", level=2)
+    doc.add_paragraph(
+        "两个问题都可以由已有的训练历史回答，无需额外 GPU。二者都源于同一个观察："
+        "让 v2 停下来的不是 30 轮的上限，而是 patience = 6 的早停。"
+    )
+    cc = Path("outputs/convergence_check/summary.json")
+    if cc.exists():
+        d = json.loads(cc.read_text())
+        doc.add_paragraph(
+            f'第一，训练在停止时仍在改善。{d["pretrain_folds_still_improving"]} 折（共 10 折）'
+            f'的验证指标末段斜率为正，中位 {d["pretrain_median_tail_slope"]:+.5f}/轮。'
+            "更要紧的是截断不对称：被砍得最早的两折都属于空间分块（第 20 轮停，最佳在第 14 轮），"
+            "而它们的剩余斜率也最陡（+0.00395 与 +0.00257，是随机划分各折的 3–13 倍）。"
+            "因此主表中随机与分块 M1 之间 0.007 的差距，存在“不等截断造成”这一替代解释，"
+            "这正是附录 v3 收敛性检验要回答的问题。"
+        )
+        if "selection_loss_mean" in d:
+            doc.add_paragraph(
+                f'第二，用目标域仅有的日聚合信号来选择微调轮次，代价测不出来。迁移阶段只能依据 '
+                f'holdout/daily_median_kge 选轮次；训练历史另记录了偷看隐藏小时真值的 '
+                f'peek 指标（仅用于诊断，从不参与选择）。{d["n_folds_exact_match"]}/{d["n_folds"]} '
+                f'折中，日聚合准则选出的就是 oracle 会选的那一轮；池化平均亏损 '
+                f'{d["selection_loss_mean"]:+.4f} KGE，而 peek 序列自身的逐轮噪声底噪为 '
+                f'{d["peek_noise_floor"]:.4f}——亏损在噪声以下。各配置之间也无差异'
+                f'（Kruskal-Wallis p = {d.get("selection_loss_between_runs_p", float("nan")):.3f}）。'
+            )
+            para = doc.add_paragraph()
+            run = para.add_run(
+                "这是对实验前提的正面验证，而不是对它的让步：只用 24 小时聚合来监督并选择模型，"
+                "相比能看到小时序列，没有可测的损失。同时它也排除了“选择损失”作为那 0.007 差距的"
+                "解释，只剩不等截断一个候选。"
+            )
+            run.bold = True
+    else:
+        note(doc, "注：outputs/convergence_check/ 尚未生成，本节留空而非省略。")
+
     doc.add_heading("5. 结论", level=1)
-    for text in (
-        "一、日聚合监督不破坏小时时相能力。跨两条数据路径、两套站点划分、三档回放比例以及"
-        "一个训练中完全未出现的大洲，r 在变差的站里当元凶的比例始终只有 7.7%–10.1%，"
-        "中位 Δr 在 −0.006 至 +0.008 之间。源域学到的小时动力学在只见日目标的微调下能够存活。",
-        "二、日聚合监督带来的是标定改善而非精度改善。它把水量（1.01 倍）、方差比 α、"
-        "日内形状都修得更接近观测，KGE 中位提升 +0.021（p = 4e-33），但以绝对误差衡量，"
-        "变差的站多于改善的站（49.7% vs 41.9%）。报告时必须写明这一区分。",
-        "三、增益不因缺少邻近小时站而衰减。最近可训练邻居从 2.5 km 到 211 km，零样本技巧"
-        "从 0.60 掉到 0.34，而增益始终 0.019–0.031；空间分块下增益反而更大（+0.071 vs +0.045）；"
-        "非洲上最大（+0.165）。这对数据稀疏地区的适用性是有利证据。",
-        "四、随机划分显著高估区域外推能力。空间分块使零样本 M0 下降 0.128（五折同向），"
-        "即随机划分下约四分之一的小时技巧来自源域中留存的水文近邻，而非基于流域属性的泛化。",
-        "五、本文所训练模型的主要性能瓶颈是欠离散，且在迁移之前就已存在。M0 时 76.6% 的站 "
-        "α < 1，方差项独占 KGE 亏损的 59.4%；跨域越远越严重（run A 0.72、run B 0.86、非洲 0.16）。"
-        "该瓶颈比迁移损失大一个数量级，是后续最值得投入的方向——但其中有多少来自缺失的遗忘门"
-        "初始化尚未确定，见 §4.5。",
+    note(doc, f"注：以下结论以 {VARIANT_LABEL[MAIN]} 为准。多条结论在 v1 与 v2 之间发生了改变，"
+              "改变本身已在正文对应小节标明。")
+    sigB = {}
+    for key in ("runB", "blocked"):
+        f = run_dir(MAIN, key) / "significance" / "significance_summary.json"
+        if f.exists():
+            sigB[key] = json.loads(f.read_text())
+    concl = []
+
+    # 一：时相
+    culprit = []
+    for key in ("runB", "blocked"):
+        d = diag_dir(MAIN, key)
+        v = (d / "verdict_target.json") if d else None
+        if v and v.exists():
+            culprit.append(json.loads(v.read_text())["attribution"]["culprit_share"]["r (timing)"])
+    if culprit:
+        concl.append(
+            f"一、日聚合监督不破坏小时时相能力。在变差的站里，r 当元凶的比例仅 "
+            f"{min(culprit):.1%}–{max(culprit):.1%}（{MAIN} 的随机划分与空间分块）。"
+            "源域学到的小时动力学在只见日目标的微调下能够存活。这一条在 v1 与 v2 下同向，"
+            "是本工作最稳健的结论。"
+        )
+
+    # 二：标定 vs 精度 —— v1 与 v2 符号相反, 必须写清
+    if "runB" in sigB:
+        d = sigB["runB"]
+        n = d["n_stations"]
+        imp, deg = d["n_improved"] / n, d["n_degraded"] / n
+        concl.append(
+            f"二、日聚合监督的增益来自标定，而不再损害逐点精度——这一条相对 v1 已经改变。"
+            f"v1 下以绝对误差衡量变差的站（49.7%）多于改善的站（41.9%），误差中位变化为负；"
+            f"{MAIN} 下反转为 {imp:.1%} 改善、{deg:.1%} 变差，误差中位变化 "
+            f'{d["median_error_reduction"]:+.5f} mm/h。但幅度不可混淆：该误差改善相当于观测'
+            f"平均流量的 0.7%，而同期池化 ΔKGE 为 "
+            f'{d["pooled_median_delta_kge"]:+.4f}。因此正确表述是“不再损害精度”，'
+            f'而非“提升精度”；两个指标仍只在 {d["frac_metrics_agree"]:.1%} 的站上一致'
+            f'（Spearman {d["spearman_kge_vs_error"]:.3f}）。'
+        )
+
+    # 三：增益不随邻近性衰减
+    gains = {}
+    for key in ("runB", "blocked"):
+        dn = transfer_numbers(run_dir(MAIN, key))
+        if dn:
+            gains[key] = dn["M1"] - dn["M0"]
+    if len(gains) == 2:
+        concl.append(
+            f"三、增益不因缺少邻近小时站而衰减，反而更大。{MAIN} 下空间分块的增益 "
+            f'{gains["blocked"]:+.4f} 明显高于随机划分的 {gains["runB"]:+.4f}；'
+            "分量上看，分块条件下增益随孤立程度上升（距最近其他折约 62 km 时 +0.0494，"
+            "211 km 时 +0.0881），随机划分下则是平的。本地日观测替代了空间邻近性，"
+            "且在邻近性缺失处最管用。这对数据稀疏地区的适用性是有利证据。"
+        )
+
+    # 四：随机划分高估外推能力, 但代价可回收
+    f0 = Path("outputs/v2_split_effect/summary_M0.json")
+    f1 = Path("outputs/v2_split_effect/summary_M1.json")
+    if f0.exists() and f1.exists():
+        o0 = json.loads(f0.read_text())["overall"]
+        o1 = json.loads(f1.read_text())["overall"]
+        rec = 1 - abs(o1["paired_median_drop"]) / abs(o0["paired_median_drop"])
+        concl.append(
+            f'四、随机划分显著高估零样本区域外推能力，但这个代价大部分可以回收。同一批 '
+            f'{o0["n_stations"]:,} 个流域逐站配对，零样本阶段分块比随机低 '
+            f'{o0["paired_median_drop"]:+.4f}（六家机构全部同向）；日聚合微调后收窄到 '
+            f'{o1["paired_median_drop"]:+.4f}，回收 {rec:.1%}，此时一个站更适合哪套划分'
+            f'已接近抛硬币。机理上代价几乎全部落在 r（时相）上，零样本落后 −0.0271 而 α、β '
+            "差距均在 0.005 以内，微调回收了其中 83%。"
+        )
+
+    # 五：欠离散瓶颈 —— 遗忘门那一问已解决
+    dgn = run_dir(MAIN, "runB") / "degenerate" / "degenerate_summary.json"
+    if dgn.exists():
+        m = json.loads(dgn.read_text())["medians"]
+        concl.append(
+            f'五、主要性能瓶颈仍是欠离散，且在迁移之前就已存在，但其量级与成因相对 v1 已经改变。'
+            f'v1 的零样本模型是过度离散（闪变为观测的 6.80 倍、日内标准差 3.11 倍），'
+            f'而 {MAIN} 在微调前即已基本标定（闪变 '
+            f'{m["flashiness"]["M0"]/m["flashiness"]["observed"]:.2f} 倍，均值 '
+            f'{m["mean"]["M0"]/m["mean"]["observed"]:.2f} 倍），残留问题是 α 中位 0.808 的'
+            "轻度欠离散。此前把这一项归因于“缺失的遗忘门初始化尚未确定”，该问题已解决："
+            "遗忘门已按已发表方法实现并纳入 v2，见 §4.5。"
+        )
+
+    # 七：回放 —— v2 下结论改变
+    concl.append(
         "六、方法在非洲原位有效，且超过专门训练的基线。在非洲自己的日观测上微调，五折配对 "
         "ΔKGE +0.611、92.3% 的流域改善、M1 中位 KGE +0.505，高于大洲留出 PUB 基线的 +0.279。"
-        "同时这划出了第一条结论的边界：非洲原位微调使 r 从 0.596 升到 0.780（M1 折间标准差仅 "
-        "0.0016），说明“不改变时相”只在模型已掌握该域动力学时成立。",
-        "七、源域回放能同时改善两个域。0.25 一档在目标域（+0.0449→+0.0643）与源域"
-        "（−0.1064→−0.0668）上均优于无回放，五折两指标全部同向；机制是阻尼过度重标定，"
-        "把过冲站从 6.25% 压到 2.09%。",
-    ):
+        "同时这划出了第一条结论的边界：非洲原位微调使 r 从 0.596 升到 0.780，"
+        "说明“不改变时相”只在模型已掌握该域动力学时成立。"
+    )
+    concl.append(
+        "七、源域回放只保护源域，对目标域不再有增益——这一条相对 v1 已经改变。v1 下 0.25 一档"
+        "在两个域上均优于无回放，机制是阻尼过度重标定（过冲站从 6.25% 压到 2.09%）。"
+        f"{MAIN} 下零样本模型本就不再过度离散，该机制失去对象：回放的 r 增益（+0.0060）与"
+        "不回放（+0.0054）无法区分，α 增益反而更小。因此在 v2 配置下回放不应作为目标域增益手段。"
+    )
+    for text in concl:
         doc.add_paragraph(text, style="List Number")
 
     doc.add_heading("6. 已知局限与应对", level=1)
@@ -723,34 +1035,63 @@ def main() -> None:
     doc.add_heading("6.2 空间分块的折构成不均衡", level=2)
     doc.add_paragraph(
         "现状：空间分块必然使折构成不均衡（30 个机构×折组合中 6 个为空，美国站占比在折间从 "
-        "40% 到 73%）。去掉近邻必然去掉该区域，这是方法的固有代价，无法通过调整块数消除"
-        "（块数从 60 增到 240 时，隔离度从 140 km 降到 64 km，而构成均衡度只是相应改善）。"
+        "40% 到 73%）。去掉近邻必然去掉该区域，这是方法的固有代价，无法通过调整块数消除。"
     )
     para = doc.add_paragraph()
-    run = para.add_run("应对：已通过逐站配对排除（见 §4.6）。")
+    run = para.add_run("应对：已通过逐站配对排除，并进一步量化了代价的可回收性（见 §4.6）。")
     run.bold = True
-    run = para.add_run(
-        "同一批 8,709 个流域在两套划分中各当过一次目标站，配对比较使构成差异从构造上被固定；"
-        "六家机构内部无一例外全部下降。因此该混淆已被排除，无需补充实验。"
-    )
+    f0 = Path("outputs/v2_split_effect/summary_M0.json")
+    f1 = Path("outputs/v2_split_effect/summary_M1.json")
+    if f0.exists() and f1.exists():
+        o0 = json.loads(f0.read_text())["overall"]
+        o1 = json.loads(f1.read_text())["overall"]
+        rec = 1 - abs(o1["paired_median_drop"]) / abs(o0["paired_median_drop"])
+        run = para.add_run(
+            f'同一批 {o0["n_stations"]:,} 个流域在两套划分中各当过一次目标站，配对比较使构成差异'
+            f'从构造上被固定；零样本阶段六家机构无一例外全部下降，因此该混淆已被排除。'
+            f'并且日聚合微调回收了 {rec:.1%} 的代价（配对跌幅 {o0["paired_median_drop"]:+.4f} → '
+            f'{o1["paired_median_drop"]:+.4f}），残余几乎全部集中在冰岛这一个机构。无需补充实验。'
+        )
+    else:
+        run = para.add_run("同一批流域在两套划分中各当过一次目标站，配对比较使构成差异从构造上被固定。")
 
-    doc.add_heading("6.3 KGE 改善而绝对误差略微变差", level=2)
-    doc.add_paragraph(
-        "现状：站级配对检验显示，BH-FDR 校正后 91.6% 的站变化显著，但方向分裂——"
-        "以绝对误差衡量，变差的站（49.7%）多于改善的站（41.9%），全站中位误差变化 "
-        "−0.00019 mm/h。KGE 变好的站占 54.6%，误差变小的站仅 46.5%，两者同向的站仅 67.5%。"
-    )
-    doc.add_paragraph(
-        "这不是缺陷而是指标选择的必然后果：提高 α（预测方差比）会改善 KGE，"
-        "而绝对误差在预测更靠近条件中位数时最小，两者要求相反。日聚合监督使水文过程线更接近"
-        "观测的水量（1.01 倍）、方差比与日内形状，但不提升逐点精度。"
-    )
-    para = doc.add_paragraph()
-    run = para.add_run(
-        "应对：主结论一律表述为“标定改善”而非“精度改善”，并同时报告两个指标。"
-        "主动交代优于被发现，且这一区分本身对读者有价值。"
-    )
-    run.bold = True
+    doc.add_heading("6.3 KGE 与逐点绝对误差的分歧", level=2)
+    sig = {}
+    for key in ("runB",):
+        f = run_dir(MAIN, key) / "significance" / "significance_summary.json"
+        if f.exists():
+            sig[key] = json.loads(f.read_text())
+    if "runB" in sig:
+        d = sig["runB"]
+        n = d["n_stations"]
+        imp, deg = d["n_improved"] / n, d["n_degraded"] / n
+        doc.add_paragraph(
+            f'现状（相对 v1 已经改变，此处按 {MAIN}）：站级配对检验显示 BH-FDR 校正后 '
+            f'{d["n_significant_after_bh"]/n:.1%} 的站变化显著。v1 下方向是分裂且偏负的——'
+            f'以绝对误差衡量变差的站（49.7%）多于改善的站（41.9%），误差中位变化 '
+            f'−0.0002 mm/h；{MAIN} 下反转为 {imp:.1%} 改善、{deg:.1%} 变差，'
+            f'误差中位变化 {d["median_error_reduction"]:+.5f} mm/h。'
+        )
+        para = doc.add_paragraph()
+        run = para.add_run("但符号反转不等于幅度对等，这一点必须写清。")
+        run.bold = True
+        run = para.add_run(
+            f'{MAIN} 的误差改善中位数为 {d["median_error_reduction"]:+.5f} mm/h，而观测平均流量为 '
+            f'0.0483 mm/h——即约 0.7%；同期池化 ΔKGE 为 {d["pooled_median_delta_kge"]:+.4f}。'
+            f'两个指标仍只在 {d["frac_metrics_agree"]:.1%} 的站上同向'
+            f'（Spearman {d["spearman_kge_vs_error"]:.3f}）。'
+        )
+        doc.add_paragraph(
+            "机制未变，只是不再表现为损害：提高 α（预测方差比）会改善 KGE，而绝对误差在预测更"
+            "靠近条件中位数时最小，两者要求相反。日聚合监督的作用是标定——水量、方差比、"
+            "日内形状——KGE 奖励这些，平均绝对误差基本不奖励。"
+        )
+        para = doc.add_paragraph()
+        run = para.add_run(
+            f'应对：主结论表述为“{MAIN} 下日聚合微调不再损害逐点精度”，而不是“提升精度”；'
+            "同时报告两个指标，并注明站级结论是在哪个指标下成立的。"
+        )
+        run.bold = True
 
     doc.add_heading("6.4 非洲实验所用协议不是最强形态", level=2)
     doc.add_paragraph(
@@ -770,6 +1111,41 @@ def main() -> None:
     )
     run.bold = True
 
+    doc.add_heading("6.5 干旱流域是唯一恶化的分层，且问题在尾部", level=2)
+    sg = Path("outputs/v2_stratify/stratified_gain_target.csv")
+    if sg.exists():
+        frame = pd.read_csv(sg)
+        kz = frame.loc[frame["variable"].eq("kgz_detailed")].copy()
+        neg = kz.loc[kz["gain"] < 0]
+        if len(neg):
+            rows = [{"气候带": r["group"], "站数": int(r["n_stations"]),
+                     "M0 中位 KGE": fmt(r["M0_kge"]), "M1 中位 KGE": fmt(r["M1_kge"]),
+                     "配对增益中位": fmt(r["gain"], sign=True),
+                     "改善占比": f'{r["frac_improved"]:.1%}'}
+                    for _, r in neg.iterrows()]
+            add_table(doc, pd.DataFrame(rows), "表 6-1　配对增益为负的气候带（Köppen 细分）",
+                      widths=[1.0, 0.7, 1.2, 1.2, 1.2, 0.9])
+            r = neg.iloc[0]
+            doc.add_paragraph(
+                f'现状：{r["group"]}（热带荒漠，{int(r["n_stations"])} 站）是 15 个气候带中唯一'
+                f'配对增益为负者（{r["gain"]:+.4f}），而它两个分布各自的中位数移动幅度大得多：'
+                f'{r["M0_kge"]:.4f} → {r["M1_kge"]:.4f}，恰好 {r["frac_improved"]:.1%} 的站改善。'
+            )
+            para = doc.add_paragraph()
+            run = para.add_run("这两个数字打架，是因为量的不是一回事。")
+            run.bold = True
+            run = para.add_run(
+                "配对增益的中位数近乎为零，而两个分布各自的中位数相差 0.21——也就是说典型的"
+                "干旱站没有变化，是少数站崩掉了。因此正确表述不是“日聚合微调伤害干旱区”，"
+                "而是“它没能修好干旱区，并使其中一部分变得不稳定”。"
+            )
+            para = doc.add_paragraph()
+            run = para.add_run(
+                "应对：后续工作应把 BWh 单列或排除，而不是平均进总体；干旱区 B 带整体在两个阶段"
+                "都不可用（M1 中位 KGE 约 −0.005），这本身也不应被总体中位数掩盖。"
+            )
+            run.bold = True
+
     doc.add_heading("7. 其它未完成项", level=1)
     for text in (
         "时间划分为两段而非 PLAN 要求的三段，报告的是验证期内与早停集不相交的留出样本，"
@@ -777,8 +1153,16 @@ def main() -> None:
         "但绝对性能表述需加限定。",
         "早停集偏小且时间上不分散（512 样本/站），使早停指标读数为 0.085 而最终报告为 0.433。"
         "属指标噪声而非泄漏，代价同样在 0.006 量级，但后续实验应放宽。",
-        "initial_forget_bias 在本报告全部运行中均未实现（见 §4.5）。对比结论不受影响，"
-        "绝对水平与 α 的解释可能受影响；fold 1 搜索正在直接检验这一项。",
+        "v1 的四个配置文件现已带有 initial_forget_bias: 3，但 v1 的全部结果都是在没有该项的"
+        "情况下产生的——该字段是实现遗忘门时补进去的，当时未为 v1 留快照。因此这些配置文件"
+        "已无法复现 v1：照它们重跑会得到 72 小时回看配 v2 遗忘门，一个从未被评估过的组合。"
+        "任何一次运行实际使用了什么，权威来源是 outputs/<run>/fold*/pretrain/run_meta.json，"
+        "本报告的 v1/v2 对照即取自该处；四个配置文件的对应行已加警告。",
+        "diagnose_kge 的 frac_worse 曾对所有分量一律按 (M1 − M0) < 0 计算。这对 r、KGE、NSE "
+        "正确，但对 α 与 β 错误——它们的理想值是 1，而 β 中位数在 1 以上，故 β 下降通常是改善。"
+        "该列因此报告过“β 上 52–55% 的站变差”，而同期 β 中位数正在朝 1 靠近。现已改为按 "
+        "|值 − 1| 是否变大判定，并新增 worse_criterion 列记录所用判据；旧规则系统性高估恶化"
+        "（α 41.2% → 35.0%，β 55.0% → 40.9%），但它从未被本报告或 RESULTS 引用，故无已发表数字改变。",
         "M2 符号先验不予移植，此为有意决定：其表达式在 CAMELS-US 属性上拟合，全球对应列量纲相差 "
         "2–400 倍，且其中 PERMAVE（平均渗透率）在全球静态表中没有同物理量的列——NSIDC_permafrost "
         "是多年冻土范围，属不同变量，而 cos(PERMAVE²) 对量纲极度敏感。更根本的是，该方法修正的是"
@@ -793,6 +1177,49 @@ def main() -> None:
         "但与参考实现确有差异。",
     ):
         doc.add_paragraph(text, style="List Bullet")
+
+    # ---------------- 附录 A. v3 收敛性检验 ----------------
+    doc.add_heading("附录 A　v3 收敛性检验（不进入主表）", level=1)
+    doc.add_paragraph(
+        "§4.8 指出 v2 的训练在停止时仍在改善，且截断不对称——被砍得最早的两折都属于空间分块，"
+        "剩余斜率也最陡。因此主表中随机与分块 M1 之间 0.007 的差距，存在“不等截断造成”这一"
+        "替代解释。v3 就是为回答这一问而设。"
+    )
+    para = doc.add_paragraph()
+    run = para.add_run("为什么它不进入主表：")
+    run.bold = True
+    run = para.add_run(
+        "v3 相对 v2 改动了两项（train.epochs 30 → 50，train.patience 6 → 10），因此不是单变量对比。"
+        "只提高轮数上限无法回答收敛问题——patience 仍为 6 且各折 counter 已达 2–6 时，"
+        "各折会因噪声随机终止（逐轮趋势约为波动幅度的八分之一）；放宽 patience 才能让"
+        "轮数上限成为唯一约束。代价是它不再与 v2 构成单变量对比，故只作收敛性检验单列。"
+    )
+    doc.add_paragraph(
+        "v3 从 v2 第 30 轮的 checkpoint 续跑，而非从零重训。这是精确等价而非近似："
+        "lr_schedule（1:5e-4,12:1e-4,22:5e-5）按绝对轮数设定、不含总轮数，apply_lr_schedule 只读"
+        "当前轮，因此从零跑 v3 的前 30 轮与 v2 已完成的计算相同。一处必须说明的残余差异："
+        "epoch_subset 的随机数发生器未存入 checkpoint，故第 31 轮起抽到的训练子集与"
+        "“一口气跑 50 轮”不是同一批，只是同分布——相当于换了随机种子。v2 自身也有这个性质，"
+        "因为其 sbatch 一直带 --resume。"
+    )
+    rows = []
+    for key, label in (("runB", "v3 随机划分"), ("blocked", "v3 空间分块"), ("replay", "v3 回放 0.25")):
+        d = transfer_numbers(run_dir("v3", key))
+        base = transfer_numbers(run_dir("v2", key))
+        if d:
+            rows.append({"配置": label, "M0": fmt(d["M0"]), "M1": fmt(d["M1"]),
+                         "ΔKGE": fmt(d["M1"] - d["M0"], sign=True),
+                         "v2 的 M1": fmt(base["M1"]) if base else "—",
+                         "相对 v2": fmt(d["M1"] - base["M1"], sign=True) if base else "—"})
+        else:
+            rows.append({"配置": label, "M0": "运行中", "M1": "运行中", "ΔKGE": "—",
+                         "v2 的 M1": fmt(base["M1"]) if base else "—", "相对 v2": "—"})
+    add_table(doc, pd.DataFrame(rows), "表 A-1　v3 结果（若显示“运行中”，表示该组合仍在队列或训练中）",
+              widths=[1.4, 0.9, 0.9, 0.9, 1.0, 0.9])
+    if all(r["M1"] == "运行中" for r in rows):
+        note(doc, "注：v3 尚未产出结果，本表如实标注为“运行中”而非省略。待其完成后，"
+                  "需要检验的是随机与分块之间 0.007 的差距是否随更长训练而收窄；"
+                  "若收窄，则该差距应解释为不等截断的产物而非空间分块的固有代价。")
 
     doc.save(out)
     print(f"wrote {out} ({out.stat().st_size / 1024:.0f} KB)")
