@@ -24,8 +24,9 @@ Two data paths for the daily branch:
 > `initial_forget_bias: 3`, the latter because it is part of Gauch et al.'s published
 > method and was missing from both this code and the 100-station reference. Nothing else
 > differs. v2 is the primary result; v1 is retained because several conclusions change
-> in magnitude between them and the change is itself informative. run A's v2 is still
-> queued, so the run A vs run B comparison is quoted from v1.
+> in magnitude between them and the change is itself informative. run A's v2 completed
+> 2026-08-20 and is quoted directly below; the run A vs run B comparison no longer
+> depends on v1.
 ## Headline
 
 **Every KGE, NSE, r, alpha and beta in this file is a per-station MEDIAN over target
@@ -976,6 +977,66 @@ higher-is-better makes the sign test correct -- so no published number changes. 
 CSVs for all eight diagnostic runs were regenerated from their unchanged per-station tables,
 and each row now carries a `worse_criterion` column naming the rule applied, so the column
 cannot be read under the wrong one again.
+
+## run A under v2: the sampled daily branch still degrades
+
+run A's v2 finished 2026-08-20, filling the one hole in the main table. It does not
+change the v1 verdict:
+
+| | M0 | M1 | ΔKGE | source Δ |
+|---|---|---|---|---|
+| run A v1 | 0.4275 | 0.3973 | **-0.0303** | -0.0387 |
+| run A v2 | 0.4241 | 0.3965 | **-0.0276** | -0.0381 |
+| run B v2 | 0.5318 | 0.6277 | +0.0959 | -0.0882 |
+
+**Daily-aggregate fine-tuning makes run A worse, under both configurations.** The longer
+hourly look-back and the forget-gate initialisation -- which took run B's gain from
++0.0449 to +0.0959 -- move run A by +0.0027, i.e. nothing. So the defect is in run A's
+data path, not in the training configuration: feeding the daily branch a strided sample
+of hourly values instead of true daily means gives the transfer step nothing usable to
+calibrate against. This was the v1 conclusion and it survives the change that rescued
+every other configuration.
+
+## v3, so far: longer training improves the source model and not the target
+
+v3 raises `train.epochs` 30 -> 50 and `train.patience` 6 -> 10 to test whether v2's
+early stopping had truncated it, and whether it truncated the two splits unequally
+(§4.8). The pretrain answer is yes on both counts; the target-domain answer is no.
+
+Pretrain selection metric, gain over v2 per fold:
+
+| | fold0 | fold1 | fold2 | fold3 | fold4 | mean |
+|---|---|---|---|---|---|---|
+| v3 run B | +0.0048 | 0 | +0.0093 | +0.0048 | 0 | **+0.0038** |
+| v3 blocked | **+0.0142** | 0 | +0.0057 | +0.0027 | **+0.0105** | **+0.0066** |
+
+The prediction from §4.8 holds exactly: the two folds that v2 truncated earliest --
+blocked fold0 and fold4, both stopped at epoch 20 with best@14 and the steepest residual
+slopes -- are the two that gained most, and blocked's mean gain is 1.7x run B's. Several
+folds also ran the full 50 epochs with their best at or near epoch 50, so even 50 is
+still a binding cap for them. v2 was therefore under-trained, and unequally so.
+
+**None of it reaches the target domain.**
+
+| | M1 under v2 | M1 under v3 | change |
+|---|---|---|---|
+| run B | 0.6277 | 0.6270 | **-0.0007** |
+| replay 0.25 | 0.6252 | 0.6255 | +0.0003 |
+| blocked | 0.6210 | pending | — |
+
+A +0.0038 gain in the pretrain selection metric produces a -0.0007 change in target-domain
+M1 -- nothing, in the direction of nothing. The mechanism is unremarkable once stated: the
+pretrain metric is measured on the *source* domain, while M1 is what survives a fine-tune
+on the *target* domain. The fine-tune re-adapts the model either way, so a slightly better
+starting point does not have to produce a better end point.
+
+The consequence for the headline is the part that still needs blocked's transfer. If
+blocked behaves like run B -- pretrain gain not reaching M1 -- then the 0.007 random-vs-
+blocked gap is **not** an artefact of unequal truncation, and v2's main table stands as
+written. If instead blocked's larger pretrain gain does reach its M1, the gap narrows and
+should be reported as a truncation artefact. Run B's result makes the first outcome more
+likely, but blocked is the configuration that was actually truncated, so the question is
+not settled by run B alone. `50660661` is queued.
 
 ## Reproducing
 
