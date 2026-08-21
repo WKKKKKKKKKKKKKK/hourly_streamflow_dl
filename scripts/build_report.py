@@ -182,8 +182,16 @@ def latinise_font_names(path: Path) -> int:
     import shutil
     import zipfile
 
-    names = {"宋体": "SimSun", "新細明體": "PMingLiU", "ＭＳ 明朝": "MS Mincho",
-             "ＭＳ ゴシック": "MS Gothic", "맑은 고딕": "Malgun Gothic"}
+    # Keys are written as escapes, not literals, so this file is itself pure ASCII -- a
+    # source file carrying the very characters it exists to remove would defeat the point.
+    # In order: SimSun, PMingLiU, MS Mincho, MS Gothic, Malgun Gothic.
+    names = {
+        "\u5b8b\u4f53": "SimSun",
+        "\u65b0\u7d30\u660e\u9ad4": "PMingLiU",
+        "\uff2d\uff33 \u660e\u671d": "MS Mincho",
+        "\uff2d\uff33 \u30b4\u30b7\u30c3\u30af": "MS Gothic",
+        "\ub9d1\uc740 \uace0\ub515": "Malgun Gothic",
+    }
     targets = {"word/fontTable.xml", "word/theme/theme1.xml"}
     replaced = 0
     tmp = path.with_suffix(path.suffix + ".tmp")
