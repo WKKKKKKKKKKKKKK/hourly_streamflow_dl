@@ -3,6 +3,10 @@
 Global-scale version of the `hourly_streamflow_dl / MTSLSTM_100stations` experiment,
 following `Plan.docx` **Phase I (LSTM defender)** and the design notes in [PLAN.md](PLAN.md).
 
+> This branch is self-contained and shares no history with `main`. `main` holds the
+> 100-gauge experiment this work extends; the branch holds the global-scale Phase I project
+> as its own tree, so nothing here overwrites or depends on `main`.
+
 The premise: pretend 20% of the world's gauges have **no hourly** streamflow observations,
 only 24-hour aggregates. Can daily-only supervision recover hourly skill at those gauges?
 
@@ -14,10 +18,23 @@ only 24-hour aggregates. Can daily-only supervision recover hourly skill at thos
 | Step 4 | `scripts.aggregate_folds` — pool all 5 folds; `eval.africa` — the 5 models on African daily data vs prior work | every station scored once, Wilcoxon + BH-FDR; African daily KGE/NSE |
 | Step 5 | `eval.africa` — same run, adding ERA5-Land daily runoff as the physical baseline | three-way comparison table |
 
-All five steps are implemented and exercised end to end. Steps 1–3 on a 30-station fold
-table, Step 4's pooling on the same, and Steps 4–5' Africa arm via `eval.africa --self-test`.
-What is still missing is **data, not code**: the ERA5-Land download is in flight, and no run
-has happened on a GPU yet, so the sizing defaults below are arithmetic rather than measured.
+**Status: all five steps have run at full scale and Phase I is complete.** Three
+configurations were executed across 5 folds each (see below), 9,181 gauges are cached and
+8,990 enter the folds, the African arm ran both as a cross-continent extrapolation test and
+as an in-situ fine-tune, and every figure quoted anywhere in this repository is read from a
+result file. The write-up is [reports/PhaseI_report.docx](reports/PhaseI_report.docx); the
+full record, including the conclusions that were retracted along the way, is
+[RESULTS_phase1.md](RESULTS_phase1.md).
+
+Where to start, depending on what you want:
+
+| You want | Read |
+|---|---|
+| the results and what they mean | `reports/PhaseI_report.docx` — 8 chapters plus an appendix |
+| every number with its provenance and status | `RESULTS_phase1.md` |
+| which config produced which output | `python -m scripts.inventory` |
+| how to re-run any of it | the Reproducing section of `RESULTS_phase1.md` |
+| what was planned versus what was done | [PLAN.md](PLAN.md), whose header lists the deviations |
 
 ---
 
