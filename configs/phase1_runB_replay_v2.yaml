@@ -1,8 +1,11 @@
-# v2 = 冻结配置 + 搜索结论。相对 configs/phase1_runB_replay.yaml:
-#   lookback_hourly 336 (原 72) —— fold 1 搜索里唯一超出折间噪声的发现,
-#     H=168/336 的 M1 比 H=72 高约 0.05 (折间 sigma 0.017), 且源域遗忘同时减轻。
-#   initial_forget_bias 3 —— Gauch 已发表方法的组成部分。两组严格配对的性能效应
-#     符号相反 (+0.009 / -0.027, 均值 0.5 sigma), 无法判定, 故按方法忠实性采纳。
+# v2 = the frozen configuration plus the search conclusions. Against configs/phase1_runB_replay.yaml:
+#   lookback_hourly 336 (was 72) -- the one fold-1 search result that cleared
+#     between-fold noise: M1 at H=168/336 is about 0.05 higher than at H=72
+#     (between-fold sigma 0.017), and source-domain forgetting eases at the same time.
+#   initial_forget_bias 3 -- part of Gauch et al.'s published method, not a tuning knob.
+#     The two strictly paired comparisons of its own effect disagree in sign
+#     (+0.009 / -0.027, about 0.5 sigma), so it is adopted for methodological fidelity
+#     rather than because it was shown to help.
 data:
   root: /ibex/project/c2266/abbaa0a/data/input_data/hourly_q_dl/6datasets_H_8760_512_temporal_local_19800101_20251231_0.7_0.3_False_ts_func2_1000_5.0_False_10000_s_func2_1095_10000_3_42_penman_MSWEP_V316_test_Past_hourly_10_hourly_9181_42
   index_dir: index

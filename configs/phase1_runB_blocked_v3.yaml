@@ -1,9 +1,21 @@
-# v3 = v2 + train.epochs 50 (原 30)。唯一改动, 学习率计划不变, 使 v2 vs v3 为单变量对比。
-# 依据: 30 轮时验证曲线斜率已衰减 7-23 倍但仍为正 (+0.0005 至 +0.0017/轮), patience 6
-#   几乎从未触发, 说明 30 是硬截断而非收敛。更关键的是欠训练不对称 —— 空间分块的残余
-#   斜率约为随机划分的两倍, 而『分块 M1 仅低 0.007』正是头条结论, 两条线必须在同等
-#   充分的训练下比较。Gauch 官方用 50 轮。
-# 保持 1:5e-4,12:1e-4,22:5e-5 意味着第 22 轮后一直是 5e-5, 那正是训到收敛该有的长尾。
+# v3 = v2 with train.epochs 50 (was 30) and train.patience 10 (was 6).
+#
+# Why: at epoch 30 the validation slope had decayed 7-23x but was still positive
+# (+0.0005 to +0.0017 per epoch) and patience 6 almost never fired, so 30 was a hard
+# cut-off rather than convergence. More importantly the under-training was asymmetric --
+# the spatially blocked split's residual slope was about twice the random split's, and
+# "blocked M1 is only 0.007 lower" is the headline claim, so both must be compared under
+# equally sufficient training. Gauch et al. use 50 epochs.
+#
+# patience also rises to 10. Raising the epoch cap alone cannot answer the convergence
+# question: with patience still 6 and per-fold counters already at 2-6, folds terminate
+# on noise rather than on the cap (the per-epoch trend is about an eighth of the
+# oscillation). Relaxing patience makes the cap the binding constraint. The cost is that
+# v3 changes two settings and is therefore NOT a single-variable comparison against v2 --
+# it is reported as a convergence check and stays out of the main table.
+#
+# lr_schedule is unchanged. Keeping 1:5e-4,12:1e-4,22:5e-5 means 5e-5 from epoch 22
+# onward, which is the long tail training to convergence should have.
 data:
   root: /ibex/project/c2266/abbaa0a/data/input_data/hourly_q_dl/6datasets_H_8760_512_temporal_local_19800101_20251231_0.7_0.3_False_ts_func2_1000_5.0_False_10000_s_func2_1095_10000_3_42_penman_MSWEP_V316_test_Past_hourly_10_hourly_9181_42
   index_dir: index

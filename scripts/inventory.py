@@ -106,7 +106,7 @@ def collect() -> list[dict]:
             "replay": cfg["transfer"].get("source_replay_ratio", 0),
             "pretrain": f'{len(list(root.glob("fold*/pretrain/DONE")))}/5',
             "transfer": f'{len(list(root.glob("fold*/transfer/summary.json")))}/5',
-            "source": (f'继承 {rt["inherited_from"]}' if rt and "inherited_from" in rt
+            "source": (f'inherits {rt["inherited_from"]}' if rt and "inherited_from" in rt
                        else "run_meta" if rt else "config only"),
             "drift": ",".join(drift),
         })
