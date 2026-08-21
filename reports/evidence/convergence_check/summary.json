@@ -1,0 +1,22 @@
+{
+  "pretrain_folds_still_improving": 10,
+  "pretrain_median_tail_slope": 0.0009901881992556952,
+  "pretrain_truncation_by_run": {
+    "v2_blocked": {
+      "min_epochs": 20,
+      "max_slope": 0.0039516003,
+      "median_slope": 0.0013880113
+    },
+    "v2_runB": {
+      "min_epochs": 29,
+      "max_slope": 0.0014556753,
+      "median_slope": 0.0005923651
+    }
+  },
+  "selection_loss_between_runs_p": 0.5668576534874771,
+  "selection_loss_mean": 0.0035396075587319793,
+  "selection_loss_median": 0.0,
+  "peek_noise_floor": 0.007844154198179853,
+  "n_folds_exact_match": 8,
+  "n_folds": 15
+}

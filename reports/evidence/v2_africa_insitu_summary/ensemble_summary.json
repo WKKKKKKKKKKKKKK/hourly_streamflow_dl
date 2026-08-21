@@ -1,0 +1,34 @@
+{
+  "folds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "M0": {
+    "n_basins": 282,
+    "median_kge": 0.11425155240127527,
+    "median_nse": 0.20279382013838393,
+    "median_r": 0.7055687809373962,
+    "median_alpha": 0.43987615104521616,
+    "median_beta": 0.47548299300027763,
+    "frac_kge_gt_0": 0.6205673758865248
+  },
+  "M1": {
+    "n_basins": 282,
+    "median_kge": 0.5760931331480006,
+    "median_nse": 0.5571690653843171,
+    "median_r": 0.799246227306473,
+    "median_alpha": 0.8299533625427266,
+    "median_beta": 0.9532461924679705,
+    "frac_kge_gt_0": 0.9078014184397163
+  },
+  "paired": {
+    "n_basins": 282,
+    "median_delta_kge": 0.40936754601270264,
+    "frac_improved": 0.875886524822695,
+    "wilcoxon_p": 5.029341760809543e-28
+  },
+  "note_vs_metric_average": "average-of-fold-metrics gave M1 +0.4990; the prediction ensemble gives +0.5761 (difference +0.0771)"
+}

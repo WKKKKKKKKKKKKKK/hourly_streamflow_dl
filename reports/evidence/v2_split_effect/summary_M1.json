@@ -1,0 +1,65 @@
+{
+  "overall": {
+    "n_stations": 8709,
+    "n_dropped_degenerate": 140,
+    "median_random": 0.6336760456395358,
+    "median_blocked": 0.6268228100733243,
+    "difference_of_medians": -0.006853235566211535,
+    "paired_median_drop": -0.0061163707603659745,
+    "frac_worse": 0.5215294522907338,
+    "wilcoxon_p": 4.203649139807956e-06
+  },
+  "by_agency": [
+    {
+      "source": "BOMAustralia",
+      "n_stations": 1607,
+      "median_random": 0.3386068091424473,
+      "median_blocked": 0.3299188435655531,
+      "paired_median_drop": -0.007594587959220966,
+      "frac_worse": 0.5164903546981954
+    },
+    {
+      "source": "CAMELSH",
+      "n_stations": 5047,
+      "median_random": 0.6694090133536058,
+      "median_blocked": 0.66020885730991,
+      "paired_median_drop": -0.005503238582991621,
+      "frac_worse": 0.5211016445413117
+    },
+    {
+      "source": "Germany",
+      "n_stations": 458,
+      "median_random": 0.6935452188591951,
+      "median_blocked": 0.708453718517547,
+      "paired_median_drop": 0.0011731529789653916,
+      "frac_worse": 0.49563318777292575
+    },
+    {
+      "source": "Japan",
+      "n_stations": 690,
+      "median_random": 0.6353349168212317,
+      "median_blocked": 0.622859422533161,
+      "paired_median_drop": -0.01056324998826133,
+      "frac_worse": 0.5565217391304348
+    },
+    {
+      "source": "LamaHCE",
+      "n_stations": 834,
+      "median_random": 0.7054402474762365,
+      "median_blocked": 0.6975680093898471,
+      "paired_median_drop": -0.0017432504598445808,
+      "frac_worse": 0.5035971223021583
+    },
+    {
+      "source": "LamaHIce",
+      "n_stations": 73,
+      "median_random": 0.5910112311586088,
+      "median_blocked": 0.5356928034040132,
+      "paired_median_drop": -0.09422286597381979,
+      "frac_worse": 0.6986301369863014
+    }
+  ],
+  "all_agencies_negative": false,
+  "agency_spread": 0.09539601895278518,
+  "verdict": "the drop is NOT consistent across agencies, so composition cannot be ruled out."
+}

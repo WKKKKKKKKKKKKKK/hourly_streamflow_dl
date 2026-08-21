@@ -1,0 +1,117 @@
+{
+  "run_dir": "/home/kongw0a/global_mtslstm/outputs/v3_runB",
+  "domain": "target",
+  "folds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "n_stations": 8979,
+  "verdict": "KGE fell +0.0631, but timing leads in only 6.6% of the stations that got worse (45.7% variance, 47.7% bias; r itself moved +0.0062). Daily means carry volume but no sub-daily information, so fine-tuning rescales the series rather than forgetting its dynamics -- the inherent cost of daily-only supervision. Separately and larger: at M0 already, 72.6% of stations are under-dispersed (median alpha 0.809) and variance carries 52.4% of the KGE deficit. That ceiling predates the transfer step and is the bigger target.",
+  "summary": [
+    {
+      "component": "kge",
+      "n_stations": 8979,
+      "M0_median": 0.5212769367087268,
+      "M1_median": 0.6204379210256772,
+      "median_delta": 0.0630619137210301,
+      "mean_delta": -138.28568264219106,
+      "frac_worse": 0.3223076066377102,
+      "worse_criterion": "decreased",
+      "wilcoxon_p": 2.0678926687405516e-300
+    },
+    {
+      "component": "kge_r",
+      "n_stations": 8979,
+      "M0_median": 0.7965385736352402,
+      "M1_median": 0.8128114143800017,
+      "median_delta": 0.00618158944546332,
+      "mean_delta": 0.014505636257747001,
+      "frac_worse": 0.39982180643724247,
+      "worse_criterion": "decreased",
+      "wilcoxon_p": 1.0854496327864345e-121
+    },
+    {
+      "component": "kge_alpha",
+      "n_stations": 8979,
+      "M0_median": 0.8148359496288949,
+      "M1_median": 0.8463642900471968,
+      "median_delta": 0.030540759009898832,
+      "mean_delta": 0.36763848405603894,
+      "frac_worse": 0.36006236774696515,
+      "worse_criterion": "moved away from 1.0",
+      "wilcoxon_p": 7.238869078034187e-27
+    },
+    {
+      "component": "kge_beta",
+      "n_stations": 8979,
+      "M0_median": 1.017707941713622,
+      "M1_median": 0.9802912215646696,
+      "median_delta": -0.035565067972751496,
+      "mean_delta": 137.95585212076176,
+      "frac_worse": 0.40483350038979843,
+      "worse_criterion": "moved away from 1.0",
+      "wilcoxon_p": 3.545636262511122e-72
+    },
+    {
+      "component": "nse",
+      "n_stations": 8979,
+      "M0_median": 0.51549360474545,
+      "M1_median": 0.5893705012096271,
+      "median_delta": 0.03348625469884381,
+      "mean_delta": -45944.37950268677,
+      "frac_worse": 0.3402383338901882,
+      "worse_criterion": "decreased",
+      "wilcoxon_p": 7.400258539006741e-265
+    },
+    {
+      "component": "sim_std",
+      "n_stations": 8979,
+      "M0_median": 0.060462913556183,
+      "M1_median": 0.0614925768276649,
+      "median_delta": 0.001236391613397697,
+      "mean_delta": 0.007218231808609362,
+      "frac_worse": 0.4269963247577681,
+      "worse_criterion": "decreased",
+      "wilcoxon_p": 6.561042297479458e-72
+    }
+  ],
+  "attribution": {
+    "n_stations": 8843,
+    "n_dropped_degenerate": 136,
+    "min_obs_std": 0.001,
+    "frac_stations_worse": 0.3216103132421124,
+    "culprit_share": {
+      "r (timing)": 0.06645569620253164,
+      "alpha (variance)": 0.45675105485232065,
+      "beta (bias)": 0.4767932489451477
+    },
+    "solo_effect_median": {
+      "r (timing)": 0.0021897729911320996,
+      "alpha (variance)": 0.02297680028423632,
+      "beta (bias)": 0.008234421491579047
+    },
+    "deficit_share": {
+      "M0": {
+        "r (timing)": 0.25267356972385924,
+        "alpha (variance)": 0.5238185035692012,
+        "beta (bias)": 0.2235079267069396
+      },
+      "M1": {
+        "r (timing)": 0.33484395558372887,
+        "alpha (variance)": 0.47008534059377943,
+        "beta (bias)": 0.1950707038224917
+      }
+    },
+    "alpha_median": {
+      "M0": 0.809132345832854,
+      "M1": 0.8416084395709904
+    },
+    "frac_under_dispersed": {
+      "M0": 0.7259979644916883,
+      "M1": 0.7409250254438539
+    }
+  }
+}

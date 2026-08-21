@@ -1,0 +1,118 @@
+{
+  "fold": 3,
+  "best_epoch": 23,
+  "best_val_median_kge": 0.12324205131792876,
+  "n_source_stations": 7194,
+  "n_target_stations": 1796,
+  "static_features": [
+    "SoilGrids1km_SNDPPT_mean_all_layers.mat",
+    "slope_1KMmn_GMTEDmd.mat",
+    "WorldClim_V2_snowfall_fraction_P.mat",
+    "GlobCover_0.0055555deg_2x_majority_resampled_all_classes.mat",
+    "FAO_FRA2000_forest_cover_fraction_smaller.mat",
+    "GLHYMPS_V2_logK_Ferr_raster_0p025",
+    "Lakes_Dams_Wetlands_GLWD_3",
+    "NDVI_climatology_VGT-PROBAV_V2",
+    "CGIAR_PET_V2",
+    "WorldClim_V21_Pmean",
+    "WorldClim_V21_Tmean",
+    "GLOBCOVER_Urban_300m_averaged_to_0.083deg",
+    "MOD44B_percent_tree_cover_smaller",
+    "UMD_1km_landcover",
+    "GLiM_V01_Export_do_not_share.mat",
+    "elevation_1KMmn_GMTEDmn_with_Antarctica_from_World_e-Atlas.mat",
+    "Daly_PRISM_effective_terrain_height_dem_elevation.mat",
+    "long",
+    "lat",
+    "area",
+    "RGI_V7.0_area_km2",
+    "KGZ_detailed",
+    "KGZ_major",
+    "reservoir_impact_GRanD_v1_3",
+    "res_area_GeoDAR_v11_reservoirs_km2"
+  ],
+  "config": {
+    "data": {
+      "root": "/ibex/project/c2266/abbaa0a/data/input_data/hourly_q_dl/6datasets_H_8760_512_temporal_local_19800101_20251231_0.7_0.3_False_ts_func2_1000_5.0_False_10000_s_func2_1095_10000_3_42_penman_MSWEP_V316_test_Past_hourly_10_hourly_9181_42",
+      "index_dir": "index",
+      "lookback_hourly": 168,
+      "include_corrected": true,
+      "static_exclude": [
+        "pedigree_of_HDI_2015",
+        "pedigree_of_GDP_per_capita_2015",
+        "GDP_5arcmin_2015",
+        "GDP_30arcsec_2015",
+        "HDI_2015",
+        "GDP_percapita_2015",
+        "gpw_v4_rev11_2000",
+        "gpw_v4_rev11_2005",
+        "gpw_v4_rev11_2010",
+        "gpw_v4_rev11_2015",
+        "gpw_v4_rev11_2020",
+        "globpop_density_30arc_2022",
+        "globpop_density_30arc_2020",
+        "globpop_density_30arc_2010",
+        "globpop_density_30arc_2000",
+        "globpop_density_30arc_1990",
+        "elevation_SRTM_v2.1_GTOPO30"
+      ],
+      "onehot_static": {}
+    },
+    "folds": {
+      "file": "folds/folds_random.csv",
+      "n_folds": 5,
+      "seed": 42
+    },
+    "model": {
+      "hidden_size_daily": 128,
+      "hidden_size_hourly": 128,
+      "num_layers": 1,
+      "dropout": 0.4,
+      "head_dropout": true,
+      "frequency_factor": 1
+    },
+    "train": {
+      "epochs": 30,
+      "batches_per_epoch": 20000,
+      "val_max_stations": 0,
+      "val_batches_per_station": 1,
+      "lr": 0.0005,
+      "lr_schedule": "1:5e-4,12:1e-4,22:5e-5",
+      "loss": "nse_basin",
+      "reg_lambda": 1.0,
+      "early_stopping": true,
+      "patience": 6,
+      "num_workers": 6,
+      "pin_memory": true,
+      "seed": 42,
+      "grad_clip": 1.0
+    },
+    "transfer": {
+      "epochs": 12,
+      "batches_per_epoch": 4000,
+      "lr": 0.0005,
+      "weight_decay": 1e-05,
+      "agg_loss_weight": 0.5,
+      "freeze_modules": [
+        "lstm_hourly"
+      ],
+      "min_daily_hours": 18,
+      "holdout_batches_per_station": 2,
+      "patience": 4,
+      "num_workers": 6,
+      "seed": 42,
+      "grad_clip": 1.0
+    },
+    "eval": {
+      "max_batches_per_station": 12,
+      "min_samples_per_station": 100
+    },
+    "wandb": {
+      "project": "global_mtslstm_phase1",
+      "entity": null,
+      "mode": "online",
+      "group": "phase1_pretrain"
+    },
+    "output_root": "outputs"
+  }
+}

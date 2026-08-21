@@ -1,0 +1,65 @@
+{
+  "overall": {
+    "n_stations": 8709,
+    "n_dropped_degenerate": 140,
+    "median_random": 0.5393097465001438,
+    "median_blocked": 0.4359689391548916,
+    "difference_of_medians": -0.10334080734525225,
+    "paired_median_drop": -0.05941908789132755,
+    "frac_worse": 0.6368124928235159,
+    "wilcoxon_p": 1.597393285347399e-168
+  },
+  "by_agency": [
+    {
+      "source": "BOMAustralia",
+      "n_stations": 1607,
+      "median_random": 0.2647763256942556,
+      "median_blocked": 0.148412536435496,
+      "paired_median_drop": -0.0644352686884998,
+      "frac_worse": 0.5936527691350342
+    },
+    {
+      "source": "CAMELSH",
+      "n_stations": 5047,
+      "median_random": 0.5859854547324643,
+      "median_blocked": 0.4996482733530439,
+      "paired_median_drop": -0.05009225744295809,
+      "frac_worse": 0.6340400237765009
+    },
+    {
+      "source": "Germany",
+      "n_stations": 458,
+      "median_random": 0.6118089481728158,
+      "median_blocked": 0.4980332110822513,
+      "paired_median_drop": -0.07302939533588687,
+      "frac_worse": 0.6441048034934498
+    },
+    {
+      "source": "Japan",
+      "n_stations": 690,
+      "median_random": 0.54700059798715,
+      "median_blocked": 0.4461723154159839,
+      "paired_median_drop": -0.07190946122881764,
+      "frac_worse": 0.6927536231884058
+    },
+    {
+      "source": "LamaHCE",
+      "n_stations": 834,
+      "median_random": 0.6021185893802625,
+      "median_blocked": 0.450658874605192,
+      "paired_median_drop": -0.12125009443444162,
+      "frac_worse": 0.684652278177458
+    },
+    {
+      "source": "LamaHIce",
+      "n_stations": 73,
+      "median_random": 0.2594428004743613,
+      "median_blocked": 0.175934225860367,
+      "paired_median_drop": -0.15153026309326512,
+      "frac_worse": 0.6575342465753424
+    }
+  ],
+  "all_agencies_negative": true,
+  "agency_spread": 0.10143800565030703,
+  "verdict": "every one of 6 agencies shows a drop (max -0.0501, min -0.1515), so the blocked-split loss is not an artefact of fold composition."
+}

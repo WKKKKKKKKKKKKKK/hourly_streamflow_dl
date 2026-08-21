@@ -34,6 +34,8 @@ Where to start, depending on what you want:
 | every number with its provenance and status | `RESULTS_phase1.md` |
 | which config produced which output | `python -m scripts.inventory` |
 | how to re-run any of it | the Reproducing section of `RESULTS_phase1.md` |
+| the figures on their own | [reports/figures/](reports/figures/) — nine PNGs, regenerate with `python -m scripts.make_figures` |
+| the file behind any number | [reports/evidence/](reports/evidence/) — mirrors `outputs/` paths, so a citation resolves directly |
 | what was planned versus what was done | [PLAN.md](PLAN.md), whose header lists the deviations |
 
 ---

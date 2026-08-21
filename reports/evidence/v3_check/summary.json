@@ -1,0 +1,44 @@
+{
+  "pretrain_gain_by_run": {
+    "blocked": {
+      "mean": 0.0066227527,
+      "median": 0.0056719772,
+      "max": 0.0141859134
+    },
+    "runB": {
+      "mean": 0.0037761637,
+      "median": 0.0047544497,
+      "max": 0.0093107381
+    }
+  },
+  "paired_gap": [
+    {
+      "variant": "v2",
+      "n_stations": 8709,
+      "median_gap": -0.0061163707603659745,
+      "mean_gap": 0.0011352121941736175,
+      "frac_blocked_worse": 0.5215294522907338,
+      "wilcoxon_p": 4.203649139807956e-06
+    },
+    {
+      "variant": "v3",
+      "n_stations": 8709,
+      "median_gap": -0.0015123109207172414,
+      "mean_gap": -0.017963060373731035,
+      "frac_blocked_worse": 0.5047651854403491,
+      "wilcoxon_p": 0.044285612489163184
+    }
+  ],
+  "gap_narrowing_v2_to_v3": {
+    "n_stations": 8709,
+    "median_change_in_gap": 0.003863683549164554,
+    "mean_change_in_gap": -0.019098272567904646,
+    "wilcoxon_p": 0.004160152783959717
+  },
+  "reproducibility": {
+    "n_identical_weight_folds": 3,
+    "n_reproduced_exactly": 2,
+    "largest_M1_difference": 0.0106643949188574,
+    "largest_at": "blocked fold1"
+  }
+}

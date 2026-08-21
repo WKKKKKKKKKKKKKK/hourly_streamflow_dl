@@ -16,7 +16,7 @@ Design decisions, stated because they are choices:
 * Diverging blue-to-red with a grey midpoint wherever the quantity has a meaningful zero.
 * No dual axes anywhere. Where two quantities have different scales they get two panels.
 
-    python -m scripts.make_figures --out-dir outputs/figures
+    python -m scripts.make_figures
 """
 
 from __future__ import annotations
@@ -484,7 +484,10 @@ def fig_intraday(out: Path) -> str | None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate the report's figures.")
-    parser.add_argument("--out-dir", default="outputs/figures")
+    # reports/, not outputs/: these are deliverables, and outputs/ is gitignored,
+    # so figures written there would exist only inside the .docx and never on the
+    # published branch.
+    parser.add_argument("--out-dir", default="reports/figures")
     args = parser.parse_args()
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)

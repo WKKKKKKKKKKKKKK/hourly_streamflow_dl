@@ -174,7 +174,7 @@ def figure(doc, name: str, caption: str, width: float = 6.4) -> bool:
     Figures come from scripts/make_figures.py, which reads the same result files as the
     tables beside them, so a figure cannot disagree with the numbers it sits next to.
     """
-    path = Path("outputs/figures") / name
+    path = Path("reports/figures") / name
     if not path.exists():
         note(doc, f"({name} not generated -- run python -m scripts.make_figures)")
         return False
@@ -853,7 +853,9 @@ def main() -> None:
            "Figure 4-3  Why the two metrics disagree. A fifth of gauges improve on KGE while their point-wise error worsens, and an eighth do the reverse. Source: per_station_tests.csv.")
 
     doc.add_heading("4.4 Global distribution", level=2)
-    map_path = Path("outputs/v2_stratify/maps/global_map_target.png")
+    map_path = Path("reports/figures/fig09_global_map.png")
+    if not map_path.exists():
+        map_path = Path("outputs/v2_stratify/maps/global_map_target.png")
     if map_path.exists():
         doc.add_picture(str(map_path), width=Inches(6.5))
         doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER

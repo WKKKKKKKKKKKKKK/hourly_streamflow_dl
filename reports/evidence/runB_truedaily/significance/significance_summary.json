@@ -1,0 +1,12 @@
+{
+  "n_stations": 8862,
+  "alpha": 0.05,
+  "n_uncorrected_significant": 8132,
+  "n_expected_by_chance": 443.1,
+  "n_significant_after_bh": 8117,
+  "n_improved": 3712,
+  "n_degraded": 4405,
+  "median_error_reduction": -0.00019138139636409868,
+  "pooled_median_delta_kge": 0.021378491237380115,
+  "pooled_wilcoxon_p": NaN
+}

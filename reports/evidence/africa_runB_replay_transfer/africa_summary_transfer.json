@@ -1,0 +1,34 @@
+{
+  "folds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "n_basins": 294,
+  "self_test": false,
+  "comparison": [
+    {
+      "method": "MTS-LSTM ensemble",
+      "n_basins_scored": 283,
+      "median_kge": 0.07980946629722918,
+      "median_nse": 0.19472964334086484,
+      "frac_kge_gt_0": 0.6007067137809188
+    },
+    {
+      "method": "ERA5-Land runoff",
+      "n_basins_scored": 283,
+      "median_kge": -0.33360387192619845,
+      "median_nse": -1.4068649963931117,
+      "frac_kge_gt_0": 0.24734982332155478
+    },
+    {
+      "method": "continent-PUB baseline (prior work)",
+      "n_basins_scored": 294,
+      "median_kge": 0.279,
+      "median_nse": 0.245,
+      "frac_kge_gt_0": 0.7551020408163265
+    }
+  ]
+}

@@ -1173,7 +1173,9 @@ python -m scripts.africa_insitu_ensemble --insitu-glob outputs/v2_africa_insitu_
 
 | | where | recreatable from |
 |---|---|---|
-| code, configs, sbatch | git, 81 commits, no remote | — (single copy) |
+| code, configs, sbatch | git, no remote | — (single copy) |
+| figures | `reports/figures/`, tracked | `python -m scripts.make_figures` |
+| the numbers behind the report | `reports/evidence/`, tracked, mirrors `outputs/` paths | `python -m scripts.collect_evidence` |
 | results, weights, logs | `outputs/` -> `/ibex/user/kongw0a/global_mtslstm_outputs`, 1.2 GB, gitignored | rerunning everything (~hundreds of GPU-hours) |
 | hourly cache, 58 GB | `/ibex/user/kongw0a/hourly_cache` | `scripts.build_hourly_cache` from `6sources.nc` |
 | Africa forcing, 137 GB | `/ibex/user/kongw0a/era5_land_africa_forcing` | `scripts.download_era5_land_africa` + rescale |

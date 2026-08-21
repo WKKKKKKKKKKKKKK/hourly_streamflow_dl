@@ -1,0 +1,17 @@
+{
+  "n_stations": 8862,
+  "alpha": 0.05,
+  "n_uncorrected_significant": 8282,
+  "n_expected_by_chance": 443.1,
+  "n_significant_after_bh": 8276,
+  "n_improved": 3784,
+  "n_degraded": 4492,
+  "median_error_reduction": -0.00042863122830782974,
+  "pooled_median_delta_kge": 0.04205709100545718,
+  "pooled_wilcoxon_p": 4.364005081657257e-42,
+  "n_pooled_pairs": 8849,
+  "frac_kge_improved": 0.5542999208950163,
+  "frac_error_improved": 0.4546276415414171,
+  "frac_metrics_agree": 0.7210984292010396,
+  "spearman_kge_vs_error": 0.555500064042677
+}

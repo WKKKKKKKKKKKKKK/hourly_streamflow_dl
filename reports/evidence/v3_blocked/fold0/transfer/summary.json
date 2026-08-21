@@ -1,0 +1,61 @@
+{
+  "fold": 0,
+  "best_epoch": 11,
+  "best_holdout_daily_kge": 0.7414262423899403,
+  "n_target_stations": 1801,
+  "n_source_stations": 7189,
+  "step1_M0_target_hourly": {
+    "split": "fold0_M0_target_hourly_hourly",
+    "n_stations": 1800,
+    "n_valid_stations": 1780,
+    "n_excluded_stations": 20,
+    "n_samples": 4476887,
+    "median_kge": 0.4820397597170993,
+    "mean_kge": -32.6007391224047,
+    "median_nse": 0.4544271539554338,
+    "mean_nse": -32180.897290244695,
+    "frac_kge_gt_0": 0.8044943820224719,
+    "frac_nse_gt_0": 0.7797752808988764
+  },
+  "step2_M1_target_hourly": {
+    "split": "fold0_M1_target_hourly_hourly",
+    "n_stations": 1800,
+    "n_valid_stations": 1780,
+    "n_excluded_stations": 20,
+    "n_samples": 4476887,
+    "median_kge": 0.6729044416868475,
+    "mean_kge": -7.259674755883305,
+    "median_nse": 0.6318959642374592,
+    "mean_nse": -691.2734194766242,
+    "frac_kge_gt_0": 0.8926966292134831,
+    "frac_nse_gt_0": 0.8853932584269663
+  },
+  "step2_gain_median_kge": 0.1908646819697482,
+  "step3_source_before": {
+    "split": "fold0_M0_source_hourly_hourly",
+    "n_stations": 7188,
+    "n_valid_stations": 7069,
+    "n_excluded_stations": 119,
+    "n_samples": 17496204,
+    "median_kge": 0.6320974772696611,
+    "mean_kge": -1.9309210623764816,
+    "median_nse": 0.6139486419760773,
+    "mean_nse": -623.8949612740352,
+    "frac_kge_gt_0": 0.8970151365115292,
+    "frac_nse_gt_0": 0.9036638845664168
+  },
+  "step3_source_after": {
+    "split": "fold0_M1_source_hourly_hourly",
+    "n_stations": 7188,
+    "n_valid_stations": 7069,
+    "n_excluded_stations": 119,
+    "n_samples": 17496204,
+    "median_kge": 0.46523799824086165,
+    "mean_kge": -4.544635302044104,
+    "median_nse": 0.4593390756002641,
+    "mean_nse": -845.3540765205433,
+    "frac_kge_gt_0": 0.7962936766162116,
+    "frac_nse_gt_0": 0.7896449285613241
+  },
+  "step3_paired_median_delta_kge": -0.12053185110301634
+}

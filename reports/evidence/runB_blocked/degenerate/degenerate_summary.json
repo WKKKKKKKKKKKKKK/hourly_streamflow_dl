@@ -1,0 +1,31 @@
+{
+  "n_stations": 8432,
+  "medians": {
+    "flashiness": {
+      "observed": 0.028532955795526505,
+      "M0": 0.16965650767087936,
+      "M1": 0.07473428919911385
+    },
+    "intraday_std": {
+      "observed": 0.005816855933517218,
+      "M0": 0.017621180042624474,
+      "M1": 0.011586460750550032
+    },
+    "intraday_range": {
+      "observed": 0.01867281086742878,
+      "M0": 0.051615020260214806,
+      "M1": 0.0365578830242157
+    },
+    "q95_events_per_year": {
+      "observed": 11.939459639759841,
+      "M0": 20.95496997998666,
+      "M1": 25.63372062341683
+    },
+    "mean": {
+      "observed": 0.04832633398473263,
+      "M0": 0.027987664565443993,
+      "M1": 0.04861808381974697
+    }
+  },
+  "verdict": "M1 keeps 199.2% of the observed within-day standard deviation and 261.9% of its flashiness. Intra-day variability survives, so the daily-aggregate term is not being satisfied by flattening the day."
+}
