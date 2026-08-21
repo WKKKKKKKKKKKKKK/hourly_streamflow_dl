@@ -187,9 +187,11 @@ def main() -> None:
         "and score against the hourly truth that was hidden."
     )
     run.italic = True
-    note(doc, "Every number in this document is read from the result files by "
-              "scripts/build_report.py. None is transcribed by hand. Where a result is "
-              "missing the section says so rather than omitting it silently.")
+    note(doc, "Every table in this document is read from the result files by "
+              "scripts/build_report.py, and where a result is missing the section says so "
+              "rather than omitting it silently. Figures quoted in the prose to "
+              "cross-reference another section are transcribed, so each is followed by the "
+              "section that generates it; §8 lists the file behind every number.")
 
     para = doc.add_paragraph()
     run = para.add_run("Which configuration this reports. ")
@@ -1410,6 +1412,53 @@ def main() -> None:
     ):
         doc.add_paragraph(text, style="List Bullet")
 
+    # ---------------- 8. Where every number comes from ----------------
+    doc.add_heading("8. Where every number comes from", level=1)
+    doc.add_paragraph(
+        "Tables in this document are generated from the files below. Prose figures that "
+        "cross-reference another section are transcribed from the same files, so this table "
+        "is what makes them checkable. Regenerate this document with "
+        "python -m scripts.build_report."
+    )
+    prov = [
+        ("Main results, M0 / M1 / STEP 3, tables 2-1 and 2-3",
+         "outputs/<run>/fold*/transfer/summary.json"),
+        ("KGE components r / α / β, tables 2-2, 4-9, 4-10",
+         "outputs/<run>/diagnostics_allhours/kge_components_summary_target.csv"),
+        ("Per-gauge attribution, culprit shares",
+         "outputs/<run>/diagnostics_allhours/verdict_target.json"),
+        ("Which configuration a run actually used",
+         "outputs/<run>/fold*/pretrain/run_meta.json — authoritative; see §7"),
+        ("Stratified gain, tables 4-1 to 4-3, §6.5",
+         "outputs/v2_stratify/stratified_gain_target.csv, covariate_ranking_target.csv"),
+        ("Global map and latitude bands, figure 4-1 and table 4-6",
+         "outputs/v2_stratify/maps/"),
+        ("Within-day shape, table 4-4",
+         "outputs/<run>/degenerate/degenerate_summary.json"),
+        ("Significance with FDR, table 4-5 and §6.3",
+         "outputs/<run>/significance/significance_summary.json"),
+        ("Random-vs-blocked pairing, tables 4-7 and 4-8, §6.2",
+         "outputs/v2_split_effect/summary_M0.json, summary_M1.json"),
+        ("Convergence and selection loss, §4.8",
+         "outputs/convergence_check/summary.json"),
+        ("Africa, temperate transfer, table 3-1",
+         "outputs/africa_runB_*/daily_series_*.csv.gz, africa_comparison_transfer.csv"),
+        ("Africa in situ, tables 3-2a and 3-2b, §3.2 and §3.3",
+         "outputs/{,v2_}africa_insitu_summary/summary.json, ensemble_summary.json"),
+        ("v3 convergence check, appendix A",
+         "outputs/v3_check/ — python -m scripts.v3_check"),
+        ("Experiment inventory and config drift",
+         "python -m scripts.inventory"),
+        ("Full record with every finding and its status",
+         "RESULTS_phase1.md"),
+    ]
+    add_table(doc, pd.DataFrame([{"Content": a, "Source": b} for a, b in prov]),
+              "Table 8-1  Provenance", widths=[2.6, 3.4])
+    note(doc, "outputs/ is a symlink to /ibex/user/kongw0a/global_mtslstm_outputs and is "
+              "gitignored: 1.2 GB with no second copy, where the derived caches (58 GB hourly, "
+              "137 GB Africa forcing) are cheap to rebuild from scripts. The code is 80+ commits "
+              "with no git remote. Both are recorded in RESULTS_phase1.md under Reproducing.")
+
     # ---------------- Appendix A. v3 ----------------
     doc.add_heading("Appendix A  v3 convergence check (not part of the main tables)", level=1)
     doc.add_paragraph(
@@ -1457,24 +1506,52 @@ def main() -> None:
     if all(r["M1"] == "running" for r in rows):
         note(doc, "v3 has not produced results yet; the table says so rather than omitting the row.")
     else:
-        para = doc.add_paragraph()
-        run = para.add_run("Verdict: the 0.007 gap does not survive longer training. ")
-        run.bold = True
-        run = para.add_run(
-            "Taking the same paired per-gauge comparison the main table rests on — blocked M1 "
-            "minus random M1 over the same 8,709 catchments — under v2 the gap is −0.0061 (52.2% "
-            "of gauges worse, p = 4.2e-06) and under v3 it narrows to −0.0015 (50.5% worse, "
-            "p = 4.4e-02). The narrowing is 0.0039, paired across gauges at p = 4.2e-03, and at "
-            "50.5% worse the gap is a coin flip."
-        )
-        doc.add_paragraph(
-            "The pretrain side confirmed §4.8's prediction exactly: gains on the selection metric "
-            "average +0.0038 for run B and +0.0066 for blocked, and the two largest per-fold gains "
-            "are the two folds v2 truncated earliest (fold0 +0.0142, fold4 +0.0105). Several folds "
-            "ran the full 50 epochs with their best at or near epoch 50, so even 50 remains a "
-            "binding cap for them. v2 was under-trained, and unequally so. What that buys in the "
-            "target domain, however, is another matter — see below."
-        )
+        chk = Path("outputs/v3_check/summary.json")
+        if chk.exists():
+            c = json.loads(chk.read_text())
+            gaps = {g["variant"]: g for g in c.get("paired_gap", [])}
+            nar = c.get("gap_narrowing_v2_to_v3", {})
+            if "v2" in gaps and "v3" in gaps:
+                add_table(doc, pd.DataFrame([
+                    {"Configuration": v, "Gauges paired": f'{gaps[v]["n_stations"]:,}',
+                     "Paired median gap": f'{gaps[v]["median_gap"]:+.4f}',
+                     "Blocked worse": f'{gaps[v]["frac_blocked_worse"]:.1%}',
+                     "p": pfmt(gaps[v]["wilcoxon_p"])} for v in ("v2", "v3")
+                ]), "Table A-2  Blocked M1 minus random M1, paired over the same gauges",
+                    widths=[1.2, 1.0, 1.3, 1.0, 1.0])
+                para = doc.add_paragraph()
+                run = para.add_run("Verdict: the gap does not survive longer training. ")
+                run.bold = True
+                run = para.add_run(
+                    f'Taking the same paired per-gauge comparison the main table rests on, the '
+                    f'gap goes from {gaps["v2"]["median_gap"]:+.4f} under v2 to '
+                    f'{gaps["v3"]["median_gap"]:+.4f} under v3, a narrowing of '
+                    f'{nar.get("median_change_in_gap", float("nan")):+.4f} paired across '
+                    f'{nar.get("n_stations", 0):,} gauges (p {pfmt(nar.get("wilcoxon_p"))}). At '
+                    f'{gaps["v3"]["frac_blocked_worse"]:.1%} of gauges worse it is a coin flip.'
+                )
+            pg = c.get("pretrain_gain_by_run", {})
+            gains_path = Path("outputs/v3_check/pretrain_gains.csv")
+            if pg and gains_path.exists():
+                frame = pd.read_csv(gains_path)
+                top = frame.nlargest(2, "pretrain_gain")
+                doc.add_paragraph(
+                    f'The pretrain side confirmed §4.8\'s prediction: gains on the selection '
+                    f'metric average {pg.get("runB", {}).get("mean", float("nan")):+.4f} for run B '
+                    f'and {pg.get("blocked", {}).get("mean", float("nan")):+.4f} for blocked, and '
+                    f'the two largest per-fold gains are '
+                    + ", ".join(f'{r["run"]} fold{int(r["fold"])} {r["pretrain_gain"]:+.4f}'
+                                for _, r in top.iterrows())
+                    + ' — the two folds v2 truncated earliest. Several folds ran the full 50 '
+                      'epochs with their best at or near epoch 50, so even 50 remains a binding '
+                      'cap for them. v2 was under-trained, and unequally so. What that buys in '
+                      'the target domain is another matter — see below.'
+                )
+            note(doc, "Generated by scripts/v3_check.py into outputs/v3_check/. This appendix's "
+                      "verdict was previously computed ad hoc and stored nowhere, which made it "
+                      "unverifiable; it is now reproducible with one command.")
+        else:
+            note(doc, "(outputs/v3_check/ not generated — run python -m scripts.v3_check)")
 
         doc.add_heading("A.1 The finding that limits this one: the transfer stage is not reproducible to better than about 0.01", level=2)
         doc.add_paragraph(
@@ -1483,15 +1560,17 @@ def main() -> None:
             "v3, because their early stopping had already terminated and best_model.pth was never "
             "rewritten. Two of them reproduced exactly. One did not."
         )
-        add_table(doc, pd.DataFrame([
-            {"Fold": "run B fold1", "Weights": "identical", "Transfer epoch chosen": "9 → 9",
-             "Holdout daily KGE": "0.719465 → 0.719465", "M1 difference": "0.0000"},
-            {"Fold": "run B fold4", "Weights": "identical", "Transfer epoch chosen": "9 → 9",
-             "Holdout daily KGE": "0.708492 → 0.708492", "M1 difference": "0.0000"},
-            {"Fold": "blocked fold1", "Weights": "identical", "Transfer epoch chosen": "12 → 12",
-             "Holdout daily KGE": "0.698512 → 0.698289", "M1 difference": "+0.0107"},
-        ]), "Table A-2  Three folds with bit-identical weights, and transfer results that need not match",
-            widths=[1.3, 0.8, 1.1, 1.8, 0.9])
+        repro_path = Path("outputs/v3_check/transfer_reproducibility.csv")
+        if repro_path.exists():
+            repro = pd.read_csv(repro_path)
+            add_table(doc, pd.DataFrame([
+                {"Fold": f'{r["run"]} fold{int(r["fold"])}', "Weights": "identical",
+                 "Transfer epoch chosen": f'{int(r["epoch_v2"])} → {int(r["epoch_v3"])}',
+                 "Holdout daily KGE": f'{r["holdout_v2"]:.6f} → {r["holdout_v3"]:.6f}',
+                 "M1 difference": f'{r["M1_difference"]:+.4f}'}
+                for _, r in repro.iterrows()
+            ]), "Table A-3  Folds with bit-identical weights, and transfer results that need not match",
+                widths=[1.3, 0.8, 1.1, 1.8, 0.9])
         doc.add_paragraph(
             "Same weights, same config, same seed, same selected epoch — and M1 moves 0.0107. The "
             "holdout metric differs only in its fourth decimal, so this is numeric "
