@@ -21,6 +21,32 @@ has happened on a GPU yet, so the sizing defaults below are arithmetic rather th
 
 ---
 
+## Three configurations, and which one to read
+
+Results are organised as v1 / v2 / v3. They differ in three settings and nothing else;
+`python -m scripts.inventory` prints the full mapping from config to output directory.
+
+| | hourly look-back | forget-gate init | epochs | patience | role |
+|---|---|---|---|---|---|
+| v1 | 72 | none | 30 | 6 | original setting |
+| **v2** | **336** (168 for run A) | **3** | 30 | 6 | **primary result** |
+| v3 | 336 | 3 | 50 | 10 | convergence check, kept out of the main table |
+
+The forget-gate initialisation is part of Gauch et al.'s published method and was missing
+from both this code and the 100-station reference; it was added for methodological
+fidelity, not because it was shown to help on its own. It arrived together with the longer
+look-back, so v1 -> v2 cannot be attributed to either alone.
+
+**The v1 config files no longer reproduce v1.** `initial_forget_bias: 3` was added to them
+when the forget gate was implemented, after those runs had finished, and no snapshot was
+kept — re-running them today gives a 72-hour look-back with a v2 forget gate, a
+combination that was never evaluated. The authority for what any run used is that run's
+own `outputs/<run>/fold*/pretrain/run_meta.json`; `scripts.inventory` reads from there and
+flags every config that has drifted.
+
+Numbers, findings and their status live in `RESULTS_phase1.md`; the write-up is
+`reports/PhaseI_report.docx`.
+
 ## Quick start
 
 ```bash
@@ -35,9 +61,16 @@ python -m scripts.smoke_test                        # ~1 min, safe on a login no
 sbatch slurm/00_build_index.sbatch                  # or run the three above as one job
 python -m scripts.build_station_table --workers 8   # ~55 GB read, run on a compute node
 
-# 3. train
-sbatch slurm/10_pretrain.sbatch                     # array 0-4, one fold each
-sbatch --dependency=afterok:<jobid> slurm/20_transfer.sbatch
+# 3. see which experiment is which, and what each run actually used
+python -m scripts.inventory
+
+# 4. train. NOTE: a pretrain is ~9 h but the scripts declare 4 h on purpose -- that is
+#    the gpu4 partition boundary (95 nodes vs 46/31/58), and crossing it cost days of
+#    queue time. So CHAIN the pretrain; a single job silently truncates the run.
+CFG=configs/phase1_runB_v2.yaml
+H=$(CONFIG=$CFG sbatch --parsable slurm/10_pretrain_runB.sbatch)
+for i in 1 2; do H=$(CONFIG=$CFG sbatch --parsable --dependency=afterany:$H slurm/10_pretrain_runB.sbatch); done
+CONFIG=$CFG sbatch --dependency=afterok:$H slurm/20_transfer_runB.sbatch
 
 # 4. pool
 python -m scripts.aggregate_folds
@@ -187,7 +220,7 @@ the model, and early stopping would chase noise.
 ## Layout
 
 ```
-configs/phase1.yaml     every knob for Phase I
+configs/phase1*.yaml    13 experiment configs; `python -m scripts.inventory` maps each to its output
 common/                 config loading, seeding, W&B, KGE/NSE, per-station accumulation
 data/index.py           one-off scan of 7.1M files -> cached batch index
 data/folds.py           stratified 5-fold station split (source 80% / target 20%)
@@ -199,11 +232,16 @@ train/pretrain_source.py     Step 1
 train/transfer_target.py     Steps 2 and 3
 eval/evaluate.py        per-station metrics; also a standalone CLI
 scripts/                build_index, make_folds, build_station_table, smoke_test, aggregate_folds
-slurm/                  00_build_index, 10_pretrain (array 0-4), 20_transfer (array 0-4)
+slurm/                  01_build_cache, 04_build_eval_index, 10_pretrain*, 20_transfer*,
+                        30_diagnose, 31_by_hour, 32_degenerate, 33_significance,
+                        40_basin_average, 41_africa, 42_africa_transfer, 43_africa_ensemble,
+                        50_search
 ```
 
-Outputs land in `outputs/fold{k}/{pretrain,transfer}/` — `best_model.pth`,
-`training_history.csv`, `per_station_hourly_*.csv`, `summary.json`, and a log.
+Outputs land in `outputs/<run>/fold{k}/{pretrain,transfer}/` — `best_model.pth`,
+`training_history.csv`, `per_station_hourly_*.csv`, `summary.json`, `run_meta.json`
+and a log. `<run>` is the config's `output_root`; `outputs/` is a symlink to
+`/ibex/user/kongw0a/global_mtslstm_outputs` and is gitignored.
 
 ---
 

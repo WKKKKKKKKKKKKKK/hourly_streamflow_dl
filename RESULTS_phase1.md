@@ -1109,36 +1109,80 @@ from noise.
 
 ## Reproducing
 
+**Read this before copying the commands.** A pretrain run is ~9 h (30 epochs at ~17.9
+min), but the sbatch scripts declare **4 h**, deliberately: that is the `gpu4` partition
+boundary, and gpu4 carries 95 nodes against 46/31/58 for gpu24/gpu72/gpu. Declaring 5 h
+loses access to the largest pool and measurably changed queue latency from minutes to
+days. So a full pretrain must be **chained**, not submitted as one job. Submitting the
+single-job form silently produces a truncated run, and because a wall-clock kill exits
+non-zero, an `afterok` dependant then never starts.
+
 ```bash
-# run B cache (once)
-sbatch slurm/01_build_cache.sbatch
+# one-off
+sbatch slurm/01_build_cache.sbatch               # 58 GB memmap from 6sources.nc
 sbatch slurm/04_build_eval_index.sbatch          # all-hours evaluation index
 
-# a run, per config
-P=$(sbatch --parsable slurm/10_pretrain_runB.sbatch)
-sbatch --dependency=afterok:$P slurm/20_transfer_runB.sbatch
+# which config maps to which output, and what each run actually used
+python -m scripts.inventory                      # also flags configs that have drifted
 
-# diagnostics (evaluation only, no retraining)
-D=$(CONFIG=configs/phase1_runB.yaml INDEX=samples_evalhours.npz \
-    OUT_ROOT=outputs/runB_truedaily/diagnostics_allhours sbatch --parsable slurm/30_diagnose.sbatch)
-MERGE=1 INDEX=samples_evalhours.npz OUT_ROOT=outputs/runB_truedaily/diagnostics_allhours \
-  CONFIG=configs/phase1_runB.yaml sbatch --dependency=afterany:$D --array=0 slurm/30_diagnose.sbatch
-CONFIG=configs/phase1_runB.yaml sbatch slurm/31_by_hour.sbatch
+# a full run, per config. CONFIG selects the experiment; see scripts.inventory.
+CFG=configs/phase1_runB_v2.yaml
+H=$(CONFIG=$CFG sbatch --parsable slurm/10_pretrain_runB.sbatch)
+for i in 1 2; do H=$(CONFIG=$CFG sbatch --parsable --dependency=afterany:$H slurm/10_pretrain_runB.sbatch); done
+CONFIG=$CFG sbatch --dependency=afterok:$H slurm/20_transfer_runB.sbatch
+```
+
+`afterany` between chunks, not `afterok`: a chunk hitting the wall exits non-zero by
+design and the next chunk is what handles it. `--resume` picks up the checkpoint; the
+already-complete guard makes surplus chunks exit 0 in seconds, so over-provisioning the
+chain is cheap. Point the final `afterok` at the last chunk.
+
+For a variant that reuses another run's pretrained weights -- the replay configs do this
+on purpose -- skip the pretrain chain and pass `PRETRAIN_ROOT`:
+
+```bash
+CONFIG=configs/phase1_runB_replay_v2.yaml PRETRAIN_ROOT=outputs/v2_runB \
+  sbatch slurm/20_transfer_runB.sbatch
+```
+
+```bash
+# diagnostics and analyses -- evaluation only, no retraining
+CFG=configs/phase1_runB_v2.yaml; OUT=outputs/v2_runB/diagnostics_allhours
+D=$(CONFIG=$CFG INDEX=samples_evalhours.npz OUT_ROOT=$OUT sbatch --parsable slurm/30_diagnose.sbatch)
+MERGE=1 CONFIG=$CFG OUT_ROOT=$OUT sbatch --dependency=afterany:$D --array=0 slurm/30_diagnose.sbatch
+CONFIG=$CFG sbatch slurm/32_degenerate.sbatch
+CONFIG=$CFG sbatch slurm/33_significance.sbatch
+
+# CPU only, from finished outputs
+python -m scripts.stratify_gain       --run outputs/v2_runB/diagnostics_allhours --out-dir outputs/v2_stratify
+python -m scripts.global_map          --run outputs/v2_runB/diagnostics_allhours --out-dir outputs/v2_stratify/maps
+python -m scripts.paired_split_effect --random-run v2_runB --blocked-run v2_blocked --tag M0 --out-dir outputs/v2_split_effect
+python -m scripts.paired_split_effect --random-run v2_runB --blocked-run v2_blocked --tag M1 --out-dir outputs/v2_split_effect
+python -m scripts.convergence_check
+python -m scripts.build_report --out reports/PhaseI_report.docx
 
 # Africa (needs the rescaled forcing, not raw ERA5-Land)
 PRESET=forcing sbatch slurm/40_basin_average.sbatch
 python -m scripts.rescale_africa_forcing
-CONFIG=configs/phase1_runB.yaml KIND=transfer sbatch slurm/41_africa.sbatch
-
-# analyses, all evaluation-only
-python -m scripts.stratify_gain --run outputs/runB_truedaily/diagnostics_allhours
-python -m scripts.global_map    --run outputs/runB_truedaily/diagnostics_allhours
-CONFIG=configs/phase1_runB.yaml sbatch slurm/32_degenerate.sbatch
-CONFIG=configs/phase1_runB.yaml sbatch slurm/33_significance.sbatch
+CONFIG=configs/phase1_runB_v2.yaml KIND=transfer sbatch slurm/41_africa.sbatch
+CONFIG=configs/phase1_runB_v2.yaml sbatch slurm/42_africa_transfer.sbatch      # in-situ
+python -m scripts.africa_insitu_ensemble --insitu-glob outputs/v2_africa_insitu_fold
 ```
 
-Outputs live under `outputs/<run>/` and are **not** version-controlled; the scripts
-that regenerate them are.
+### What is and is not preserved
+
+| | where | recreatable from |
+|---|---|---|
+| code, configs, sbatch | git, 81 commits, no remote | — (single copy) |
+| results, weights, logs | `outputs/` -> `/ibex/user/kongw0a/global_mtslstm_outputs`, 1.2 GB, gitignored | rerunning everything (~hundreds of GPU-hours) |
+| hourly cache, 58 GB | `/ibex/user/kongw0a/hourly_cache` | `scripts.build_hourly_cache` from `6sources.nc` |
+| Africa forcing, 137 GB | `/ibex/user/kongw0a/era5_land_africa_forcing` | `scripts.download_era5_land_africa` + rescale |
+| prepared batches, root data | `/ibex/project/c2266/.../hourly_q_dl/` | — (upstream) |
+
+The derived 195 GB is cheap to rebuild; `outputs/` is not, and has no second copy. Note
+the precedent: the 100-station experiment's prepared dataset has already been deleted from
+`/ibex/project`, and its raw source under `/mnt/datawaha` is not mounted on this cluster
+any more, so those results can no longer be regenerated here at all.
 
 ## Open
 

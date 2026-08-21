@@ -431,6 +431,28 @@ def main() -> None:
     with open(out_dir / "summary.json", "w", encoding="utf-8") as handle:
         json.dump(summary, handle, indent=2, default=str)
 
+    # Provenance beside the results, matching what pretrain_source writes. Until this
+    # existed, the only record of which pretrained weights a transfer started from was a
+    # line in transfer.log -- and the replay configs, which deliberately reuse another
+    # run's pretrain, could not be traced to their source without parsing that log. Logs
+    # live under the gitignored outputs tree and do get cleaned up; a structured file
+    # beside summary.json does not depend on that.
+    with open(out_dir / "run_meta.json", "w", encoding="utf-8") as handle:
+        json.dump(
+            {
+                "fold": args.fold,
+                "pretrained_from": str(pretrained),
+                "best_epoch": summary["best_epoch"],
+                "best_holdout_daily_kge": summary["best_holdout_daily_kge"],
+                "n_source_stations": summary["n_source_stations"],
+                "n_target_stations": summary["n_target_stations"],
+                "config": dict(cfg),
+            },
+            handle,
+            indent=2,
+            default=str,
+        )
+
     logger.info("STEP 2 gain on target hourly KGE: %+.4f (M0 %.4f -> M1 %.4f)",
                 summary["step2_gain_median_kge"], m0_summary["median_kge"], m1_summary["median_kge"])
     wandb_log(run, {
