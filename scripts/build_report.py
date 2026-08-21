@@ -166,6 +166,56 @@ def components(path: Path) -> dict | None:
 
 
 
+def latinise_font_names(path: Path) -> int:
+    """Replace the CJK font names python-docx's default theme carries with their Latin
+    equivalents.
+
+    The template ships East-Asian fallback entries -- SimSun, PMingLiU, MS Mincho, Malgun
+    Gothic -- written in their own scripts inside word/fontTable.xml and
+    word/theme/theme1.xml. They are invisible to a reader, but they mean a document
+    intended to be entirely English is not, which matters when the audience does not read
+    those scripts. Substituting each font's Latin name refers to the same font, so Word
+    resolves it identically.
+
+    Returns the number of substitutions made.
+    """
+    import shutil
+    import zipfile
+
+    names = {"宋体": "SimSun", "新細明體": "PMingLiU", "ＭＳ 明朝": "MS Mincho",
+             "ＭＳ ゴシック": "MS Gothic", "맑은 고딕": "Malgun Gothic"}
+    targets = {"word/fontTable.xml", "word/theme/theme1.xml"}
+    replaced = 0
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    with zipfile.ZipFile(path) as src, zipfile.ZipFile(
+            tmp, "w", zipfile.ZIP_DEFLATED) as dst:
+        for item in src.infolist():
+            data = src.read(item.filename)
+            if item.filename in targets:
+                text = data.decode("utf8")
+                for cjk, latin in names.items():
+                    replaced += text.count(cjk)
+                    text = text.replace(cjk, latin)
+                data = text.encode("utf8")
+            dst.writestr(item, data)
+    shutil.move(str(tmp), str(path))
+
+    # Verify rather than trust the dictionary: the first pass missed MS Gothic because the
+    # search had only looked for Han ideographs, not katakana. Anything non-ASCII left in
+    # these parts means the mapping is incomplete, and failing loudly is better than
+    # shipping a document that is quietly not all-Latin.
+    with zipfile.ZipFile(path) as check:
+        for name in targets:
+            text = check.read(name).decode("utf8")
+            stray = sorted({c for c in text if ord(c) > 127})
+            if stray:
+                raise SystemExit(
+                    f"{name} still holds non-ASCII characters {stray} — extend the font "
+                    "name mapping in latinise_font_names()"
+                )
+    return replaced
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build the Phase I Word report.")
     parser.add_argument("--out", default="reports/PhaseI_report.docx")
@@ -1612,7 +1662,9 @@ def main() -> None:
         )
 
     doc.save(out)
-    print(f"wrote {out} ({out.stat().st_size / 1024:.0f} KB)")
+    swapped = latinise_font_names(out)
+    print(f"wrote {out} ({out.stat().st_size / 1024:.0f} KB); "
+          f"latinised {swapped} CJK font-name occurrences")
 
 
 if __name__ == "__main__":
