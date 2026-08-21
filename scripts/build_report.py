@@ -168,6 +168,25 @@ def components(path: Path) -> dict | None:
 
 
 
+def figure(doc, name: str, caption: str, width: float = 6.4) -> bool:
+    """Insert one generated figure with its caption, or say it is missing.
+
+    Figures come from scripts/make_figures.py, which reads the same result files as the
+    tables beside them, so a figure cannot disagree with the numbers it sits next to.
+    """
+    path = Path("outputs/figures") / name
+    if not path.exists():
+        note(doc, f"({name} not generated -- run python -m scripts.make_figures)")
+        return False
+    doc.add_picture(str(path), width=Inches(width))
+    doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+    para = doc.add_paragraph()
+    run = para.add_run(caption)
+    run.font.size = Pt(9)
+    para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    return True
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build the Phase I Word report.")
     parser.add_argument("--out", default="reports/PhaseI_report.docx")
@@ -441,6 +460,9 @@ def main() -> None:
         "about."
     )
 
+    figure(doc, "fig03_configurations.png",
+           "Figure 2-1  Every configuration as an M0 -> M1 movement. run A points backwards under both v1 and v2; every run B variant gains, and v2 roughly doubles v1's gain on the random split while nearly tripling it on the blocked one. Source: each fold's transfer/summary.json.")
+
     doc.add_heading("2.3 Source replay", level=2)
     replay_rows = []
     sweep = (("v1", "0 (no replay)", "outputs/runB_truedaily"),
@@ -482,6 +504,9 @@ def main() -> None:
     )
 
     # ---------------- 3. Africa ----------------
+    figure(doc, "fig01_kge_components.png",
+           "Figure 2-2  Where the gain comes from. r moves little while alpha moves substantially, under both splits -- the finding that daily-aggregate supervision re-calibrates amplitude rather than disturbing timing. Source: kge_components_summary_target.csv.")
+
     doc.add_heading("3. External validation on Africa", level=1)
     doc.add_paragraph(
         "294 African catchments have daily discharge observations, no hourly observations, "
@@ -621,6 +646,9 @@ def main() -> None:
                   "must be like for like. Averaging per-fold metrics instead gives a different "
                   "number; both are in the summary files.")
 
+    figure(doc, "fig07_africa_hydrographs.png",
+           "Figure 3-1  Africa in situ, three catchments spanning the outcome rather than three good ones: the lower-quartile, median and upper-quartile catchment by M1 KGE. The third panel shows the mechanism directly -- M0 under-predicts every peak and fine-tuning lifts them toward the observed hydrograph. Source: ensemble_series_M{0,1}.csv.gz.")
+
     doc.add_heading("3.3 Where the timing claim stops holding", level=2)
     summary = Path(AFRICA[MAIN]["insitu"]) / "summary.json"
     if summary.exists():
@@ -731,6 +759,9 @@ def main() -> None:
                   "where snowmelt- and storage-dominated catchments had been predicted to gain "
                   "least; snow fraction measures as positively correlated instead (+0.081).")
 
+    figure(doc, "fig02_gain_drivers.png",
+           "Figure 4-1  What predicts the gain. It does not fade with distance from trainable neighbours -- under blocking it rises -- and it falls monotonically with catchment area. Source: stratified_gain_target.csv.")
+
     doc.add_heading("4.2 Degenerate-solution check", level=2)
     doc.add_paragraph(
         "A daily-aggregate loss constrains only the 24-hour mean, so in principle there is a "
@@ -777,6 +808,9 @@ def main() -> None:
             "table above supports that, and only for v2."
         )
 
+    figure(doc, "fig08_intraday_shape.png",
+           "Figure 4-2  Within-day shape against the observed median. v1's zero-shot model was over-dispersed rather than flattened, and fine-tuning only halved the excess; v2 is already calibrated before any fine-tuning. Source: degenerate_summary.json.")
+
     doc.add_heading("4.3 Significance with FDR control", level=2)
     sig_path = run_dir(MAIN, "runB") / "significance" / "significance_summary.json"
     if sig_path.exists():
@@ -815,6 +849,9 @@ def main() -> None:
             f'it is made under.'
         )
 
+    figure(doc, "fig05_metric_disagreement.png",
+           "Figure 4-3  Why the two metrics disagree. A fifth of gauges improve on KGE while their point-wise error worsens, and an eighth do the reverse. Source: per_station_tests.csv.")
+
     doc.add_heading("4.4 Global distribution", level=2)
     map_path = Path("outputs/v2_stratify/maps/global_map_target.png")
     if map_path.exists():
@@ -822,7 +859,7 @@ def main() -> None:
         doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
         cap = doc.add_paragraph()
         run = cap.add_run(
-            "Figure 4-1  Target-domain hourly metrics in space. Top left, zero-shot M0 KGE; "
+            "Figure 4-4  Target-domain hourly metrics in space. Top left, zero-shot M0 KGE; "
             "top right, M1 after fine-tuning; bottom left, the gain M1 − M0 on a diverging "
             "scale centred at zero; bottom right, α at M0 centred at 1.0. The 5-fold design "
             "makes every gauge a target gauge exactly once, so every marker is a real value."
@@ -976,6 +1013,9 @@ def main() -> None:
                       "established (Spearman ρ = +0.257, p = 0.623). Iceland is one outlier, not a "
                       "trend, and the wording should stop there.")
 
+    figure(doc, "fig04_agency_recovery.png",
+           "Figure 4-5  The blocking cost per agency and how much fine-tuning recovers. Five of six agencies recover 85% or more; Iceland, the sparsest network, recovers 38% and holds almost the entire residual. Source: recovery_by_agency.csv.")
+
     doc.add_heading("4.7 The mechanism: both the cost and the recovery are about timing", level=2)
     comp = {}
     for key in ("runB", "blocked"):
@@ -1087,6 +1127,9 @@ def main() -> None:
                   "than omitted)")
 
     # ---------------- 5. Conclusions ----------------
+    figure(doc, "fig06_convergence.png",
+           "Figure 4-6  Source validation trajectories, zoomed to the plateau. The blue stop markers show that early stopping, not the 30-epoch cap, ended v2 -- and that it cut two blocked folds at epoch 20 while the rest ran to 30. Source: each fold's training_history.csv.")
+
     doc.add_heading("5. Conclusions", level=1)
     note(doc, f"Stated for {VARIANT_LABEL[MAIN]}. Several changed between v1 and v2; each change "
               "is flagged in the section it belongs to.")
