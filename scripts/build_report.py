@@ -21,6 +21,8 @@ from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Inches, Pt, RGBColor
 
+from scripts.latinise_docx import latinise
+
 # One registry instead of paths scattered through the body. v2 is the primary result;
 # v1 is kept because several conclusions changed between them and the change is itself
 # a finding. v3 is a convergence check and deliberately stays out of the main tables --
@@ -164,64 +166,6 @@ def components(path: Path) -> dict | None:
             for k in ("kge", "kge_r", "kge_alpha", "kge_beta")}
 
 
-
-
-def latinise_font_names(path: Path) -> int:
-    """Replace the CJK font names python-docx's default theme carries with their Latin
-    equivalents.
-
-    The template ships East-Asian fallback entries -- SimSun, PMingLiU, MS Mincho, Malgun
-    Gothic -- written in their own scripts inside word/fontTable.xml and
-    word/theme/theme1.xml. They are invisible to a reader, but they mean a document
-    intended to be entirely English is not, which matters when the audience does not read
-    those scripts. Substituting each font's Latin name refers to the same font, so Word
-    resolves it identically.
-
-    Returns the number of substitutions made.
-    """
-    import shutil
-    import zipfile
-
-    # Keys are written as escapes, not literals, so this file is itself pure ASCII -- a
-    # source file carrying the very characters it exists to remove would defeat the point.
-    # In order: SimSun, PMingLiU, MS Mincho, MS Gothic, Malgun Gothic.
-    names = {
-        "\u5b8b\u4f53": "SimSun",
-        "\u65b0\u7d30\u660e\u9ad4": "PMingLiU",
-        "\uff2d\uff33 \u660e\u671d": "MS Mincho",
-        "\uff2d\uff33 \u30b4\u30b7\u30c3\u30af": "MS Gothic",
-        "\ub9d1\uc740 \uace0\ub515": "Malgun Gothic",
-    }
-    targets = {"word/fontTable.xml", "word/theme/theme1.xml"}
-    replaced = 0
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    with zipfile.ZipFile(path) as src, zipfile.ZipFile(
-            tmp, "w", zipfile.ZIP_DEFLATED) as dst:
-        for item in src.infolist():
-            data = src.read(item.filename)
-            if item.filename in targets:
-                text = data.decode("utf8")
-                for cjk, latin in names.items():
-                    replaced += text.count(cjk)
-                    text = text.replace(cjk, latin)
-                data = text.encode("utf8")
-            dst.writestr(item, data)
-    shutil.move(str(tmp), str(path))
-
-    # Verify rather than trust the dictionary: the first pass missed MS Gothic because the
-    # search had only looked for Han ideographs, not katakana. Anything non-ASCII left in
-    # these parts means the mapping is incomplete, and failing loudly is better than
-    # shipping a document that is quietly not all-Latin.
-    with zipfile.ZipFile(path) as check:
-        for name in targets:
-            text = check.read(name).decode("utf8")
-            stray = sorted({c for c in text if ord(c) > 127})
-            if stray:
-                raise SystemExit(
-                    f"{name} still holds non-ASCII characters {stray} — extend the font "
-                    "name mapping in latinise_font_names()"
-                )
-    return replaced
 
 
 def main() -> None:
@@ -1670,7 +1614,7 @@ def main() -> None:
         )
 
     doc.save(out)
-    swapped = latinise_font_names(out)
+    swapped = latinise(out)
     print(f"wrote {out} ({out.stat().st_size / 1024:.0f} KB); "
           f"latinised {swapped} CJK font-name occurrences")
 
