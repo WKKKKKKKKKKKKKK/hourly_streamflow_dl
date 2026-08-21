@@ -1038,6 +1038,75 @@ should be reported as a truncation artefact. Run B's result makes the first outc
 likely, but blocked is the configuration that was actually truncated, so the question is
 not settled by run B alone. `50660661` is queued.
 
+## v3, settled: the 0.007 gap does not survive, and the pipeline's own noise is larger
+
+v3's transfers finished 2026-08-21. Taking the paired per-station comparison that the
+0.007 headline rests on -- blocked M1 minus random M1 over the same 8,709 catchments:
+
+| | paired median gap | stations worse | p |
+|---|---|---|---|
+| under v2 (30 epochs) | **-0.0061** | 52.2% | 4.2e-06 |
+| under v3 (50 epochs) | **-0.0015** | **50.5%** | 4.4e-02 |
+
+The gap narrows by 0.0039 (paired over stations, p = 4.2e-03), and at 50.5% worse it is a
+coin flip. So the answer to the question v3 was built for is: **the blocked-vs-random gap
+does not survive longer training**, and it should not be reported as a robust cost of
+spatial blocking.
+
+### The finding that limits this one: the transfer stage is not reproducible to better than ~0.01
+
+Found by chasing an inconsistency rather than by looking for it. Three folds carried
+*bit-identical* pretrained weights between v2 and v3, because their early stopping had
+already terminated and `best_model.pth` was never rewritten. Two of them reproduced
+exactly; one did not:
+
+| fold | weights | transfer epoch chosen | holdout daily KGE | M1 difference |
+|---|---|---|---|---|
+| run B fold1 | identical | 9 -> 9 | 0.719465 -> 0.719465 | **0.0000** |
+| run B fold4 | identical | 9 -> 9 | 0.708492 -> 0.708492 | **0.0000** |
+| blocked fold1 | **identical** | **12 -> 12** | 0.698512 -> 0.698**289** | **+0.0107** |
+
+Same weights, same config, same seed, same selected epoch -- and M1 moves 0.0107. The
+holdout metric differs only in its fourth decimal, so this is numeric non-determinism in
+the fine-tune (kernel selection and non-deterministic reductions differ across hardware),
+accumulating over 12 epochs into a target-domain difference an order of magnitude larger
+than its cause. Two folds reproducing bit-exactly and one not is the signature of
+hardware, not of a bug: jobs land on whatever node is free, which since 2026-08-19 can be
+either a v100 or an a100.
+
+**This is larger than the effect it was measuring.** 0.0107 at fold level against a 0.007
+headline gap and a 0.0039 narrowing. Assuming per-fold noise near 0.01 and independence
+across folds, a five-fold aggregate carries about 0.0045, so the narrowing is roughly
+0.9 sigma.
+
+It also exposes a real weakness in how the gap was tested. The paired per-station test has
+8,709 replicates but **one run per configuration**, and run-level noise is shared across
+every station in a run, so pairing stations cannot remove it. The tiny p-values
+(4.2e-06, 4.2e-03) treat stations as independent replicates of a difference whose dominant
+uncertainty is at the run level. They are not wrong about the stations; they are answering
+a narrower question than the one being asked.
+
+### What to report
+
+1. The v2 main table stands as the primary result and v3 stays out of it, per its design
+   (it changes two settings, so it is not a single-variable comparison).
+2. The 0.007 random-vs-blocked M1 gap should be reported as **not distinguishable from
+   zero**, with both reasons given: it narrows to -0.0015 under longer training, and it is
+   smaller than the pipeline's run-to-run reproducibility.
+3. The *zero-shot* blocked penalty is unaffected by any of this and remains solid:
+   -0.0594 paired, 63.7% of stations worse, all six agencies negative, p = 1.6e-168. That
+   is an order of magnitude above the noise discussed here. It is the M1 residual, not the
+   M0 penalty, that dissolves.
+4. Any future claim at the 0.01 level needs repeated runs per configuration, not more
+   stations. Seeds vary nothing that matters here -- the variation is in the hardware --
+   so the repeats must be actual reruns.
+
+For completeness, the pretrain side of v3 did exactly what §4.8 predicted: blocked gained
++0.0066 on the selection metric against run B's +0.0038, with the two largest gains in the
+two folds v2 truncated earliest (fold0 +0.0142, fold4 +0.0105). v2 was under-trained and
+unequally so. That asymmetry is real; what it buys in the target domain is not separable
+from noise.
+
 ## Reproducing
 
 ```bash
