@@ -92,8 +92,8 @@ def fig_components(out: Path) -> str | None:
     data = {k: v for k, v in data.items() if v}
     if not data:
         return None
-    labels = [("kge_r", "r  (timing)"), ("kge_alpha", "alpha  (variance)"),
-              ("kge_beta", "beta  (water balance)")]
+    labels = [("kge_r", "Timing  (r)"), ("kge_alpha", "Variance  (alpha)"),
+              ("kge_beta", "Water balance  (beta)")]
     fig, axes = plt.subplots(1, 2, figsize=(7.6, 2.5), sharex=True, sharey=True)
     for ax, (name, comp) in zip(axes, data.items()):
         for i, (key, lab) in enumerate(labels):
@@ -106,7 +106,7 @@ def fig_components(out: Path) -> str | None:
         ax.axvline(1.0, color=GREY, lw=0.8, ls=(0, (3, 3)), zorder=1)
         ax.set_title(name)
         ax.set_xlim(0.72, 1.18)
-        ax.set_xlabel("median across target gauges")
+        ax.set_xlabel("Median across target gauges")
         tidy(ax, "x")
     axes[0].set_yticks(range(len(labels)))
     axes[0].set_yticklabels([l for _, l in labels][::-1])
@@ -114,7 +114,7 @@ def fig_components(out: Path) -> str | None:
                       ms=6, label="M0  zero-shot"),
                Line2D([], [], marker="o", ls="none", color=INK, ms=6,
                       label="M1  after daily-only fine-tuning"),
-               Line2D([], [], color=GREY, lw=0.8, ls=(0, (3, 3)), label="ideal value 1.0")]
+               Line2D([], [], color=GREY, lw=0.8, ls=(0, (3, 3)), label="Ideal value 1.0")]
     fig.legend(handles=handles, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.16),
                fontsize=8, labelcolor=INK)
     fig.suptitle("Daily-aggregate fine-tuning re-calibrates variance, not timing",
@@ -155,8 +155,8 @@ def fig_gain_drivers(out: Path) -> str | None:
                      xytext=(0, 11) if anchor == "first" else (0, -15),
                      fontsize=8, color=colour, ha="center", fontweight="semibold")
     ax1.set_xscale("log")
-    ax1.set_xlabel("km to nearest trainable neighbour\n(quintile median)")
-    ax1.set_ylabel("gain  M1 - M0")
+    ax1.set_xlabel("Distance to nearest trainable neighbour, km\n(quintile median)")
+    ax1.set_ylabel("Gain  M1 - M0")
     ax1.set_title("Isolation does not reduce it", fontsize=9)
     ax1.set_ylim(0.030, 0.100)
     tidy(ax1)
@@ -164,7 +164,7 @@ def fig_gain_drivers(out: Path) -> str | None:
     # One series: the title names it, so no legend and no label on the line.
     ax2.plot(area.covariate_median, area.gain, marker="o", ms=5, lw=2, color=AQUA, zorder=3)
     ax2.set_xscale("log")
-    ax2.set_xlabel("catchment area, km2\n(quintile median)")
+    ax2.set_xlabel("Catchment area, km2\n(quintile median)")
     ax2.set_title("Small catchments gain most (rho -0.17)", fontsize=9)
     tidy(ax2)
     fig.suptitle("What predicts the gain, and what does not",
@@ -192,10 +192,10 @@ def fig_configurations(out: Path) -> str | None:
                     target.append(block["median_kge"])
         return (float(np.mean(m0)), float(np.mean(m1))) if m0 else None
 
-    rows = [("run A  sampled daily", "runA_regwin24", "v2_runA", None),
-            ("run B  true daily", "runB_truedaily", "v2_runB", "v3_runB"),
-            ("run B  blocked", "runB_blocked", "v2_blocked", "v3_blocked"),
-            ("run B  replay 0.25", "runB_replay", "v2_replay025", "v3_replay025")]
+    rows = [("Run A  sampled daily", "runA_regwin24", "v2_runA", None),
+            ("Run B  true daily", "runB_truedaily", "v2_runB", "v3_runB"),
+            ("Run B  blocked", "runB_blocked", "v2_blocked", "v3_blocked"),
+            ("Run B  replay 0.25", "runB_replay", "v2_replay025", "v3_replay025")]
     entries = []
     for label, v1, v2, v3 in rows:
         for variant, run, colour in (("v1", v1, BLUE), ("v2", v2, ORANGE), ("v3", v3, AQUA)):
@@ -216,17 +216,17 @@ def fig_configurations(out: Path) -> str | None:
     ax.set_yticks(range(len(entries)))
     ax.set_yticklabels([e[0] for e in entries][::-1], fontsize=8)
     ax.set_xlim(0.36, 0.70)
-    ax.set_xlabel("target-domain hourly KGE, median across gauges")
+    ax.set_xlabel("Target-domain hourly KGE, median across gauges")
     tidy(ax, "x")
     handles = [Line2D([], [], marker="o", ls="none", mfc="white", mec=INK, mew=1.5, ms=6,
                       label="M0  zero-shot"),
                Line2D([], [], marker="o", ls="none", color=INK, ms=6, label="M1  fine-tuned"),
-               Line2D([], [], color=BLUE, lw=2, label="v1  H=72, no forget gate"),
-               Line2D([], [], color=ORANGE, lw=2, label="v2  H=336, forget gate 3"),
-               Line2D([], [], color=AQUA, lw=2, label="v3  v2 + 50 epochs")]
+               Line2D([], [], color=BLUE, lw=2, label="Config v1  H=72, no forget gate"),
+               Line2D([], [], color=ORANGE, lw=2, label="Config v2  H=336, forget gate 3"),
+               Line2D([], [], color=AQUA, lw=2, label="Config v3  v2 + 50 epochs")]
     fig.legend(handles=handles, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.10),
                fontsize=8, labelcolor=INK)
-    ax.set_title("run A moves backwards under both configurations; every run B variant gains",
+    ax.set_title("Only run A moves backwards; every run B variant gains",
                  fontsize=10.5, pad=10)
     path = out / "fig03_configurations.png"
     fig.savefig(path)
@@ -250,14 +250,14 @@ def fig_agency_recovery(out: Path) -> str | None:
     ax.set_yticklabels([f'{s}  (n={int(n):,})' for s, n in
                         zip(frame["source"], frame["n_stations"])])
     ax.axvline(0, color=GREY, lw=0.8, zorder=1)
-    ax.set_xlabel("paired median KGE drop, blocked minus random")
+    ax.set_xlabel("Paired median KGE drop, blocked minus random")
     ax.set_xlim(frame["M0"].min() - 0.02, 0.055)
     tidy(ax, "x")
     handles = [Line2D([], [], marker="o", ls="none", mfc="white", mec=INK, mew=1.5, ms=6,
-                      label="drop at M0  zero-shot"),
+                      label="Drop at M0  zero-shot"),
                Line2D([], [], marker="o", ls="none", color=INK, ms=6,
-                      label="drop at M1  after fine-tuning"),
-               Line2D([], [], color=RED, lw=2, label="recovery below 50%")]
+                      label="Drop at M1  after fine-tuning"),
+               Line2D([], [], color=RED, lw=2, label="Recovery below 50%")]
     fig.legend(handles=handles, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.13),
                fontsize=8, labelcolor=INK)
     ax.set_title("Fine-tuning recovers the blocking cost everywhere except the sparsest network",
@@ -290,21 +290,21 @@ def fig_metric_disagreement(out: Path) -> str | None:
     hb = ax.hexbin(dk[inside], de[inside], gridsize=40, cmap="Blues", mincnt=1,
                    bins="log", linewidths=0, zorder=2, extent=(-xlim, xlim, -ylim, ylim))
     cb = fig.colorbar(hb, ax=ax, shrink=0.8, pad=0.02)
-    cb.set_label("gauges per cell (log scale)", fontsize=8, color=MUTED)
+    cb.set_label("Gauges per cell (log scale)", fontsize=8, color=MUTED)
     cb.outline.set_visible(False)
     ax.axhline(0, color=INK, lw=1.0, zorder=3)
     ax.axvline(0, color=INK, lw=1.0, zorder=3)
-    quads = (("both improve", (dk > 0) & (de > 0), xlim * 0.96, ylim * 0.94, "right", "top"),
+    quads = (("Both improve", (dk > 0) & (de > 0), xlim * 0.96, ylim * 0.94, "right", "top"),
              ("KGE up, error worse", (dk > 0) & (de <= 0), xlim * 0.96, -ylim * 0.94, "right", "bottom"),
-             ("both worse", (dk <= 0) & (de <= 0), -xlim * 0.96, -ylim * 0.94, "left", "bottom"),
+             ("Both worse", (dk <= 0) & (de <= 0), -xlim * 0.96, -ylim * 0.94, "left", "bottom"),
              ("KGE down, error better", (dk <= 0) & (de > 0), -xlim * 0.96, ylim * 0.94, "left", "top"))
     for label, mask, x, y, ha, va in quads:
         count = int(mask.sum())
         ax.annotate(f"{label}\n{count:,}  ({count / n:.0%})", (x, y), ha=ha, va=va,
                     fontsize=7.6, color=INK, zorder=4,
                     bbox=dict(boxstyle="round,pad=0.3", fc="white", ec=GRID, lw=0.7, alpha=0.94))
-    ax.set_xlabel("change in KGE   (M1 - M0)")
-    ax.set_ylabel("reduction in point-wise absolute error  (mm/h)")
+    ax.set_xlabel("Change in KGE   (M1 - M0)")
+    ax.set_ylabel("Reduction in point-wise absolute error  (mm/h)")
     ax.set_xlim(-xlim, xlim)
     ax.set_ylim(-ylim, ylim)
     tidy(ax)
@@ -346,18 +346,18 @@ def fig_convergence(out: Path) -> str | None:
         # stopped, and at the full range (which starts near 0.42) that is invisible.
         ax.set_xlim(12, 51)
         ax.set_ylim(0.595, 0.648)
-        ax.annotate("v2 epoch cap", (30, 0.5975), textcoords="offset points",
+        ax.annotate("Epoch cap for v2", (30, 0.5975), textcoords="offset points",
                     xytext=(4, 0), fontsize=7.4, color=MUTED)
         ax.set_title(name)
-        ax.set_xlabel("epoch")
+        ax.set_xlabel("Epoch")
         tidy(ax)
     if not drew:
         plt.close(fig)
         return None
-    axes[0].set_ylabel("source validation median KGE")
-    handles = [Line2D([], [], color=BLUE, lw=2, label="v2  (30 epochs, patience 6)"),
-               Line2D([], [], color=ORANGE, lw=2, label="v3  (50 epochs, patience 10)"),
-               Line2D([], [], marker="o", ls="none", color=BLUE, ms=5, label="where v2 stopped")]
+    axes[0].set_ylabel("Source validation median KGE")
+    handles = [Line2D([], [], color=BLUE, lw=2, label="Config v2  (30 epochs, patience 6)"),
+               Line2D([], [], color=ORANGE, lw=2, label="Config v3  (50 epochs, patience 10)"),
+               Line2D([], [], marker="o", ls="none", color=BLUE, ms=5, label="Where v2 stopped")]
     fig.legend(handles=handles, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.14),
                fontsize=8, labelcolor=INK)
     fig.suptitle("Early stopping, not the epoch cap, is what ended v2 -- and it cut the "
@@ -400,7 +400,7 @@ def fig_africa_hydrographs(out: Path) -> str | None:
         start = end - pd.Timedelta(days=730)
         a, b = a[a.date.between(start, end)], b[b.date.between(start, end)]
         ax.fill_between(a["date"], 0, a["obs"], color=GREY, alpha=0.28, lw=0, zorder=1)
-        ax.plot(a["date"], a["obs"], color=INK, lw=1.1, zorder=4, label="observed")
+        ax.plot(a["date"], a["obs"], color=INK, lw=1.1, zorder=4, label="Observed")
         ax.plot(a["date"], a["ensemble"], color=BLUE, lw=1.3, zorder=2, label="M0 zero-shot")
         ax.plot(b["date"], b["ensemble"], color=ORANGE, lw=1.3, zorder=3,
                 label="M1 after African daily fine-tuning")
@@ -409,9 +409,9 @@ def fig_africa_hydrographs(out: Path) -> str | None:
         ax.set_title(f'{sid}   M1 KGE {row["kge"]:+.3f}'
                      + (f'   (M0 {m0kge:+.3f})' if np.isfinite(m0kge) else ""),
                      fontsize=8.5, loc="left")
-        ax.set_ylabel("mm/d")
+        ax.set_ylabel("Runoff (mm/d)")
         tidy(ax, "y")
-    handles = [Line2D([], [], color=INK, lw=1.6, label="observed"),
+    handles = [Line2D([], [], color=INK, lw=1.6, label="Observed"),
                Line2D([], [], color=BLUE, lw=1.8, label="M0  zero-shot"),
                Line2D([], [], color=ORANGE, lw=1.8, label="M1  after African daily fine-tuning")]
     fig.legend(handles=handles, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.05),
@@ -434,11 +434,11 @@ def fig_intraday(out: Path) -> str | None:
         if not path.exists():
             continue
         med = json.loads(path.read_text())["medians"]
-        for key, name in (("flashiness", "flashiness"),
-                          ("intraday_std", "within-day std"),
-                          ("intraday_range", "within-day range"),
+        for key, name in (("flashiness", "Flashiness"),
+                          ("intraday_std", "Within-day std"),
+                          ("intraday_range", "Within-day range"),
                           ("q95_events_per_year", "Q95 events / yr"),
-                          ("mean", "mean flow")):
+                          ("mean", "Mean flow")):
             if key not in med or not med[key].get("observed"):
                 continue
             obs = med[key]["observed"]
@@ -455,15 +455,17 @@ def fig_intraday(out: Path) -> str | None:
             if sub.empty:
                 continue
             y = len(metrics) - 1 - i + offset
+            # No config prefix on the in-plot label: colour plus the legend already carry
+            # identity, so repeating it is redundant ink and puts a lowercase token first.
             dumbbell(ax, y, sub["M0"].iloc[0], sub["M1"].iloc[0], colour,
-                     f'{cfg}  {sub["M1"].iloc[0]:.2f}x')
+                     f'{sub["M1"].iloc[0]:.2f}x')
     ax.axvline(1.0, color=GREY, lw=1.0, zorder=1)
-    ax.annotate("observed", (1.0, -0.62), textcoords="offset points", xytext=(0, 0),
-                fontsize=7.6, color=MUTED, ha="center", annotation_clip=False)
+    ax.annotate("Observed", (1.0, len(metrics) - 0.62), textcoords="offset points",
+                xytext=(5, 0), fontsize=7.6, color=MUTED, ha="left", va="center")
     ax.set_yticks(range(len(metrics)))
     ax.set_yticklabels(metrics[::-1])
     ax.set_xscale("log")
-    ax.set_xlabel("ratio to the observed median  (log scale)")
+    ax.set_xlabel("Ratio to the observed median  (log scale)")
     ax.set_xlim(0.35, 12)
     ax.set_xticks([0.5, 1, 2, 4, 8])
     ax.set_xticklabels(["0.5x", "1x", "2x", "4x", "8x"])
@@ -471,10 +473,10 @@ def fig_intraday(out: Path) -> str | None:
     handles = [Line2D([], [], marker="o", ls="none", mfc="white", mec=INK, mew=1.5, ms=6,
                       label="M0  zero-shot"),
                Line2D([], [], marker="o", ls="none", color=INK, ms=6, label="M1  fine-tuned"),
-               Line2D([], [], color=BLUE, lw=2, label="v1"),
-               Line2D([], [], color=ORANGE, lw=2, label="v2")]
+               Line2D([], [], color=BLUE, lw=2, label="Config v1"),
+               Line2D([], [], color=ORANGE, lw=2, label="Config v2")]
     ax.legend(handles=handles, loc="lower right", fontsize=7.8, labelcolor=INK, ncol=2)
-    ax.set_title("v1 was over-dispersed, not flattened; v2 is calibrated before fine-tuning",
+    ax.set_title("Under v1 the model was over-dispersed, not flattened; v2 needs no correction",
                  fontsize=10.5, pad=10)
     path = out / "fig08_intraday_shape.png"
     fig.savefig(path)
