@@ -716,9 +716,13 @@ def fig_africa_hourly(out: Path) -> str | None:
         if not ratios:
             ax.axis("off")
             continue
-        # 1.0 is "flat day" -- no systematic dependence on the clock. The observation cannot
-        # appear here at all: a daily total has no shape inside the day.
-        ax.axhline(1.0, color=INK, lw=1.1, ls=(0, (4, 3)), zorder=1)
+        # A reference line at 1.0, not data: it marks a perfectly flat day, meaning no
+        # systematic dependence on the clock. Grey rather than black on purpose -- black is
+        # the observation in the daily block, and using it here for a constant invited the
+        # reading that this line IS the observation. It cannot be: the observation is a
+        # daily total, and a daily total has no shape inside the day, which is exactly what
+        # makes this column unverifiable.
+        ax.axhline(1.0, color=GREY, lw=1.2, ls=(0, (4, 3)), zorder=1)
         # One fixed logarithmic scale for every row. Autoscaling each panel drew a 3% wiggle
         # at the same visual amplitude as a factor of fifteen, inverting the comparison the
         # column exists to make.
@@ -744,9 +748,13 @@ def fig_africa_hourly(out: Path) -> str | None:
         ax.set_xlabel("Hour (UTC)", fontsize=9.5)
         ax.set_ylabel("Share of own mean", fontsize=9.5)
         ax.tick_params(labelsize=9)
-        ax.set_title("Average day: all 90 days aligned by hour, each series\n"
-                     "over its own mean. Flat = no time-of-day cycle",
-                     fontsize=9, loc="left", color=MUTED, pad=8)
+        # Two lines, not three: a third overflowed the panel and collided with the HOURLY
+        # group header above the top row. What the grey line means is in the legend, and
+        # that no observation can appear here is already stated by the group header and by
+        # the middle panel.
+        ax.set_title("Average day: all 90 days aligned by hour,\n"
+                     "each series over its own mean",
+                     fontsize=8.8, loc="left", color=MUTED, pad=8)
         tidy(ax, "y")
 
     handles = [
@@ -755,7 +763,8 @@ def fig_africa_hourly(out: Path) -> str | None:
         Line2D([], [], color=ORANGE, lw=MODEL_LW + 0.4,
                label="Our sMTS-LSTM  —  M1, after African daily fine-tuning"),
         Line2D([], [], color=AQUA, lw=BASELINE_LW, label="ERA5-Land runoff  —  reanalysis baseline"),
-        Line2D([], [], color=INK, lw=1.1, ls=(0, (4, 3)), label="Flat day  —  no sub-daily shape"),
+        Line2D([], [], color=GREY, lw=1.2, ls=(0, (4, 3)),
+               label="Reference line at 1.0  —  a perfectly flat day, not data"),
     ]
     fig.legend(handles=handles, loc="lower center", ncol=3, bbox_to_anchor=(0.5, 0.004),
                fontsize=10.5, labelcolor=INK, frameon=False,
