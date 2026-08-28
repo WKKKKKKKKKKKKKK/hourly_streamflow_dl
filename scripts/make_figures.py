@@ -65,14 +65,26 @@ CONFIG_NOTE = ("Configuration v2: hourly look-back 336 h, forget-gate initialisa
                "from v1.")
 
 
-def stamp(fig, extra: str = "", y: float = -0.16):
+def stamp(fig, extra: str = "", y: float = -0.16, size: float = 7.2,
+          wrap_at: int | None = None):
     """Say which configuration a figure shows.
 
     Without this a reader cannot tell a v2 figure from a v1 one, and v1 versus v2 is exactly
     the distinction several of these figures exist to make.
+
+    ``wrap_at`` sets the measure in characters. Matplotlib's own ``wrap`` fills the figure
+    width, which on a 15-inch panel stretches the note into a single unreadable band; wide
+    figures pass an explicit measure instead. Defaults leave every existing figure unchanged.
     """
     text = f"{CONFIG_NOTE}  {extra}".strip()
-    fig.text(0.5, y, text, ha="center", fontsize=7.2, color=MUTED, wrap=True)
+    if wrap_at:
+        import textwrap
+        text = "\n".join("\n".join(textwrap.wrap(block, wrap_at)) if block.strip() else ""
+                         for block in text.split("\n"))
+        fig.text(0.5, y, text, ha="center", va="top", fontsize=size, color=MUTED,
+                 linespacing=1.5)
+    else:
+        fig.text(0.5, y, text, ha="center", fontsize=size, color=MUTED, wrap=True)
 
 
 def tidy(ax, grid_axis="both"):
@@ -511,26 +523,37 @@ def fig_intraday(out: Path) -> str | None:
 
 
 # ---------------------------------------------------------------- figure 10
-def fig_africa_hourly(out: Path) -> str | None:
-    """The hourly runoff behind the daily African score, beside a physical baseline.
+# The model's own hourly output is the subject of this figure; ERA5-Land is the contrast.
+# Widths and alphas below encode that: the two model lines are drawn heavy and on top, the
+# baseline thin and behind, because a first pass at equal weight let ERA5-Land's spikes
+# dominate the panel and the model curves read as background texture.
+MODEL_LW, BASELINE_LW = 2.0, 0.7
+ROW_HEIGHT = 3.25          # inches per catchment; 2.0 was legible only when zoomed in
+FIG_WIDTH = 15.6
 
-    Figure 7 shows the same three catchments daily, because daily is the only resolution
-    at which an African score exists. This shows what the model is actually emitting
-    underneath that: 24 values per day, of which the daily figure plots only the mean.
+
+def fig_africa_hourly(out: Path) -> str | None:
+    """The sMTS-LSTM's hourly runoff behind the daily African score, beside a baseline.
+
+    Figure 7 shows the same three catchments daily, because daily is the only resolution at
+    which an African score exists. This shows what the model is actually emitting underneath
+    that: 24 values per day, of which the daily figure plots only the mean. Both model states
+    are drawn -- M0 zero-shot and M1 after African daily fine-tuning -- so the effect of the
+    fine-tuning step on sub-daily shape is visible and not only its effect on the daily score.
 
     Everything is drawn in mm/d so the four series share one axis: the hourly curves are
     multiplied by 24, which turns an mm/h value into the daily rate it implies. The daily
-    observation is a step, because that is genuinely all that was measured. An hourly
-    curve whose 24 values average onto the observed step is making the same statement the
-    KGE table makes -- the point of the panel is what the curve does BETWEEN the steps,
-    which no score in this project can reach.
+    observation is a step, because that is genuinely all that was measured. An hourly curve
+    whose 24 values average onto the observed step is making the same statement the KGE table
+    makes -- the point of the panel is what the curve does BETWEEN the steps, which no score
+    in this project can reach.
 
     Two things this figure cannot do, stated on the figure itself rather than left to the
     reader: there is no hourly observation for any African catchment, so no line here is
     reference truth; and ERA5-Land runoff is grid-cell runoff generation with no river
-    routing, so its sub-daily shape is expected to be too fast regardless of skill. Its
-    daily median KGE over these catchments is -0.334 against the model's +0.576, which is
-    the only comparison of the two that rests on observations.
+    routing, so its sub-daily shape is expected to be too fast regardless of skill. Its daily
+    median KGE over these catchments is -0.334 against the model's +0.576, which is the only
+    comparison of the two that rests on observations.
     """
     hourly = Path("outputs/v2_africa_hourly/hourly_series.csv.gz")
     era5 = Path("/ibex/user/kongw0a/era5_land_africa_hourly3/basin_hourly_runoff.csv.gz")
@@ -543,27 +566,29 @@ def fig_africa_hourly(out: Path) -> str | None:
     scored = scored.loc[np.isfinite(scored["kge"])].sort_values("kge").reset_index(drop=True)
     label_of = {str(r.station_id): float(r.kge) for r in scored.itertuples()}
 
-    ids = [s for s in scored.station_id.astype(str) if s in set(sim.station_id.astype(str))]
-    ids = sorted(set(sim.station_id.astype(str)), key=lambda s: label_of.get(s, 0.0))
+    ids = sorted(set(sim.station_id.astype(str)), key=lambda k: label_of.get(k, 0.0))
     if not ids:
         return None
 
     # Left column: the 90-day window with the largest observed flow volume inside the
     # validation period -- a stated rule, so it is a real wet season and not a chosen one.
-    # Right column: a 7-day zoom on the largest event in that window, because 2,160 hours
+    # Middle: a 7-day zoom on the largest event in that window, because 2,160 hours
     # compressed into one axis hides the very structure the figure is about.
-    fig, axes = plt.subplots(len(ids), 3, figsize=(11.4, 2.0 * len(ids) + 1.1),
-                             gridspec_kw={"width_ratios": [2.1, 1.0, 0.95]}, squeeze=False)
+    # Right: the mean shape of a day, which is where the model and the baseline differ most.
+    fig, axes = plt.subplots(
+        len(ids), 3, figsize=(FIG_WIDTH, ROW_HEIGHT * len(ids) + 1.6),
+        gridspec_kw={"width_ratios": [2.1, 1.05, 0.95]}, squeeze=False)
+
     for row, sid in enumerate(ids):
         g = sim.loc[sim.station_id.astype(str).eq(sid)].sort_values("time")
         if g.empty:
             continue
         daily = g.groupby("date", as_index=False)["obs_daily"].first()
         vol = daily.set_index("date")["obs_daily"].asfreq("D").rolling(90, min_periods=60).sum()
-        end = vol.idxmax() if vol.notna().any() else daily["date"].max()
-        start = end - pd.Timedelta(days=89)
-        win = g.loc[g.time.between(start, end + pd.Timedelta(hours=23))]
-        peak_day = (daily.loc[daily.date.between(start, end)]
+        end_day = vol.idxmax() if vol.notna().any() else daily["date"].max()
+        start = end_day - pd.Timedelta(days=89)
+        win = g.loc[g.time.between(start, end_day + pd.Timedelta(hours=23))]
+        peak_day = (daily.loc[daily.date.between(start, end_day)]
                     .sort_values("obs_daily").iloc[-1]["date"])
         z0 = peak_day - pd.Timedelta(days=3)
         zoom = g.loc[g.time.between(z0, z0 + pd.Timedelta(days=7))]
@@ -578,94 +603,93 @@ def fig_africa_hourly(out: Path) -> str | None:
                 continue
             d = daily.loc[daily.date.between(frame.time.min().normalize(),
                                              frame.time.max().normalize())]
-            # Hourly mm/h -> the daily rate it implies, so one axis serves all four series.
-            ax.step(d["date"], d["obs_daily"], where="post", color=INK, lw=1.4,
-                    zorder=5, label="Observed (daily, the only measurement)")
-            ax.fill_between(d["date"], 0, d["obs_daily"], step="post",
-                            color=GREY, alpha=0.22, lw=0, zorder=1)
-            ax.plot(frame["time"], frame["ensemble_M0"] * 24, color=BLUE, lw=0.9,
-                    alpha=0.85, zorder=3, label="M0 hourly (zero-shot)")
-            ax.plot(frame["time"], frame["ensemble_M1"] * 24, color=ORANGE, lw=1.0,
-                    zorder=4, label="M1 hourly (after African daily fine-tuning)")
             era5_peak = np.nan
             if base is not None and not base.empty:
                 b = base.loc[base.time.between(frame.time.min(), frame.time.max())]
                 if not b.empty:
                     ax.plot(b["time"], b["era5_land_hourly"] * 24, color=AQUA,
-                            lw=0.6 if col == 0 else 0.9, alpha=0.6 if col == 0 else 0.9,
-                            zorder=2, label="ERA5-Land hourly runoff (baseline)")
+                            lw=BASELINE_LW, alpha=0.55 if col == 0 else 0.75, zorder=2)
                     era5_peak = float(b.era5_land_hourly.max() * 24)
+            ax.fill_between(d["date"], 0, d["obs_daily"], step="post",
+                            color=GREY, alpha=0.18, lw=0, zorder=1)
+            ax.step(d["date"], d["obs_daily"], where="post", color=INK, lw=2.0, zorder=5)
+            # Hourly mm/h -> the daily rate it implies, so one axis serves all four series.
+            ax.plot(frame["time"], frame["ensemble_M0"] * 24, color=BLUE, lw=MODEL_LW,
+                    alpha=0.95, zorder=3)
+            ax.plot(frame["time"], frame["ensemble_M1"] * 24, color=ORANGE, lw=MODEL_LW,
+                    zorder=4)
+
             # The axis follows the observation and the model. Letting ERA5-Land set it
             # squashes the other three series into the bottom eighth of the panel: its
             # instantaneous rate reaches 200 mm/d on a catchment whose daily observation
             # peaks near 20, which is the routing point rather than a volume error -- its
-            # daily mean over this window is 7.7 mm/d against an observed 7.6. So the peak
+            # daily mean over that window is 7.7 mm/d against an observed 7.6. So the peak
             # is stated in words instead of being allowed to flatten the hydrograph.
             top = np.nanmax([frame["ensemble_M0"].max() * 24, frame["ensemble_M1"].max() * 24,
                              d["obs_daily"].max() if len(d) else np.nan])
             if np.isfinite(top) and top > 0:
-                ax.set_ylim(0, top * 1.12)
-                if np.isfinite(era5_peak) and era5_peak > top * 1.12:
+                ax.set_ylim(0, top * 1.16)
+                if np.isfinite(era5_peak) and era5_peak > top * 1.16:
                     ax.annotate(f"ERA5-Land peaks at {era5_peak:.0f} mm/d",
-                                (0.985, 0.95), xycoords="axes fraction", ha="right",
-                                va="top", fontsize=6.8, color=AQUA,
+                                (0.985, 0.96), xycoords="axes fraction", ha="right",
+                                va="top", fontsize=8.5, color=AQUA,
                                 bbox=dict(facecolor="white", edgecolor="none",
-                                          alpha=0.82, pad=1.4))
+                                          alpha=0.85, pad=2.2))
             if col == 0:
-                ax.set_ylabel("Runoff (mm/d)")
-                ax.set_title(f"{sid}   daily M1 KGE {label_of.get(sid, float('nan')):+.3f}",
-                             fontsize=8.5, loc="left")
+                ax.set_ylabel("Runoff (mm/d)", fontsize=10)
+                ax.set_title(f"{sid}      daily M1 KGE {label_of.get(sid, float('nan')):+.3f}",
+                             fontsize=11.5, loc="left", pad=8)
             else:
-                ax.set_title(note, fontsize=8, loc="left", color=MUTED)
-            # AutoDateLocator alone put eleven labels on a seven-day axis and they overlapped
+                ax.set_title(note, fontsize=10, loc="left", color=MUTED, pad=8)
+            # AutoDateLocator's default put eleven labels on a seven-day axis, overlapping
             # into an unreadable band, which is worse than no axis at all.
             span_days = (frame.time.max() - frame.time.min()).total_seconds() / 86400
             ax.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=3, maxticks=4))
             ax.xaxis.set_major_formatter(
                 mdates.DateFormatter("%d %b" if span_days < 30 else "%d %b %Y"))
-            ax.tick_params(axis="x", labelsize=7)
+            ax.tick_params(axis="both", labelsize=9)
             tidy(ax, "y")
 
-        # Third column: the mean shape of a day, each series divided by its own mean over
-        # the window. Dividing out the level is the whole point -- it separates "how much
-        # water" (which the daily score already covers) from "how it is distributed inside
-        # a day" (which no score in this project can reach). A flat line at 1.0 would mean
-        # the hourly output carries no sub-daily information at all.
+        # Third column: the mean shape of a day, each series divided by its own mean over the
+        # window. Dividing out the level is the whole point -- it separates "how much water"
+        # (which the daily score already covers) from "how it is distributed inside a day"
+        # (which no score in this project can reach). A flat line at 1.0 would mean the
+        # hourly output carries no sub-daily information at all.
         ax = axes[row][2]
         drawn = False
-        for frame, column, colour, width in (
-                (win, "ensemble_M0", BLUE, 1.2), (win, "ensemble_M1", ORANGE, 1.4)):
-            if frame.empty:
-                continue
-            prof = frame.groupby(frame.time.dt.hour)[column].mean()
-            level = float(frame[column].mean())
-            if not np.isfinite(level) or level <= 0:
-                continue
-            ax.plot(prof.index, prof.values / level, color=colour, lw=width, zorder=3)
-            drawn = True
         if base is not None and not base.empty and not win.empty:
             b = base.loc[base.time.between(win.time.min(), win.time.max())]
             if not b.empty and float(b.era5_land_hourly.mean()) > 0:
                 prof = b.groupby(b.time.dt.hour)["era5_land_hourly"].mean()
                 ax.plot(prof.index, prof.values / float(b.era5_land_hourly.mean()),
-                        color=AQUA, lw=1.2, zorder=2)
+                        color=AQUA, lw=1.6, zorder=2)
                 drawn = True
+        for column, colour in (("ensemble_M0", BLUE), ("ensemble_M1", ORANGE)):
+            if win.empty:
+                continue
+            level = float(win[column].mean())
+            if not np.isfinite(level) or level <= 0:
+                continue
+            prof = win.groupby(win.time.dt.hour)[column].mean()
+            ax.plot(prof.index, prof.values / level, color=colour, lw=MODEL_LW, zorder=3)
+            drawn = True
+
         if drawn:
             # 1.0 is "flat day". The observation cannot appear here: a daily total has no
             # shape inside the day, which is exactly what makes this column unverifiable.
-            ax.axhline(1.0, color=INK, lw=0.9, ls=(0, (4, 3)), zorder=1)
-            # One fixed scale for all three rows. Autoscaling each panel drew a 3% wiggle
-            # at the same visual amplitude as a 150% swing, which inverts the comparison
-            # the column exists to make. Panels that hug 1.0 are meant to look flat: the
-            # model has no systematic time-of-day cycle, it responds to events, whereas
-            # ERA5-Land's afternoon convective peak is systematic and survives averaging
-            # over ninety days. The peak-to-trough ratio is printed so a flat panel still
-            # carries a number.
+            ax.axhline(1.0, color=INK, lw=1.1, ls=(0, (4, 3)), zorder=1)
+            # One fixed scale for all rows, and logarithmic. Autoscaling each panel drew a
+            # 3% wiggle at the same visual amplitude as a factor of fifteen, which inverts
+            # the comparison the column exists to make. Panels where the model hugs 1.0 are
+            # meant to look flat: it has no systematic time-of-day cycle, it responds to
+            # events, whereas ERA5-Land's afternoon convective peak is systematic and
+            # survives averaging over ninety days.
             ax.set_yscale("log")
             ax.set_ylim(*DIURNAL_YLIM)
             ax.set_yticks(list(DIURNAL_YTICKS))
             ax.set_yticklabels([f"{t:g}" for t in DIURNAL_YTICKS])
             ax.yaxis.set_minor_formatter(plt.NullFormatter())
+            # The peak-to-trough ratio, so a panel that looks flat still carries a number.
             ratios = []
             for line in ax.get_lines():
                 ys = np.asarray(line.get_ydata(), dtype=float)
@@ -673,15 +697,16 @@ def fig_africa_hourly(out: Path) -> str | None:
                     continue
                 ratios.append((line.get_color(), np.nanmax(ys) / np.nanmin(ys)))
             for k, (colour, ratio) in enumerate(ratios):
-                ax.annotate(f"x{ratio:.2f}", (0.02, 0.96 - 0.115 * k),
+                ax.annotate(f"x{ratio:.2f}", (0.03, 0.955 - 0.105 * k),
                             xycoords="axes fraction", ha="left", va="top",
-                            fontsize=6.6, color=colour)
+                            fontsize=9, color=colour, fontweight="semibold")
             ax.set_xlim(0, 23)
             ax.set_xticks([0, 6, 12, 18])
             ax.set_xticklabels(["00", "06", "12", "18"])
-            ax.set_xlabel("Hour (UTC)", fontsize=7.5)
-            ax.set_ylabel("Share of own mean", fontsize=7.5)
-            ax.tick_params(labelsize=7)
+            ax.set_xlabel("Hour (UTC)", fontsize=9.5)
+            ax.set_ylabel("Share of own mean", fontsize=9.5)
+            ax.tick_params(labelsize=9)
+
             # The within-day coefficient of variation, on the column that illustrates it:
             # how much sub-daily shape there is, independent of the flow level. These are
             # this catchment's own numbers over its own window -- three catchments describe
@@ -697,32 +722,44 @@ def fig_africa_hourly(out: Path) -> str | None:
                 if not b.empty:
                     by_day = b.groupby(b.time.dt.normalize())["era5_land_hourly"]
                     era5_cv = float((by_day.std() / by_day.mean().replace(0, np.nan)).median())
-            note_cv = f"CV {cvs['M0']:.3f} -> {cvs['M1']:.3f}"
+            note_cv = f"within-day CV  {cvs['M0']:.3f} -> {cvs['M1']:.3f}"
             if np.isfinite(era5_cv):
-                note_cv += f", ERA5 {era5_cv:.2f}"
-            ax.set_title(f"Mean shape of a day   {note_cv}", fontsize=7.6,
-                         loc="left", color=MUTED)
+                note_cv += f",  ERA5 {era5_cv:.2f}"
+            ax.set_title(f"Mean shape of a day\n{note_cv}", fontsize=9.5,
+                         loc="left", color=MUTED, pad=8)
             tidy(ax, "y")
         else:
             ax.axis("off")
 
-    handles = [Line2D([], [], color=INK, lw=1.6, label="Observed (daily, the only measurement)"),
-               Line2D([], [], color=BLUE, lw=1.6, label="M0 hourly  (zero-shot)"),
-               Line2D([], [], color=ORANGE, lw=1.8, label="M1 hourly  (after African daily fine-tuning)"),
-               Line2D([], [], color=AQUA, lw=1.6, label="ERA5-Land hourly runoff  (reanalysis baseline)")]
-    handles.append(Line2D([], [], color=INK, lw=0.9, ls=(0, (4, 3)),
-                          label="Flat day (no sub-daily shape)"))
-    fig.legend(handles=handles, loc="lower center", ncol=5, bbox_to_anchor=(0.5, -0.026),
-               fontsize=7.4, labelcolor=INK, frameon=False,
-               columnspacing=1.1, handlelength=1.7)
-    fig.suptitle("Hourly runoff under the daily African score: model output and a "
-                 "reanalysis baseline",
-                 fontsize=10.5, fontweight="semibold", color=INK, y=0.995)
-    fig.tight_layout(h_pad=1.5, w_pad=1.4, rect=(0, 0.075, 1, 0.985))
+    handles = [
+        Line2D([], [], color=BLUE, lw=MODEL_LW + 0.4,
+               label="Our sMTS-LSTM, hourly  —  M0, zero-shot"),
+        Line2D([], [], color=ORANGE, lw=MODEL_LW + 0.4,
+               label="Our sMTS-LSTM, hourly  —  M1, after African daily fine-tuning"),
+        Line2D([], [], color=INK, lw=2.0,
+               label="Observed  —  daily, the only measurement that exists here"),
+        Line2D([], [], color=AQUA, lw=1.6,
+               label="ERA5-Land hourly runoff  —  reanalysis baseline, not a reference"),
+        Line2D([], [], color=INK, lw=1.1, ls=(0, (4, 3)),
+               label="Flat day  —  no sub-daily shape"),
+    ]
+    fig.legend(handles=handles, loc="lower center", ncol=3, bbox_to_anchor=(0.5, 0.004),
+               fontsize=10.5, labelcolor=INK, frameon=False,
+               columnspacing=2.6, handlelength=2.4, labelspacing=0.6)
+    fig.suptitle("Hourly runoff under the daily African score: our model's own output, "
+                 "before and after fine-tuning, against a reanalysis baseline",
+                 fontsize=13.5, fontweight="semibold", color=INK, y=0.996)
+    # subplots_adjust rather than tight_layout: tight_layout silently overrides hspace and
+    # wspace, so the spacing set here was being discarded, and it warns that the log-scaled
+    # panels are not compatible with it. Explicit margins also keep the row titles close to
+    # the panels they name instead of floating halfway up the gap above them.
+    fig.subplots_adjust(left=0.05, right=0.988, top=0.945, bottom=0.10,
+                        hspace=0.40, wspace=0.22)
+
     # The three panels are three catchments, and in two of them M1 carries MORE sub-daily
-    # variation than M0 -- which is the reverse of what all 284 African basins show. Reading
-    # the panels as the population would invert the finding, so the paired result is printed
-    # on the figure, and read from the run's own summary rather than transcribed.
+    # variation than M0 -- the reverse of what all 284 African basins show. Reading the
+    # panels as the population would invert the finding, so the paired result is printed on
+    # the figure, and read from the run's own summary rather than transcribed.
     population = ""
     summary = Path("outputs/v2_africa_hourly/within_day_summary.json")
     if summary.exists():
@@ -738,13 +775,14 @@ def fig_africa_hourly(out: Path) -> str | None:
             f"basins, so the two panels here where it rises are not representative. Whether "
             f"that flattening loses real structure cannot be settled in Africa; on the global "
             f"target domain, where hourly observations do exist, the same step moved "
-            f"within-day standard deviation from 0.86x to 0.89x of observed. "
+            f"within-day standard deviation from 0.86x to 0.89x of observed.\n"
         )
     stamp(fig, population +
                "No African catchment has hourly observations, so no line here is reference "
                "truth. ERA5-Land runoff is grid-cell runoff generation with no river "
                "routing; its sub-daily shape is expected to be too fast, and its daily "
-               "median KGE is -0.334 against the model's +0.576.", y=-0.105)
+               "median KGE is -0.334 against the model's +0.576.",
+          y=-0.028, size=9.5, wrap_at=155)
     path = out / "fig10_africa_hourly.png"
     fig.savefig(path)
     plt.close(fig)

@@ -740,18 +740,21 @@ def main() -> None:
               "large negatives at every daily reset.")
 
     figure(doc, "fig10_africa_hourly.png",
-           "Figure 3-2  Hourly runoff underneath the daily African score, for the same three "
-           "catchments as Figure 3-1. Left: the 90-day window with the largest observed flow "
+           "Figure 3-2  Our sMTS-LSTM's own hourly output over the same three catchments as "
+           "Figure 3-1, in both model states -- M0 zero-shot (blue) and M1 after African "
+           "daily fine-tuning (orange) -- with ERA5-Land hourly runoff as a contrast (green) "
+           "and the daily observation as a step (black), because a daily total is genuinely "
+           "all that was measured. Left: the 90-day window with the largest observed flow "
            "volume in the validation period, chosen by that rule rather than by eye. Middle: "
            "a 7-day zoom on the largest event in it. Right: the mean shape of a day, each "
            "series divided by its own mean over the window, on a shared logarithmic scale so "
            "the three rows are comparable -- the model's mean day departs from flat by 5-31%, "
            "ERA5-Land's by a factor of 4 to 15. Hourly values are drawn as the daily rate "
-           "they imply (mm/h x 24) so all four series share one axis; the observation is a "
-           "step because a daily total is genuinely all that was measured. The vertical axis "
-           "of the left and middle panels follows the observation and the model, and "
-           "ERA5-Land's peak is stated in text where it exceeds them. Source: "
-           "outputs/v2_africa_hourly/ and basin_hourly_runoff.csv.gz.")
+           "they imply (mm/h x 24) so all four series share one axis. The vertical axis of "
+           "the left and middle panels follows the observation and the model, and ERA5-Land's "
+           "peak is stated in text where it exceeds them: letting the baseline set the axis "
+           "compressed the other three series into the bottom eighth of the panel. Source: "
+           "outputs/v2_africa_hourly/ and basin_hourly_runoff.csv.gz.", width=6.6)
 
     # ---------------- 4. Stratification and diagnostics ----------------
     doc.add_heading("4. Stratification and diagnostics", level=1)

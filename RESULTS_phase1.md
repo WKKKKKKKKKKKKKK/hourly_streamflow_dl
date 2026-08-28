@@ -1312,6 +1312,7 @@ python -m scripts.paired_split_effect --random-run v2_runB --blocked-run v2_bloc
 python -m scripts.paired_split_effect --random-run v2_runB --blocked-run v2_blocked --tag M1 --out-dir outputs/v2_split_effect
 python -m scripts.convergence_check
 python -m scripts.build_report --out reports/PhaseI_report.docx
+python -m scripts.check_english_only   # no CJK in any tracked file or commit message
 
 # Africa (needs the rescaled forcing, not raw ERA5-Land)
 PRESET=forcing sbatch slurm/40_basin_average.sbatch
