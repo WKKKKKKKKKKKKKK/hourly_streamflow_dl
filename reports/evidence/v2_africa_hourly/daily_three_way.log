@@ -1,0 +1,9 @@
+18:22:46 INFO in-situ validation days: 320540 rows over 284 basins, 1983-01-04 .. 1995-12-31
+18:23:02 INFO ERA5-Land daily: 294 stations x 16437 dates, 100.0% finite
+18:23:04 INFO after intersecting with ERA5-Land: 320540 rows over 284 basins (100.0% of the model rows kept)
+18:23:04 INFO M0: 282 basins scored | median KGE +0.1143 | median NSE +0.2028
+18:23:04 INFO M1: 282 basins scored | median KGE +0.5761 | median NSE +0.5572
+18:23:04 INFO era5_land: 282 basins scored | median KGE -0.3616 | median NSE -1.6762
+18:23:04 INFO M0 beats ERA5-Land on 76.2% of the 282 basins
+18:23:04 INFO M1 beats ERA5-Land on 93.6% of the 282 basins
+18:23:04 INFO wrote outputs/v2_africa_hourly/daily_three_way_per_basin.csv and daily_three_way_summary.json

@@ -33,13 +33,17 @@ Regenerate with `python -m scripts.collect_evidence`.
 | Africa, hourly within-day shape per basin | `v2_africa_hourly/within_day_cv_per_basin.csv` | 1 |
 | Africa, hourly within-day summary | `v2_africa_hourly/within_day_summary.json` | 1 |
 | Africa, hourly run log | `v2_africa_hourly/hourly_series.log` | 1 |
+| Africa, three-way daily per basin | `v2_africa_hourly/daily_three_way_per_basin.csv` | 1 |
+| Africa, three-way daily summary | `v2_africa_hourly/daily_three_way_summary.json` | 1 |
+| Africa, three-way daily log | `v2_africa_hourly/daily_three_way.log` | 1 |
 
-Total 918 KB.
+Total 1009 KB.
 
 Mostly summary-level. The exceptions, kept because they are the direct evidence for a
 headline claim rather than a rollup of it:
 
 - `v3_check/paired_gap_per_station.csv` (505 KB)
+- `v2_africa_hourly/daily_three_way_per_basin.csv` (89 KB)
 
 Everything else those were computed from stays in `outputs/`: the per-sample tables run to
 hundreds of megabytes and are regenerable from the checkpoints.

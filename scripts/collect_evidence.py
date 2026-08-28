@@ -49,6 +49,9 @@ PATTERNS = (
     ("Africa, hourly within-day shape per basin", "v2_africa_hourly/within_day_cv_per_basin.csv"),
     ("Africa, hourly within-day summary", "v2_africa_hourly/within_day_summary.json"),
     ("Africa, hourly run log", "v2_africa_hourly/hourly_series.log"),
+    ("Africa, three-way daily per basin", "v2_africa_hourly/daily_three_way_per_basin.csv"),
+    ("Africa, three-way daily summary", "v2_africa_hourly/daily_three_way_summary.json"),
+    ("Africa, three-way daily log", "v2_africa_hourly/daily_three_way.log"),
 )
 
 MAX_BYTES = 512 * 1024  # anything larger is a per-gauge table, not a summary

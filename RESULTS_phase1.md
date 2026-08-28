@@ -514,10 +514,42 @@ standard deviation from 0.86× to 0.89× of observed, within-day range from 0.88
 (table in "The intra-day jitter was a v1 artefact"). Where it can be checked,
 daily-aggregate supervision moved sub-daily dispersion *toward* the observations.
 
+### First, the daily comparison done properly: three methods, identical days
+
+ERA5-Land per-basin scores already existed, but from the temperate-transfer Africa run of
+the previous section, over a different period. Placing those beside the in-situ M0 and M1
+would have compared numbers computed on different days and called it a three-way
+comparison. `scripts.africa_daily_three_way` re-scores all three on the identical
+**320,540 basin-days over 282 basins**
+(1983-01-04 to 1995-12-31) with the same `score()` the in-situ ensemble used.
+
+| daily, identical basin-days | median KGE | median NSE |
+|---|---|---|
+| ERA5-Land runoff | **-0.3616** | -1.6762 |
+| M0, zero-shot | **+0.1143** | +0.2028 |
+| M1, after African daily fine-tuning | **+0.5761** | +0.5572 |
+
+M1's +0.5761 reproduces the published +0.576, and per basin it agrees
+with `ensemble_per_basin_M1.csv` to **1e-08** — which is the check that the window really is
+the same one and not merely a similar one.
+
+**Paired over basins rather than pooled**, which the medians cannot say: M1 beats the
+reanalysis on **93.6%** of the
+282 basins, and even the zero-shot M0 does on
+**76.2%**. A model that has never seen an
+African catchment already outperforms the reanalysis on three basins in four.
+
+*ERA5-Land is not uniformly poor.* On `restricted_ADHI__258` its daily KGE is **+0.146**,
+because its volume over that window is close to observed (7.75 against 7.58 mm/d). What it
+gets wrong there is the distribution, not the total — and that is precisely what the hourly
+panels make visible.
+
 ### ERA5-Land as an hourly baseline: usable as a contrast, not as a reference
 
 ERA5-Land runoff already serves as the physical baseline in the daily African
-comparison (median KGE **−0.3336** against the ensemble's **+0.576**). Its raw tiles on
+comparison. On these basin-days its median KGE is **−0.3616** (table above); the
+**−0.3336** quoted in the previous section is the same product scored on that section's own
+run and period, and both are correct for their own window. Its raw tiles on
 disk were daily-only — one 00:00 UTC stamp per day, since the field accumulates from
 00 UTC and resets — so the hourly baseline required a fresh download.
 `scripts.download_era5_land_hourly_window` fetches only the basin-months plotted, one
@@ -548,7 +580,11 @@ So ERA5-Land belongs on the figure as an honestly labelled contrast — it shows
 unrouted runoff generation looks like — and cannot be used to score anyone's hourly
 output.
 
-**Figure:** `reports/figures/fig10_africa_hourly.png`
+**Figure:** `reports/figures/fig10_africa_hourly.png` — daily and hourly are drawn as two
+separate blocks, because only the daily one can be scored. Left: observation, M0, M1 and
+ERA5-Land at daily resolution, with each panel's three KGEs printed on it. Right: the same
+three predictions hourly, with no observation, plus an average-day panel that aligns every
+day of the window by hour and divides each series by its own mean.
 **Evidence:** `outputs/v2_africa_hourly/` (`hourly_series.csv.gz`,
 `within_day_cv_per_basin.csv`, `within_day_summary.json`, `hourly_series.log`);
 `/ibex/user/kongw0a/era5_land_africa_hourly3/basin_hourly_runoff.csv.gz` and its

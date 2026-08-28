@@ -675,17 +675,52 @@ def main() -> None:
             "because their timing was already right."
         )
 
-    doc.add_heading("3.4 What the hourly output actually looks like in Africa", level=2)
+    doc.add_heading("3.4 Africa at two resolutions: daily, which can be scored, and hourly, which cannot", level=2)
     doc.add_paragraph(
-        "Every African number in this chapter is daily, because African discharge is observed "
-        "daily and that is the only resolution at which a score exists. The models still run "
-        "hourly; the ensemble script took the mean of each day's 24 outputs and discarded "
-        "them, so until now no hourly African series existed and the report had no hourly "
-        "hydrograph at all. scripts.africa_hourly_series re-runs the same five folds through "
-        "the same validation windows and keeps the hourly tail. It is the same models on the "
-        "same days, and that is checked rather than asserted: 24 x mean(hourly) reproduces "
-        "the scored daily prediction to a maximum absolute difference of 1.9e-06 mm/d for M1 "
-        "and 6.7e-06 mm/d for M0 over 2,908 basin-days, which is float32 rounding.")
+        "Every African number so far is daily, because African discharge is observed daily "
+        "and that is the only resolution at which a score exists. Two questions follow, and "
+        "they have to be kept apart. At daily resolution the model, the reanalysis and the "
+        "observation can all be compared and scored. At hourly resolution there is no "
+        "observation anywhere on the continent -- that absence is why Africa is the external "
+        "test -- so the same three series can be compared with each other and with nothing "
+        "else. Figure 3-2 is drawn as two blocks for that reason.")
+
+    three = Path("outputs/v2_africa_hourly/daily_three_way_summary.json")
+    if three.exists():
+        ts = json.loads(three.read_text())
+        doc.add_paragraph(
+            f'The daily side first, where a score exists. ERA5-Land '
+            f'per-basin scores already existed, but from the temperate-transfer Africa run of '
+            f'section 3.1 over a different period, so placing them beside the in-situ M0 and '
+            f'M1 would have compared numbers computed on different days. '
+            f'scripts.africa_daily_three_way re-scores all three on the identical '
+            f'{ts["n_basin_days"]:,} basin-days over {ts["n_basins"]} basins '
+            f'({ts["window"][0]} to {ts["window"][1]}) with the same estimator. Median KGE: '
+            f'ERA5-Land {ts["era5_land"]["median_kge"]:+.4f}, M0 {ts["M0"]["median_kge"]:+.4f}, '
+            f'M1 {ts["M1"]["median_kge"]:+.4f}. M1 reproduces the published +0.576 to 1e-08 '
+            f'per basin, which is the check that the window really is the same one.')
+        para = doc.add_paragraph()
+        run = para.add_run(
+            f'Paired over basins rather than pooled: M1 beats the reanalysis on '
+            f'{100 * ts["share_of_basins_M1_beats_era5_land"]:.1f}% of the {ts["n_basins"]} '
+            f'basins and even the zero-shot M0 does on '
+            f'{100 * ts["share_of_basins_M0_beats_era5_land"]:.1f}%.')
+        run.bold = True
+        note(doc, "ERA5-Land is not uniformly poor, and the figure shows one case: on "
+                  "restricted_ADHI__258 its daily KGE is +0.146, because its volume over that "
+                  "window is close to observed (7.75 against 7.58 mm/d). What it gets wrong "
+                  "there is the distribution, not the total -- which is exactly what the "
+                  "hourly panels make visible.")
+
+    doc.add_paragraph(
+        "Now the hourly side. The models always ran hourly; the ensemble script took the mean "
+        "of each day's 24 outputs and discarded them, so until now no hourly African series "
+        "existed and the report had no hourly hydrograph at all. "
+        "scripts.africa_hourly_series re-runs the same five folds through the same validation "
+        "windows and keeps the hourly tail. It is the same models on the same days, and that "
+        "is checked rather than asserted: 24 x mean(hourly) reproduces the scored daily "
+        "prediction to a maximum absolute difference of 1.9e-06 mm/d for M1 and 6.7e-06 mm/d "
+        "for M0 over 2,908 basin-days, which is float32 rounding.")
 
     summary = Path("outputs/v2_africa_hourly/within_day_summary.json")
     if summary.exists():
@@ -720,9 +755,11 @@ def main() -> None:
                   "sub-daily dispersion toward the observations.")
 
     doc.add_paragraph(
-        "ERA5-Land runoff, already the physical baseline in the daily comparison at a median "
-        "KGE of -0.3336, is drawn beside the model as an hourly contrast. It cannot be a "
-        "reference. ERA5-Land has no river routing, so the basin average is runoff generation "
+        "ERA5-Land is drawn beside the model in the hourly block as well, as a contrast. It "
+        "cannot be a reference there. (Its daily median KGE on these basin-days is -0.3616, "
+        "computed above; the -0.3336 quoted in section 3.1 is the same product scored on that "
+        "section's own run and period, and both are correct for their own window.) ERA5-Land "
+        "has no river routing, so the basin average is runoff generation "
         "leaving the soil column rather than water passing a gauge. On restricted_ADHI__258 "
         "(3,354 km2) its instantaneous rate reaches 199 mm/d where the daily observation "
         "peaks near 20, while its daily mean over the window is 7.75 mm/d against an observed "
@@ -740,21 +777,23 @@ def main() -> None:
               "large negatives at every daily reset.")
 
     figure(doc, "fig10_africa_hourly.png",
-           "Figure 3-2  Our sMTS-LSTM's own hourly output over the same three catchments as "
-           "Figure 3-1, in both model states -- M0 zero-shot (blue) and M1 after African "
-           "daily fine-tuning (orange) -- with ERA5-Land hourly runoff as a contrast (green) "
-           "and the daily observation as a step (black), because a daily total is genuinely "
-           "all that was measured. Left: the 90-day window with the largest observed flow "
-           "volume in the validation period, chosen by that rule rather than by eye. Middle: "
-           "a 7-day zoom on the largest event in it. Right: the mean shape of a day, each "
-           "series divided by its own mean over the window, on a shared logarithmic scale so "
-           "the three rows are comparable -- the model's mean day departs from flat by 5-31%, "
-           "ERA5-Land's by a factor of 4 to 15. Hourly values are drawn as the daily rate "
-           "they imply (mm/h x 24) so all four series share one axis. The vertical axis of "
-           "the left and middle panels follows the observation and the model, and ERA5-Land's "
-           "peak is stated in text where it exceeds them: letting the baseline set the axis "
-           "compressed the other three series into the bottom eighth of the panel. Source: "
-           "outputs/v2_africa_hourly/ and basin_hourly_runoff.csv.gz.", width=6.6)
+           "Figure 3-2  Africa at two resolutions, kept apart because only one of them can "
+           "be scored. Left block, DAILY: the observation, our sMTS-LSTM in both states (M0 "
+           "zero-shot, M1 after African daily fine-tuning) and ERA5-Land runoff, all at the "
+           "resolution African discharge is measured at, over the 90-day window with the "
+           "largest observed flow volume in the validation period -- chosen by that rule "
+           "rather than by eye. Every line here is scored against the observation and each "
+           "panel prints those scores. Right block, HOURLY: the same three predictions with "
+           "no observation, because none exists for any African catchment; nothing here can "
+           "be scored, only compared between series. The middle panel is a 10-day window "
+           "around the largest event, hourly values drawn as the daily rate they imply "
+           "(mm/h x 24) so the vertical scale means the same thing in both blocks. The right "
+           "panel aligns every day of the 90-day window by hour of day and divides each "
+           "series by its own mean, on a shared logarithmic scale: a flat line at 1.0 means "
+           "no systematic dependence on the clock, and the printed factor is peak-to-trough. "
+           "The model departs from flat by 5-31%, ERA5-Land by 4 to 15 times, peaking at "
+           "15:00 UTC -- afternoon convective rainfall passed straight through to runoff by a "
+           "scheme with no river routing. Source: outputs/v2_africa_hourly/.", width=6.8)
 
     # ---------------- 4. Stratification and diagnostics ----------------
     doc.add_heading("4. Stratification and diagnostics", level=1)
