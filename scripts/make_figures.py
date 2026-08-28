@@ -728,10 +728,14 @@ def fig_africa_hourly(out: Path) -> str | None:
         ax.set_yticklabels([f"{t:g}" for t in DIURNAL_YTICKS])
         ax.yaxis.set_minor_formatter(plt.NullFormatter())
         # Peak-to-trough ratio, so a panel that looks flat still carries a number. Ordered
-        # M1, M0, baseline to match the score block on the daily panel.
+        # M1, M0, baseline to match the score block on the daily panel. The "peak / trough"
+        # label is not decoration: a bare "x1.05" beside a curve says nothing about what is
+        # being divided by what, and this figure carries no caption block to explain it.
         order = {ORANGE: 0, BLUE: 1, AQUA: 2}
+        ax.annotate("peak / trough", (0.04, 0.985), xycoords="axes fraction", ha="left",
+                    va="top", fontsize=7.6, color=MUTED)
         for colour, ratio in sorted(ratios, key=lambda pair: order.get(pair[0], 3)):
-            ax.annotate(f"x{ratio:.2f}", (0.04, 0.955 - 0.105 * order.get(colour, 3)),
+            ax.annotate(f"x{ratio:.2f}", (0.04, 0.885 - 0.10 * order.get(colour, 3)),
                         xycoords="axes fraction", ha="left", va="top", fontsize=9,
                         color=colour, fontweight="semibold")
         ax.set_xlim(0, 23)
@@ -740,7 +744,8 @@ def fig_africa_hourly(out: Path) -> str | None:
         ax.set_xlabel("Hour (UTC)", fontsize=9.5)
         ax.set_ylabel("Share of own mean", fontsize=9.5)
         ax.tick_params(labelsize=9)
-        ax.set_title("Average day: every day in the\n90-day window, aligned by hour",
+        ax.set_title("Average day: all 90 days aligned by hour, each series\n"
+                     "over its own mean. Flat = no time-of-day cycle",
                      fontsize=9, loc="left", color=MUTED, pad=8)
         tidy(ax, "y")
 
