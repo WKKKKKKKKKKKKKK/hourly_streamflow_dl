@@ -94,6 +94,29 @@ def predict_hourly(model, loader, device, y_mean: float, y_std: float,
             np.concatenate(sim), np.concatenate(obs))
 
 
+def diurnal_ratio(frame: pd.DataFrame, column: str) -> pd.Series:
+    """Peak-to-trough of the average day, per basin: how CLOCK-driven a series is.
+
+    Averaging every day of the record by hour of day destroys event-driven structure,
+    because storms do not prefer a time of day in any fixed way relative to the calendar.
+    What survives that average is therefore systematic -- tied to the clock. Dividing by the
+    series' own mean first makes the number independent of the flow level.
+
+    This is the quantity that separates a routed hydrograph from runoff generation. Rainfall
+    over these catchments carries a strong diurnal cycle (afternoon convection). A grid-cell
+    runoff scheme with no channel routing passes that cycle through almost undamped; a
+    catchment of hundreds to thousands of square kilometres integrates over much longer than
+    a day and should damp it nearly out. So the ratio is a check on the KIND of structure an
+    hourly output has, which is the only hourly check available in Africa -- there is no
+    hourly observation to score against.
+    """
+    by_hour = frame.groupby([frame.station_id, frame.time.dt.hour], observed=True)[column].mean()
+    level = frame.groupby("station_id", observed=True)[column].mean()
+    shape = by_hour / level.reindex(by_hour.index.get_level_values(0)).to_numpy()
+    grouped = shape.groupby(level="station_id", observed=True)
+    return (grouped.max() / grouped.min()).rename(f"diurnal_ratio_{column}")
+
+
 def within_day_stats(frame: pd.DataFrame, tag: str) -> pd.DataFrame:
     """Per basin: how much sub-daily shape the hourly curve carries.
 
@@ -253,6 +276,37 @@ def main() -> None:
     # How much sub-daily shape survives daily-only supervision. Over every basin when
     # --all-basins is set, so this is a distribution and not three anecdotes.
     stats = within_day_stats(frame, "M0").join(within_day_stats(frame, "M1"), how="inner")
+
+    # And how CLOCK-driven that shape is, for the model and for the rainfall it was given.
+    # The rainfall is re-read raw from the forcing file rather than taken from the tensors:
+    # those are standardised, and a ratio of standardised values is not a ratio of rainfall.
+    for column in ("M0", "M1"):
+        stats = stats.join(diurnal_ratio(frame.rename(columns={f"ensemble_{column}": column}),
+                                         column), how="left")
+    try:
+        import xarray as xr
+        with xr.open_dataset(args.forcing) as ds:
+            forcing_stations = [str(x) for x in ds["station"].values]
+            forcing_times = pd.DatetimeIndex(ds["time"].values)
+            pcp_all = np.asarray(ds["pcp"].values, dtype=np.float32)
+        wanted_hours = pd.DatetimeIndex(frame["time"].unique())
+        take = forcing_times.isin(wanted_hours)
+        rows = []
+        for sid in station_ids:
+            if sid not in forcing_stations:
+                continue
+            rows.append(pd.DataFrame({"station_id": sid,
+                                      "time": forcing_times[take],
+                                      "pcp": pcp_all[forcing_stations.index(sid)][take]}))
+        if rows:
+            pcp = pd.concat(rows, ignore_index=True)
+            stats = stats.join(diurnal_ratio(pcp, "pcp"), how="left")
+            logger.info("rainfall diurnal ratio over %d basins: median %.2fx",
+                        int(stats.diurnal_ratio_pcp.notna().sum()),
+                        float(stats.diurnal_ratio_pcp.median()))
+    except Exception as exc:  # the ratio is diagnostic; a missing forcing must not kill the run
+        logger.warning("rainfall diurnal ratio skipped: %s: %s", type(exc).__name__, exc)
+
     stats = stats.reset_index()
     stats["station_id"] = stats.station_id.astype(str)
     stats["ratio_M1_over_M0"] = stats.cv_M1 / stats.cv_M0.replace(0, np.nan)
@@ -268,6 +322,19 @@ def main() -> None:
         "share_of_basins_with_higher_cv_after_finetuning":
             float((paired.cv_M1 > paired.cv_M0).mean()),
     }
+    for column in ("pcp", "M0", "M1"):
+        key = f"diurnal_ratio_{column}"
+        if key in stats and stats[key].notna().any():
+            summary[f"median_{key}"] = float(stats[key].median())
+    if {"median_diurnal_ratio_pcp", "median_diurnal_ratio_M1"} <= set(summary):
+        # The damping factor: how much of the rainfall's clock-driven swing the model removes.
+        summary["diurnal_damping_M1"] = float(
+            summary["median_diurnal_ratio_pcp"] / summary["median_diurnal_ratio_M1"])
+        logger.info("median diurnal peak-to-trough: rainfall %.2fx -> M0 %.2fx, M1 %.2fx "
+                    "(M1 damps the rainfall's clock-driven cycle %.1f-fold)",
+                    summary["median_diurnal_ratio_pcp"],
+                    summary.get("median_diurnal_ratio_M0", float("nan")),
+                    summary["median_diurnal_ratio_M1"], summary["diurnal_damping_M1"])
     if len(paired) >= 8:
         from scipy.stats import wilcoxon
         stat, pval = wilcoxon(paired.cv_M1, paired.cv_M0)

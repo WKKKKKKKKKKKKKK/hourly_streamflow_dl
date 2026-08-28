@@ -1378,7 +1378,8 @@ python -m scripts.basin_average_era5_land_hourly \
 | | where | recreatable from |
 |---|---|---|
 | code, configs, sbatch | git, no remote | — (single copy) |
-| figures | `reports/figures/`, tracked | `python -m scripts.make_figures` |
+| figures | `reports/figures/`, tracked, ten PNGs | `python -m scripts.make_figures` |
+| stale figures under `outputs/figures/` | ignore: leftovers from when `make_figures.py` defaulted to `outputs/`, which is gitignored | — |
 | the numbers behind the report | `reports/evidence/`, tracked, mirrors `outputs/` paths | `python -m scripts.collect_evidence` |
 | results, weights, logs | `outputs/` -> `/ibex/user/kongw0a/global_mtslstm_outputs`, 1.2 GB, gitignored | rerunning everything (~hundreds of GPU-hours) |
 | hourly cache, 58 GB | `/ibex/user/kongw0a/hourly_cache` | `scripts.build_hourly_cache` from `6sources.nc` |

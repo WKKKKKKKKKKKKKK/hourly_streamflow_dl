@@ -34,9 +34,24 @@ Where to start, depending on what you want:
 | every number with its provenance and status | `RESULTS_phase1.md` |
 | which config produced which output | `python -m scripts.inventory` |
 | how to re-run any of it | the Reproducing section of `RESULTS_phase1.md` |
-| the figures on their own | [reports/figures/](reports/figures/) — nine PNGs, regenerate with `python -m scripts.make_figures` |
+| the figures on their own | [reports/figures/](reports/figures/) — ten PNGs, regenerate with `python -m scripts.make_figures` |
 | the file behind any number | [reports/evidence/](reports/evidence/) — mirrors `outputs/` paths, so a citation resolves directly |
 | what was planned versus what was done | [PLAN.md](PLAN.md), whose header lists the deviations |
+
+**`reports/figures/` is the only figure directory that counts.** Ten PNGs, tracked in git,
+one per figure in the report, all ten refreshed by `python -m scripts.make_figures`.
+
+Two other places hold images and neither is a deliverable:
+
+* **`outputs/figures/`** — leftovers from an earlier revision, when `make_figures.py` wrote
+  to `outputs/` by default. Every file there is older than and different from its
+  counterpart in `reports/figures/`, and nothing reads them. They are stale by definition:
+  `outputs/` is gitignored, so figures written there never reached the published branch,
+  which is why the default was changed. Ignore them, or delete them.
+* **`outputs/<run>/maps/global_map_target.png`** — not a duplicate. `scripts/global_map.py`
+  writes it per configuration as its own output, because it needs the per-gauge diagnostics
+  rather than the summary files `make_figures.py` reads. Figure 9 is a byte-identical copy of
+  the v2 one; `make_figures.py` does that copy, so figure 9 stays in step with its source.
 
 ---
 

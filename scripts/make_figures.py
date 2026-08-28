@@ -801,6 +801,43 @@ def _date_axis(ax, start, end) -> None:
     tidy(ax, "y")
 
 
+# ---------------------------------------------------------------- figure 9
+# The global map is the one figure this script does not draw. scripts.global_map draws it,
+# because it needs the per-gauge diagnostics output rather than the summary files everything
+# here reads. It was previously copied into reports/figures by hand, which left figure 9 the
+# only deliverable that "python -m scripts.make_figures" did not refresh -- so a regenerated
+# map would have left a stale figure 9 in the report with nothing to catch it. Copying it
+# here puts all ten figures behind one command, and reports when it cannot.
+MAP_SOURCES = (
+    "outputs/v2_stratify/maps/global_map_target.png",          # v2, the primary configuration
+    "outputs/runB_truedaily/diagnostics_allhours/maps/global_map_target.png",   # v1 fallback
+)
+
+
+def fig_global_map(out: Path) -> str | None:
+    """Copy the map scripts.global_map produced for the primary configuration.
+
+    Not redrawn here: the source keeps its own provenance, and re-plotting it from different
+    inputs would risk a figure that disagrees with the one global_map wrote.
+    """
+    import shutil
+
+    target = out / "fig09_global_map.png"
+    for candidate in MAP_SOURCES:
+        source = Path(candidate)
+        if not source.exists():
+            continue
+        if target.exists() and target.read_bytes() == source.read_bytes():
+            return f"{target.name} (already current)"
+        shutil.copyfile(source, target)
+        return f"{target.name} (copied from {candidate})"
+    # Silence would be wrong here: the report inserts figure 9 if the file is present, so a
+    # missing source leaves whatever is already on disk in place, however old.
+    print("  fig_global_map: no source map found -- run scripts.global_map after "
+          "scripts.diagnose; reports/figures/fig09_global_map.png left as it is")
+    return None
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate the report's figures.")
     # reports/, not outputs/: these are deliverables, and outputs/ is gitignored,
@@ -813,7 +850,7 @@ def main() -> None:
 
     makers = [fig_components, fig_gain_drivers, fig_configurations, fig_agency_recovery,
               fig_metric_disagreement, fig_convergence, fig_africa_hydrographs,
-              fig_intraday, fig_africa_hourly]
+              fig_intraday, fig_global_map, fig_africa_hourly]
     for maker in makers:
         try:
             name = maker(out)
