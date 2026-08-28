@@ -1,0 +1,9 @@
+{
+  "n_basins": 284,
+  "median_cv_M0": 0.12458555400371552,
+  "median_cv_M1": 0.10525902360677719,
+  "median_paired_difference": -0.019184153527021408,
+  "share_of_basins_with_higher_cv_after_finetuning": 0.4014084507042254,
+  "wilcoxon_statistic": 15024.0,
+  "wilcoxon_p": 0.00016873431779711954
+}

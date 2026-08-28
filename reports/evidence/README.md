@@ -30,8 +30,11 @@ Regenerate with `python -m scripts.collect_evidence`.
 | Africa, in situ, summaries | `*africa_insitu_summary/*summary*.json` | 4 |
 | Africa, temperate transfer | `africa_runB_*/africa_comparison_*.csv` | 7 |
 | Africa, temperate transfer summaries | `africa_runB_*/africa_summary_*.json` | 7 |
+| Africa, hourly within-day shape per basin | `v2_africa_hourly/within_day_cv_per_basin.csv` | 1 |
+| Africa, hourly within-day summary | `v2_africa_hourly/within_day_summary.json` | 1 |
+| Africa, hourly run log | `v2_africa_hourly/hourly_series.log` | 1 |
 
-Total 896 KB.
+Total 918 KB.
 
 Mostly summary-level. The exceptions, kept because they are the direct evidence for a
 headline claim rather than a rollup of it:

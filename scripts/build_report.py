@@ -675,6 +675,84 @@ def main() -> None:
             "because their timing was already right."
         )
 
+    doc.add_heading("3.4 What the hourly output actually looks like in Africa", level=2)
+    doc.add_paragraph(
+        "Every African number in this chapter is daily, because African discharge is observed "
+        "daily and that is the only resolution at which a score exists. The models still run "
+        "hourly; the ensemble script took the mean of each day's 24 outputs and discarded "
+        "them, so until now no hourly African series existed and the report had no hourly "
+        "hydrograph at all. scripts.africa_hourly_series re-runs the same five folds through "
+        "the same validation windows and keeps the hourly tail. It is the same models on the "
+        "same days, and that is checked rather than asserted: 24 x mean(hourly) reproduces "
+        "the scored daily prediction to a maximum absolute difference of 1.9e-06 mm/d for M1 "
+        "and 6.7e-06 mm/d for M0 over 2,908 basin-days, which is float32 rounding.")
+
+    summary = Path("outputs/v2_africa_hourly/within_day_summary.json")
+    if summary.exists():
+        st = json.loads(summary.read_text())
+        drop = 100 * abs(st["median_paired_difference"]) / st["median_cv_M0"]
+        doc.add_paragraph(
+            f'The hourly output is not a flattened daily mean. Over all {st["n_basins"]} '
+            f'African basins the within-day coefficient of variation -- the standard '
+            f'deviation of a day\u2019s 24 values over that day\u2019s own mean, median over '
+            f'days -- is {st["median_cv_M0"]:.4f} for M0 and {st["median_cv_M1"]:.4f} for M1. '
+            f'Neither is near zero, which is what a model satisfying the daily-aggregate term '
+            f'by holding the day constant would produce.')
+        para = doc.add_paragraph()
+        run = para.add_run(
+            f'But daily-only supervision does measurably flatten it: the paired median change '
+            f'is {st["median_paired_difference"]:+.4f}, a fall of about {drop:.0f}% of '
+            f'M0\u2019s value, significant at Wilcoxon p {pfmt(st["wilcoxon_p"])} over '
+            f'{st["n_basins"]} basins, and it rises in only '
+            f'{100 * st["share_of_basins_with_higher_cv_after_finetuning"]:.0f}% of them.')
+        run.bold = True
+        note(doc, "This is a cost of the method that had not been measured before, and two "
+                  "cautions come with it. The three catchments in the figure are not "
+                  "representative on this point -- within-day CV rises in two of the three, "
+                  "the reverse of the population -- which is why the paired number is printed "
+                  "on the figure itself. And Africa cannot say whether the flattening is a "
+                  "loss: with no hourly observation anywhere on the continent, a flatter "
+                  "curve could equally be spurious structure being removed. The one place "
+                  "the question can be answered is the global target domain, where hourly "
+                  "truth exists; there the same step moved within-day standard deviation "
+                  "from 0.86x to 0.89x of observed and flashiness from 0.95x to 1.02x "
+                  "(section 4.2). Where it can be checked, daily-aggregate supervision moved "
+                  "sub-daily dispersion toward the observations.")
+
+    doc.add_paragraph(
+        "ERA5-Land runoff, already the physical baseline in the daily comparison at a median "
+        "KGE of -0.3336, is drawn beside the model as an hourly contrast. It cannot be a "
+        "reference. ERA5-Land has no river routing, so the basin average is runoff generation "
+        "leaving the soil column rather than water passing a gauge. On restricted_ADHI__258 "
+        "(3,354 km2) its instantaneous rate reaches 199 mm/d where the daily observation "
+        "peaks near 20, while its daily mean over the window is 7.75 mm/d against an observed "
+        "7.58 -- the volume is close, the distribution inside the day is not. Its mean day "
+        "swings by a factor of 4.2 with a 15:00 UTC peak and an 04:00 trough, the signature "
+        "of afternoon convective rainfall at 11 degrees N passed straight through to runoff, "
+        "and its within-day CV over that window is 0.81 against the model's 0.042. A routed "
+        "hydrograph at the outlet of a catchment that size should be smooth, which is what "
+        "the model produces -- but that is a physical argument, not a measurement, and no "
+        "measurement is available.")
+    note(doc, "Both preparation steps are verified against independently produced files. "
+              "The hourly ERA5-Land increments sum to the existing daily product with "
+              "correlation 1.00000000 and a maximum absolute difference of 1.5e-06 mm/d, and "
+              "0 of 8,040 increments are negative -- a wrong accumulation boundary produces "
+              "large negatives at every daily reset.")
+
+    figure(doc, "fig10_africa_hourly.png",
+           "Figure 3-2  Hourly runoff underneath the daily African score, for the same three "
+           "catchments as Figure 3-1. Left: the 90-day window with the largest observed flow "
+           "volume in the validation period, chosen by that rule rather than by eye. Middle: "
+           "a 7-day zoom on the largest event in it. Right: the mean shape of a day, each "
+           "series divided by its own mean over the window, on a shared logarithmic scale so "
+           "the three rows are comparable -- the model's mean day departs from flat by 5-31%, "
+           "ERA5-Land's by a factor of 4 to 15. Hourly values are drawn as the daily rate "
+           "they imply (mm/h x 24) so all four series share one axis; the observation is a "
+           "step because a daily total is genuinely all that was measured. The vertical axis "
+           "of the left and middle panels follows the observation and the model, and "
+           "ERA5-Land's peak is stated in text where it exceeds them. Source: "
+           "outputs/v2_africa_hourly/ and basin_hourly_runoff.csv.gz.")
+
     # ---------------- 4. Stratification and diagnostics ----------------
     doc.add_heading("4. Stratification and diagnostics", level=1)
     note(doc, f"This chapter reports {VARIANT_LABEL[MAIN]}. Earlier revisions kept v1 prose "

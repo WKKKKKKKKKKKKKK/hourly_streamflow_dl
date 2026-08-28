@@ -474,6 +474,87 @@ model than a limit imposed by the forcing: ERA5-Land precipitation timing over t
 basins is plausibly what caps it. Testing that would need a different forcing product,
 which is outside Phase I.
 
+## What the hourly output looks like in Africa, and against a physical baseline
+
+Every African number above is daily, because African discharge is observed daily and
+that is the only resolution at which a score exists. The models still run hourly, and
+`scripts.africa_insitu_ensemble` discarded those 24 values after taking their mean, so
+until now the project had no hourly African series at all — and no hourly hydrograph
+figure anywhere.
+
+`scripts.africa_hourly_series` re-runs the same five folds through the same validation
+windows and keeps the hourly tail. It is the same models on the same days, not a new
+run, and that is checked rather than asserted: `24 × mean(hourly)` reproduces the scored
+daily prediction to a maximum absolute difference of **1.9e-06 mm/d** for M1 and
+**6.7e-06 mm/d** for M0 over 2,908 basin-days — float32 rounding.
+
+**The hourly output is not a flattened daily mean.** Over all 284 African
+basins the within-day coefficient of variation — the standard deviation of a day's 24
+values over that day's own mean, median over days — is 0.1246 for M0
+and 0.1053 for M1. Neither is near zero, which is what a model
+satisfying `loss_agg` by holding the day constant would produce.
+
+**But daily-only supervision does measurably flatten it.** The paired median change is
+-0.0192, a fall of about
+15% of M0's value,
+significant at Wilcoxon p = 1.69e-04 over 284 basins. It rises
+in only 40% of basins.
+This is a real cost of the method and it had not been measured before.
+
+*Two warnings about reading it.* First, the three catchments in figure 10 are not
+representative on this point: within-day CV rises in two of the three, the reverse of
+the population. The panels are there to show hydrograph shape, and the paired number is
+printed on the figure for exactly this reason. Second, **Africa cannot say whether the
+flattening is a loss.** There is no hourly observation on the continent — that absence is
+why Africa is the external test — so a flatter curve could equally be the removal of
+spurious structure. The one place the question can be answered is the global target
+domain, where hourly truth exists: there the same fine-tuning step moved within-day
+standard deviation from 0.86× to 0.89× of observed, within-day range from 0.88× to
+0.91×, and flashiness from 0.95× to 1.02×
+(table in "The intra-day jitter was a v1 artefact"). Where it can be checked,
+daily-aggregate supervision moved sub-daily dispersion *toward* the observations.
+
+### ERA5-Land as an hourly baseline: usable as a contrast, not as a reference
+
+ERA5-Land runoff already serves as the physical baseline in the daily African
+comparison (median KGE **−0.3336** against the ensemble's **+0.576**). Its raw tiles on
+disk were daily-only — one 00:00 UTC stamp per day, since the field accumulates from
+00 UTC and resets — so the hourly baseline required a fresh download.
+`scripts.download_era5_land_hourly_window` fetches only the basin-months plotted, one
+request each: a year of hourly ERA5-Land is refused by CDS outright as too large.
+`scripts.basin_average_era5_land_hourly` then de-accumulates within each UTC day and
+shifts the hour-ending stamp to hour-beginning so the two series mean the same thing; a
+missed shift would invent a one-hour timing error in the one figure about timing.
+
+Both steps are verified against files produced independently. The hourly increments sum
+to the existing daily product with correlation **1.00000000** and a maximum absolute
+difference of **1.5e-06 mm/d** over 122 days, and **0 of 2,952** increments are negative
+— a wrong day boundary produces large negatives at every reset.
+
+**It cannot serve as hourly reference truth, for two reasons beyond its daily score.**
+ERA5-Land contains no river routing, so the basin average is runoff *generation* leaving
+the soil column, not water passing a gauge. On `restricted_ADHI__258` (3,354 km²) that
+shows up plainly: its instantaneous rate reaches **199 mm/d** on a catchment whose daily
+observation peaks near 20, while its daily mean over the window is **7.75 mm/d** against
+an observed **7.58** — the volume is close, the distribution inside the day is not. Its
+mean day swings to about **2.5× its own mean**, peaking at 15:00 UTC and troughing at
+04:00, the signature of afternoon convective rainfall at 11°N passed straight through to
+runoff. Its within-day CV over that window is **0.81** against the model's **0.042**.
+A routed hydrograph at the outlet of a 3,354 km² basin should be smooth, which is what
+the model produces; but "should" is a physical argument, not a measurement, and no
+measurement is available.
+
+So ERA5-Land belongs on the figure as an honestly labelled contrast — it shows what
+unrouted runoff generation looks like — and cannot be used to score anyone's hourly
+output.
+
+**Figure:** `reports/figures/fig10_africa_hourly.png`
+**Evidence:** `outputs/v2_africa_hourly/` (`hourly_series.csv.gz`,
+`within_day_cv_per_basin.csv`, `within_day_summary.json`, `hourly_series.log`);
+`/ibex/user/kongw0a/era5_land_africa_hourly3/basin_hourly_runoff.csv.gz` and its
+`basin_average_hourly.log`.
+
+
 ## Blocked split, mechanistically
 
 The blocked line previously had only M0/M1. Its full diagnostic suite (all-hours paired,
@@ -1238,6 +1319,21 @@ python -m scripts.rescale_africa_forcing
 CONFIG=configs/phase1_runB_v2.yaml KIND=transfer sbatch slurm/41_africa.sbatch
 CONFIG=configs/phase1_runB_v2.yaml sbatch slurm/42_africa_transfer.sbatch      # in-situ
 python -m scripts.africa_insitu_ensemble --insitu-glob outputs/v2_africa_insitu_fold
+
+# hourly African output + the ERA5-Land hourly baseline (section "What the hourly output
+# looks like in Africa"). --all-basins is the within-day statistics over all 294 basins
+# and costs ~2 min on one GPU; without it only the three plotted catchments are run.
+sbatch slurm/44_africa_hourly.sbatch                    # add ALL_BASINS=1 for the statistics
+
+# the ERA5-Land hourly baseline. A whole year of hourly ERA5-Land is refused by CDS as
+# too large, so only the basin-months the figure draws are fetched, one request each.
+python -m scripts.download_era5_land_hourly_window \
+  --config configs/phase1_runB_v2.yaml \
+  --windows /ibex/user/kongw0a/era5_land_africa_hourly3/windows.json
+python -m scripts.basin_average_era5_land_hourly \
+  --config configs/phase1_runB_v2.yaml \
+  --era5-dir /ibex/user/kongw0a/era5_land_africa_hourly3 \
+  --stations restricted_ADHI__258,GRDCCaravan__1160725,GRDCCaravan__1199200
 ```
 
 ### What is and is not preserved
