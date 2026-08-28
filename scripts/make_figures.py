@@ -50,6 +50,21 @@ plt.rcParams.update({
 })
 
 
+CONFIG_NOTE = ("Configuration v2: hourly look-back 336 h, forget-gate initialisation 3. "
+               "The forget gate is part of Gauch et al.'s published method and was absent "
+               "from v1.")
+
+
+def stamp(fig, extra: str = "", y: float = -0.16):
+    """Say which configuration a figure shows.
+
+    Without this a reader cannot tell a v2 figure from a v1 one, and v1 versus v2 is exactly
+    the distinction several of these figures exist to make.
+    """
+    text = f"{CONFIG_NOTE}  {extra}".strip()
+    fig.text(0.5, y, text, ha="center", fontsize=7.2, color=MUTED, wrap=True)
+
+
 def tidy(ax, grid_axis="both"):
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
@@ -119,10 +134,9 @@ def fig_components(out: Path) -> str | None:
                fontsize=8, labelcolor=INK)
     fig.suptitle("Daily-aggregate fine-tuning re-calibrates variance, not timing",
                  fontsize=10.5, fontweight="semibold", color=INK, y=1.04)
-    fig.text(0.5, -0.30, "Each end is a median across gauges, so the bar length is a "
-                         "difference of medians. The stricter paired median difference is "
-                         "in the report's component table.",
-             ha="center", fontsize=7.2, color=MUTED)
+    stamp(fig, "Each end is a median across gauges, so the bar length is a difference of "
+               "medians; the stricter paired median difference is in the report's component "
+               "table.", y=-0.32)
     path = out / "fig01_kge_components.png"
     fig.savefig(path)
     plt.close(fig)
@@ -170,6 +184,7 @@ def fig_gain_drivers(out: Path) -> str | None:
     fig.suptitle("What predicts the gain, and what does not",
                  fontsize=10.5, fontweight="semibold", color=INK, y=1.02)
     fig.tight_layout(w_pad=2.4)
+    stamp(fig, y=-0.02)
     path = out / "fig02_gain_drivers.png"
     fig.savefig(path)
     plt.close(fig)
@@ -262,6 +277,7 @@ def fig_agency_recovery(out: Path) -> str | None:
                fontsize=8, labelcolor=INK)
     ax.set_title("Fine-tuning recovers the blocking cost everywhere except the sparsest network",
                  fontsize=10.5, pad=10)
+    stamp(fig, y=-0.24)
     path = out / "fig04_agency_recovery.png"
     fig.savefig(path)
     plt.close(fig)
@@ -309,10 +325,8 @@ def fig_metric_disagreement(out: Path) -> str | None:
     ax.set_ylim(-ylim, ylim)
     tidy(ax)
     ax.set_title("The two metrics disagree on a third of gauges", fontsize=10.5, pad=10)
-    fig.text(0.5, -0.06,
-             f"Quadrant counts use all {n:,} gauges. The density window omits "
-             f"{(~inside).sum():,} outside it. Spearman 0.46; the metrics agree on 67.9%.",
-             ha="center", fontsize=7.3, color=MUTED)
+    stamp(fig, f"Quadrant counts use all {n:,} gauges; the density window omits "
+               f"{(~inside).sum():,} outside it. Spearman 0.46.", y=-0.08)
     path = out / "fig05_metric_disagreement.png"
     fig.savefig(path)
     plt.close(fig)
@@ -419,6 +433,8 @@ def fig_africa_hydrographs(out: Path) -> str | None:
     fig.suptitle("Africa in situ: lower-quartile, median and upper-quartile catchments by M1 KGE",
                  fontsize=10.5, fontweight="semibold", color=INK, y=0.995)
     fig.tight_layout(h_pad=1.6)
+    stamp(fig, "Fine-tuned on African daily observations only; no African catchment appears "
+               "anywhere in pretraining.", y=-0.03)
     path = out / "fig07_africa_hydrographs.png"
     fig.savefig(path)
     plt.close(fig)

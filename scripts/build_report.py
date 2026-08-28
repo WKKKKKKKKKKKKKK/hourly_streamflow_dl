@@ -861,7 +861,7 @@ def main() -> None:
         doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
         cap = doc.add_paragraph()
         run = cap.add_run(
-            "Figure 4-4  Target-domain hourly metrics in space. Top left, zero-shot M0 KGE; "
+            "Figure 4-4  Target-domain hourly metrics in space, configuration v2. Top left, zero-shot M0 KGE; "
             "top right, M1 after fine-tuning; bottom left, the gain M1 − M0 on a diverging "
             "scale centred at zero; bottom right, α at M0 centred at 1.0. The 5-fold design "
             "makes every gauge a target gauge exactly once, so every marker is a real value."
