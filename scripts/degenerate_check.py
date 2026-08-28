@@ -71,7 +71,27 @@ def shape_stats(daily_blocks: np.ndarray, threshold: float, days_per_year: float
         "intraday_range": float(np.nanmean(np.nanmax(daily_blocks, axis=1) - np.nanmin(daily_blocks, axis=1))),
         "q95_events_per_year": count_events(flat, threshold) / max(days_per_year, 1e-9),
         "mean": float(np.nanmean(flat)),
+        "diurnal_ratio": diurnal_ratio(daily_blocks),
     }
+
+
+def diurnal_ratio(daily_blocks: np.ndarray) -> float:
+    """Peak-to-trough of the AVERAGE day: how clock-driven a series is.
+
+    Averaging every day by position within the day destroys event-driven structure, since
+    storms do not keep to a fixed hour. What survives is systematic -- tied to the clock.
+    The ratio of the highest to the lowest hour of that average day is scale-free, so it
+    can be compared across stations and against the observation.
+
+    Reported per station and never pooled into one profile: these stations span every
+    longitude, so a given UTC hour is a different local time at each of them and a pooled
+    average day would smear real cycles into a flat line. The per-station RATIO does not
+    care which hour the peak falls at, so medians over stations are meaningful.
+    """
+    profile = np.nanmean(daily_blocks, axis=0)
+    if not np.isfinite(profile).all() or np.nanmin(profile) <= 0:
+        return float("nan")
+    return float(np.nanmax(profile) / np.nanmin(profile))
 
 
 @torch.no_grad()
@@ -201,7 +221,8 @@ def main() -> None:
     logger.info("%-16s %>10s", "", "")
     header = f'{"metric":22s} {"observed":>10s} {"M0":>10s} {"M1":>10s} {"M1/obs":>8s} {"M1/M0":>8s}'
     logger.info(header)
-    for metric in ("flashiness", "intraday_std", "intraday_range", "q95_events_per_year", "mean"):
+    for metric in ("flashiness", "intraday_std", "intraday_range", "q95_events_per_year",
+                   "mean", "diurnal_ratio"):
         o = table[f"obs_{metric}"].median()
         a = table[f"M0_{metric}"].median()
         b = table[f"M1_{metric}"].median()
