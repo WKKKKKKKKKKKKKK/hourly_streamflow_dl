@@ -39,6 +39,7 @@ PATTERNS = (
     ("significance with FDR", "*/significance/significance_summary.json"),
     ("within-day shape", "*/degenerate/degenerate_summary.json"),
     ("convergence and selection loss", "convergence_check/*"),
+    ("fold-to-fold dispersion by split", "split_dispersion/*"),
     ("v3 convergence check", "v3_check/*.csv"),
     ("v3 convergence check summary", "v3_check/summary.json"),
     ("Africa, in situ, per fold", "*africa_insitu_summary/by_fold.csv"),

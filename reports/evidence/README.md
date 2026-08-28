@@ -23,6 +23,7 @@ Regenerate with `python -m scripts.collect_evidence`.
 | significance with FDR | `*/significance/significance_summary.json` | 4 |
 | within-day shape | `*/degenerate/degenerate_summary.json` | 4 |
 | convergence and selection loss | `convergence_check/*` | 3 |
+| fold-to-fold dispersion by split | `split_dispersion/*` | 2 |
 | v3 convergence check | `v3_check/*.csv` | 3 |
 | v3 convergence check summary | `v3_check/summary.json` | 1 |
 | Africa, in situ, per fold | `*africa_insitu_summary/by_fold.csv` | 2 |
@@ -30,7 +31,7 @@ Regenerate with `python -m scripts.collect_evidence`.
 | Africa, temperate transfer | `africa_runB_*/africa_comparison_*.csv` | 7 |
 | Africa, temperate transfer summaries | `africa_runB_*/africa_summary_*.json` | 7 |
 
-Total 894 KB.
+Total 896 KB.
 
 Mostly summary-level. The exceptions, kept because they are the direct evidence for a
 headline claim rather than a rollup of it:

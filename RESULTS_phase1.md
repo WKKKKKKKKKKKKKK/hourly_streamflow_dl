@@ -1049,6 +1049,66 @@ should be reported as a truncation artefact. Run B's result makes the first outc
 likely, but blocked is the configuration that was actually truncated, so the question is
 not settled by run B alone. `50660661` is queued.
 
+## Random splitting overstates the precision of the result, not only its level
+
+The blocked-split penalty above is about the LEVEL of the score. There is a second way
+random splitting misleads, and it went unreported until it was asked for directly: it
+understates how much the answer moves when the region moves.
+
+Per-fold M1, the same quantity the main table averages:
+
+| fold | random | blocked |
+|---|---|---|
+| 0 | 0.6297 | 0.6720 |
+| 1 | 0.6242 | **0.5688** |
+| 2 | 0.6237 | 0.6424 |
+| 3 | 0.6307 | 0.6302 |
+| 4 | 0.6304 | 0.5914 |
+| **mean** | **0.6277** | **0.6210** |
+| **sd** | **0.0035** | **0.0411** |
+| **range** | 0.0069 | **0.1033** |
+
+The means differ by 0.007. The blocked split's own fold-to-fold range is **0.103** -- fifteen
+times that difference. Reporting a 0.007 difference between two quantities, one of which has
+a fold-level standard deviation of 0.041, is not a comparison the data supports, and this is
+a second and independent reason the gap dissolves (§ below gives the first, run-to-run
+reproducibility).
+
+| | sd ratio, blocked / random | Levene p |
+|---|---|---|
+| M0 | 3.3x | 0.256 |
+| **M1** | **11.8x** | **0.034** |
+
+M1's difference in dispersion is significant at the conventional level; M0's is not. Both
+rest on five folds per split, and variance tests at that size are weak, so the M1 result is
+suggestive rather than settled.
+
+**What it means in practice.** Under random splitting the five folds land inside a 0.007
+band, which reads as "this number is stable, use it". Under blocked splitting the same
+quantity spans 0.10. Anyone deploying on a region with no hourly gauges is facing one fold,
+not the five-fold mean, so the honest statement of expected skill is 0.62 give or take 0.04
+-- not 0.628 give or take 0.004. **Random splitting deflates the uncertainty by an order of
+magnitude, and for a decision about whether to trust the model in a data-sparse region the
+uncertainty matters more than the mean.**
+
+It also explains the early-stopping asymmetry in §4.8 rather than leaving it as an
+artefact. Blocked folds have a jitterier source-validation curve (median epoch-to-epoch
+|change| 0.0069 against 0.0060) and a far wider spread of best epochs (14-30 against 23-28).
+Random splitting leaves near-duplicate gauges on both sides of the split, so its validation
+metric is effectively averaging over fewer independent catchments than its gauge count
+suggests, and the resulting smoothness is a property of the split rather than evidence of
+convergence. **The blocked curve is not worse behaved; it is missing a layer of false
+smoothness.**
+
+One confound cannot be removed by this design: blocked folds are different geographic
+regions, so part of the fold-to-fold spread is that regions genuinely differ in difficulty
+rather than that extrapolation is uncertain. That does not weaken the practical conclusion --
+if the deployment target is one region, its difficulty is what the user faces -- but it does
+mean the spread is not a pure measure of extrapolation uncertainty.
+
+Reproduce with `python -m scripts.split_dispersion`; outputs in
+`outputs/split_dispersion/`.
+
 ## v3, settled: the 0.007 gap does not survive, and the pipeline's own noise is larger
 
 v3's transfers finished 2026-08-21. Taking the paired per-station comparison that the

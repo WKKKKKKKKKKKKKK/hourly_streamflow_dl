@@ -1018,6 +1018,73 @@ def main() -> None:
     figure(doc, "fig04_agency_recovery.png",
            "Figure 4-5  The blocking cost per agency and how much fine-tuning recovers. Five of six agencies recover 85% or more; Iceland, the sparsest network, recovers 38% and holds almost the entire residual. Source: recovery_by_agency.csv.")
 
+    doc.add_heading("4.6b Random splitting also overstates the precision, not only the level", level=2)
+    disp = Path("outputs/split_dispersion/summary.json")
+    if disp.exists():
+        d = json.loads(disp.read_text())
+        per = pd.read_csv("outputs/split_dispersion/per_fold.csv")
+        doc.add_paragraph(
+            "Everything above concerns the LEVEL of the score. Random splitting misleads a "
+            "second way: it understates how much the answer moves when the region moves."
+        )
+        rows = []
+        for fold in sorted(per["fold"].unique()):
+            r = per.loc[per.fold.eq(fold) & per.split.eq("random"), "M1"]
+            b = per.loc[per.fold.eq(fold) & per.split.eq("blocked"), "M1"]
+            rows.append({"Fold": int(fold), "Random": fmt(float(r.iloc[0])),
+                         "Blocked": fmt(float(b.iloc[0]))})
+        for label, key in (("Mean", "mean"), ("Standard deviation", "sd"), ("Range", "range")):
+            rows.append({"Fold": label,
+                         "Random": fmt(d["random"]["M1"][key]),
+                         "Blocked": fmt(d["blocked"]["M1"][key])})
+        add_table(doc, pd.DataFrame(rows),
+                  "Table 4-11  Per-fold M1, the quantity the main table averages",
+                  widths=[1.4, 1.2, 1.2])
+        ratio = d["ratios"]["M1"]
+        para = doc.add_paragraph()
+        run = para.add_run(
+            f'The two means differ by 0.007, while the blocked split\'s own fold-to-fold range '
+            f'is {d["blocked"]["M1"]["range"]:.4f} -- fifteen times that difference. '
+        )
+        run.bold = True
+        run = para.add_run(
+            f'Its fold-level standard deviation is {ratio["sd_ratio_blocked_over_random"]:.1f}x '
+            f'the random split\'s (Levene p = {ratio["levene_p"]:.3f}); the same ratio for M0 is '
+            f'{d["ratios"]["M0"]["sd_ratio_blocked_over_random"]:.1f}x and is not significant '
+            f'(p = {d["ratios"]["M0"]["levene_p"]:.3f}). Five folds per split makes a variance '
+            f'test weak, so this is suggestive rather than settled.'
+        )
+        doc.add_paragraph(
+            f'In practice: under random splitting the five folds land inside a '
+            f'{d["random"]["M1"]["range"]:.4f} band, which reads as a stable number. Under '
+            f'blocked splitting the same quantity spans {d["blocked"]["M1"]["range"]:.4f}. '
+            "Anyone deploying on a region with no hourly gauges faces one fold, not the "
+            "five-fold mean, so the honest statement is about 0.62 give or take 0.04 rather "
+            "than 0.628 give or take 0.004. Random splitting deflates the uncertainty by an "
+            "order of magnitude, and for a decision about trusting the model in a data-sparse "
+            "region the uncertainty matters more than the mean."
+        )
+        doc.add_paragraph(
+            f'This also explains the early-stopping asymmetry in §4.8 rather than leaving it as '
+            f'an artefact. Blocked folds carry a jitterier source-validation curve (median '
+            f'epoch-to-epoch change {d["blocked"]["val_curve_jitter_median"]:.4f} against '
+            f'{d["random"]["val_curve_jitter_median"]:.4f}) and a far wider spread of best '
+            f'epochs ({min(d["blocked"]["pretrain_best_epoch"])}-'
+            f'{max(d["blocked"]["pretrain_best_epoch"])} against '
+            f'{min(d["random"]["pretrain_best_epoch"])}-'
+            f'{max(d["random"]["pretrain_best_epoch"])}). Random splitting leaves '
+            "near-duplicate gauges on both sides, so its validation metric averages over fewer "
+            "independent catchments than its gauge count suggests, and the resulting smoothness "
+            "belongs to the split rather than to convergence. The blocked curve is not worse "
+            "behaved -- it is missing a layer of false smoothness."
+        )
+        note(doc, "One confound this design cannot remove: blocked folds are different "
+                  "geographic regions, so part of the spread is that regions genuinely differ "
+                  "in difficulty rather than that extrapolation is uncertain. The practical "
+                  "conclusion survives -- if the deployment target is one region, its "
+                  "difficulty is what the user faces -- but the spread is not a pure measure "
+                  "of extrapolation uncertainty.")
+
     doc.add_heading("4.7 The mechanism: both the cost and the recovery are about timing", level=2)
     comp = {}
     for key in ("runB", "blocked"):
