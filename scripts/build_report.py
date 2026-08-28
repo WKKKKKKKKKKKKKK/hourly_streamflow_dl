@@ -793,7 +793,7 @@ def main() -> None:
            "no systematic dependence on the clock, and the printed factor is peak-to-trough. "
            "The model departs from flat by 5-31%, ERA5-Land by 4 to 15 times, peaking at "
            "15:00 UTC -- afternoon convective rainfall passed straight through to runoff by a "
-           "scheme with no river routing. Source: outputs/v2_africa_hourly/.", width=6.8)
+           "scheme with no river routing. Configuration v2 throughout (hourly look-back 336 h, forget-gate initialisation 3), which matters because Chapter 3 reports both v1 and v2. One warning the figure cannot carry itself: these three catchments are the REVERSE of the population on sub-daily variability -- within-day CV rises in two of the three, while over all 284 African basins it falls, in 60% of them. Read the panels for hydrograph shape and the paired numbers above for the population. Source: outputs/v2_africa_hourly/.", width=6.8)
 
     # ---------------- 4. Stratification and diagnostics ----------------
     doc.add_heading("4. Stratification and diagnostics", level=1)

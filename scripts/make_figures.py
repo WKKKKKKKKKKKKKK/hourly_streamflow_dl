@@ -758,7 +758,7 @@ def fig_africa_hourly(out: Path) -> str | None:
     fig.suptitle("Africa at two resolutions: daily, where every line can be scored, and "
                  "hourly, where none can",
                  fontsize=13.5, fontweight="semibold", color=INK, y=0.995)
-    fig.subplots_adjust(left=0.048, right=0.99, top=0.905, bottom=0.095,
+    fig.subplots_adjust(left=0.048, right=0.99, top=0.905, bottom=0.092,
                         hspace=0.40, wspace=0.20)
 
     # Column-group headers, so the split the figure is built around is visible and not
@@ -772,42 +772,19 @@ def fig_africa_hourly(out: Path) -> str | None:
              "HOURLY  —  no observation exists, so these can only be compared with each other",
              ha="center", va="bottom", fontsize=11, fontweight="semibold", color=INK)
     divider = (left_box.x1 + mid_box.x0) / 2
-    fig.add_artist(Line2D([divider, divider], [0.10, 0.935], color=GRID, lw=1.4,
+    fig.add_artist(Line2D([divider, divider], [0.072, 0.935], color=GRID, lw=1.4,
                           transform=fig.transFigure))
 
-    population = ""
-    summary = Path("outputs/v2_africa_hourly/within_day_summary.json")
-    three_sum = Path("outputs/v2_africa_hourly/daily_three_way_summary.json")
-    if three_sum.exists():
-        ts = json.loads(three_sum.read_text())
-        population += (
-            f"Scores are computed on identical basin-days ({ts['n_basin_days']:,} of them "
-            f"over {ts['n_basins']} basins, {ts['window'][0]} to {ts['window'][1]}), because "
-            f"the ERA5-Land scores already in outputs/ come from a different Africa run and "
-            f"period. Pooled medians on those days: ERA5-Land "
-            f"{ts['era5_land']['median_kge']:+.4f}, M0 {ts['M0']['median_kge']:+.4f}, M1 "
-            f"{ts['M1']['median_kge']:+.4f}; M1 beats the reanalysis on "
-            f"{100 * ts['share_of_basins_M1_beats_era5_land']:.0f}% of basins and M0 on "
-            f"{100 * ts['share_of_basins_M0_beats_era5_land']:.0f}%.\n")
-    if summary.exists():
-        st = json.loads(summary.read_text())
-        population += (
-            f"On the hourly side, over all {st['n_basins']} African basins the within-day "
-            f"coefficient of variation falls from {st['median_cv_M0']:.3f} (M0) to "
-            f"{st['median_cv_M1']:.3f} (M1), a paired median change of "
-            f"{st['median_paired_difference']:+.4f} (Wilcoxon p = {st['wilcoxon_p']:.1e}): "
-            f"daily-only supervision does measurably flatten the hourly signal, by about "
-            f"{100 * abs(st['median_paired_difference']) / st['median_cv_M0']:.0f}%, and it "
-            f"rises in only "
-            f"{100 * st['share_of_basins_with_higher_cv_after_finetuning']:.0f}% of basins. "
-            f"Whether that loses real structure cannot be settled in Africa; on the global "
-            f"target domain, where hourly observations do exist, the same step moved "
-            f"within-day standard deviation from 0.86x to 0.89x of observed.\n")
-    stamp(fig, population +
-               "ERA5-Land runoff is grid-cell runoff generation with no river routing, so it "
-               "is a physical baseline and not a reference: its sub-daily shape is expected "
-               "to be too fast whatever its skill.",
-          y=-0.024, size=9.5, wrap_at=165)
+    # No stamp() block on this figure. The other figures carry the configuration note and
+    # their caveats underneath the axes; here that text had grown to seven lines and
+    # dominated the panel. Everything it said now lives in the report caption and in the
+    # section 3.4 prose beside it: the configuration, the three-way daily medians, the
+    # 284-basin within-day result, and the reason ERA5-Land is a baseline and not a
+    # reference. The one thing that note guarded against is worth naming here so it is not
+    # lost by accident -- the three catchments drawn are the REVERSE of the population on
+    # sub-daily variability, since within-day CV rises in two of the three while it falls in
+    # 60% of all 284 basins. A reader who meets this figure without its caption will draw the
+    # wrong conclusion on that point, so the caption is not optional decoration.
     path = out / "fig10_africa_hourly.png"
     fig.savefig(path)
     plt.close(fig)
