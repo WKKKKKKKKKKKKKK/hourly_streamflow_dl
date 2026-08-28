@@ -981,10 +981,7 @@ def main() -> None:
         doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
         cap = doc.add_paragraph()
         run = cap.add_run(
-            "Figure 4-4  Target-domain hourly metrics in space, configuration v2. Top left, zero-shot M0 KGE; "
-            "top right, M1 after fine-tuning; bottom left, the gain M1 − M0 on a diverging "
-            "scale centred at zero; bottom right, α at M0 centred at 1.0. The 5-fold design "
-            "makes every gauge a target gauge exactly once, so every marker is a real value."
+            "Figure 4-4  Target-domain hourly metrics in space, configuration v2, random split. Both rows read before / after / change. Top: zero-shot M0 KGE, M1 after daily-only fine-tuning, and the gain on a diverging scale centred at zero. Bottom: alpha = std(sim)/std(obs) at M0 and at M1, on a log scale so that halving and doubling the observed variability are equally far from the white centre, then how much closer to 1.0 alpha moved. Red means improvement in both change panels. The 5-fold design makes every gauge a target gauge exactly once, so every marker is a real value. The bottom row carries a result the KGE panels hide: alpha is only partly repaired. Its median moves 0.813 to 0.851 and the share of under-dispersed gauges barely shifts (71% to 72%), yet 65% of gauges move closer to 1.0 and the median distance |log2 alpha| falls from 0.464 to 0.342 -- a tightening toward 1.0 from both sides, not a shift upward. Daily aggregates reduce under-dispersion; they do not remove it."
         )
         run.font.size = Pt(9)
         cap.alignment = WD_ALIGN_PARAGRAPH.CENTER

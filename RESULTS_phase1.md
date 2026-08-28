@@ -1009,6 +1009,33 @@ against 443 expected by chance.
 Sources: `outputs/v2_runB/degenerate/degenerate_summary.json`,
 `outputs/v2_runB/significance/significance_summary.json`.
 
+## Under-dispersion is reduced but not removed, and it is not regional
+
+The zero-shot model's variability ratio alpha = std(sim)/std(obs) has a median of
+**0.813** with **71%** of gauges
+below 1.0: it swings less than the river does, flattening peaks. That is the specific
+defect daily-aggregate supervision is supposed to fix, and figure 4-4's bottom row now
+shows before, after and change rather than only before.
+
+**It is not a regional problem.** Median alpha at M0 by agency spans only 0.746 to 0.839 —
+BOMAustralia 0.785, CAMELSH 0.839, Germany 0.791, Japan 0.770, LamaHCE 0.769,
+LamaHIce 0.746 — with 65–81% of gauges under-dispersed in every one. It is a property of
+zero-shot transfer, not of any catchment set, which is why one global remedy moves all of
+them.
+
+**But the remedy is partial, and the headline numbers hide that.** Alpha's median moves
+only 0.813 → 0.851, and the share of
+under-dispersed gauges does not fall at all
+(71.4% → 72.4%). What
+actually improves is the *distance* to 1.0: median |log2 alpha| falls
+**0.464 → 0.342**, and **64.7%** of gauges move
+closer to 1.0. Daily aggregates tighten alpha toward 1.0 from both sides; they do not lift
+a systematically under-dispersed model up to it.
+
+Measuring the repair as |log2 alpha| rather than as alpha itself matters: the raw
+difference would score an over-dispersed gauge drifting further above 1.0 as an
+improvement, purely because the number went up.
+
 ## Provenance: the config files are not the authority for v1
 
 `configs/phase1.yaml`, `configs/phase1_runB.yaml`, `configs/phase1_runB_blocked.yaml` and

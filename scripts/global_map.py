@@ -99,7 +99,13 @@ def main() -> None:
     lon = table["long"].to_numpy()
     lat = table["lat"].to_numpy()
 
-    fig, axes = plt.subplots(2, 2, figsize=(15, 8))
+    # 2x3, not 2x2. The top row is before / after / change for KGE; the bottom row was
+    # only ever "before" for alpha, which showed the defect and left the reader to assume
+    # from the KGE panels that it had been repaired. It is repaired only partly, and that
+    # cannot be said with one panel: the median alpha moves 0.813 -> 0.851 while the share
+    # of under-dispersed gauges barely shifts (71.4% -> 72.4%). What actually happens is a
+    # tightening toward 1.0 from both sides, which needs before, after and change to show.
+    fig, axes = plt.subplots(2, 3, figsize=(20.5, 8))
     kge_norm = Normalize(vmin=-0.4, vmax=0.9)
     panel(axes[0, 0], lon, lat, table["M0_kge"].to_numpy(),
           f"M0 zero-shot hourly KGE (median {table['M0_kge'].median():.3f})",
@@ -112,7 +118,7 @@ def main() -> None:
     gain = table["gain"].to_numpy()
     span = float(max(abs(np.nanpercentile(gain, 10)), abs(np.nanpercentile(gain, 90)))) or 0.1
     clipped = float(np.mean(np.abs(gain) > span))
-    panel(axes[1, 0], lon, lat, gain,
+    panel(axes[0, 2], lon, lat, gain,
           f"gain M1 - M0 (median {table['gain'].median():+.3f}, "
           f"{(gain > 0).mean():.0%} improved; {clipped:.0%} beyond ±{span:.2f})",
           "RdBu_r", TwoSlopeNorm(vmin=-span, vcenter=0.0, vmax=span), "ΔKGE", extend="both")
@@ -125,19 +131,46 @@ def main() -> None:
     # uniform orange wash that could not be read. log2 with a symmetric range of +/-2
     # (a factor of four each way) puts 1.0 at the centre by construction, spaces halving
     # and doubling equally, and covers 93% of stations.
-    alpha = table["M0_kge_alpha"].to_numpy()
-    with np.errstate(divide="ignore", invalid="ignore"):
-        log_alpha = np.log2(np.where(alpha > 0, alpha, np.nan))
     marks = [0.25, 0.5, 0.71, 1.0, 1.41, 2.0, 4.0]
-    inside = float(np.mean((alpha >= 0.25) & (alpha <= 4.0)))
-    panel(axes[1, 1], lon, lat, log_alpha,
-          f"alpha at M0 = std(sim)/std(obs), log scale "
-          f"(median {np.nanmedian(alpha):.3f}, {inside:.0%} of gauges within the bar)\n"
-          f"orange = swings too little ({np.mean(alpha < 1):.0%}), "
-          f"purple = too much, white = matches",
-          "PuOr", Normalize(vmin=-2.0, vmax=2.0), "alpha",
-          extend="both", ticks=[np.log2(m) for m in marks],
-          ticklabels=[f"{m:g}" for m in marks])
+    log_ticks = [np.log2(m) for m in marks]
+    tick_text = [f"{m:g}" for m in marks]
+    alphas = {}
+    for col, tag in ((0, "M0"), (1, "M1")):
+        alpha = table[f"{tag}_kge_alpha"].to_numpy()
+        with np.errstate(divide="ignore", invalid="ignore"):
+            log_alpha = np.log2(np.where(alpha > 0, alpha, np.nan))
+        alphas[tag] = (alpha, log_alpha)
+        inside = float(np.mean((alpha >= 0.25) & (alpha <= 4.0)))
+        when = "zero-shot" if tag == "M0" else "after daily-only fine-tuning"
+        panel(axes[1, col], lon, lat, log_alpha,
+              f"alpha at {tag}, {when}: std(sim)/std(obs), log scale\n"
+              f"median {np.nanmedian(alpha):.3f}; orange = swings too little "
+              f"({np.mean(alpha < 1):.0%}), purple = too much",
+              "PuOr", Normalize(vmin=-2.0, vmax=2.0), "alpha",
+              extend="both", ticks=log_ticks, ticklabels=tick_text)
+
+    # The repair, measured as distance to 1.0 in log space -- the thing KGE actually pays
+    # for. Negative means alpha moved closer to 1.0, from either side. Plotting the raw
+    # difference alpha_M1 - alpha_M0 would call an over-dispersed gauge getting worse an
+    # "improvement" purely because the number went up.
+    d0 = np.abs(alphas["M0"][1])
+    d1 = np.abs(alphas["M1"][1])
+    # Signed so that POSITIVE means improvement, and drawn with RdBu_r so red means
+    # improvement -- the same convention as the gain panel above it. The first version
+    # plotted (after - before) with RdBu, which made improvement negative and therefore
+    # red, while its own caption said blue meant improvement. The caption and the colours
+    # contradicted each other, and the two change panels would have used opposite
+    # semantics for "better" in the same figure.
+    repair = d0 - d1
+    rspan = float(np.nanpercentile(np.abs(repair), 90)) or 0.5
+    closer = float(np.nanmean(repair > 0))
+    panel(axes[1, 2], lon, lat, repair,
+          f"alpha repair: how much closer to 1.0 "
+          f"({closer:.0%} improved; |log2 alpha| {np.nanmedian(d0):.3f} -> "
+          f"{np.nanmedian(d1):.3f})\n"
+          f"red = alpha moved toward 1.0, blue = away from it",
+          "RdBu_r", TwoSlopeNorm(vmin=-rspan, vcenter=0.0, vmax=rspan),
+          "reduction in |log2 alpha|", extend="both")
 
     # Say plainly what the station cloud covers: "global" describes the model, not the
     # gauge network. Africa, South America and mainland Asia contribute no stations.
