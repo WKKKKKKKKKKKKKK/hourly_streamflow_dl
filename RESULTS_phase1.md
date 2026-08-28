@@ -769,6 +769,11 @@ target exactly once in each, so composition is held fixed by construction):
 | M0 (zero-shot) | **-0.0594** | 63.7% | yes, 6/6 (p = 1.6e-168) |
 | M1 (after daily-only fine-tune) | **-0.0061** | 52.2% | no -- Germany +0.0012 (p = 4.2e-06) |
 
+Sized against the skill it removes, the zero-shot penalty is **11.0% of the random split's
+median KGE** on the paired statistic (0.0594 of 0.5393), or 19.2% as a difference of medians.
+The "about a quarter" quoted for v1 earlier in this file is v1's 0.128 against its 0.532 and
+should not be carried across to v2.
+
 **89.7% of the blocked-split penalty is recovered**, and afterwards whether a station
 prefers the random or the blocked split is close to a coin flip (52.2%); the p-value is
 tiny only because n = 8709. Note that `paired_split_effect`'s own verdict line reads
@@ -788,10 +793,16 @@ Recovery per agency:
 | **LamaHIce** | 73 | -0.1515 | **-0.0942** | **38%** |
 
 Five of six agencies recover 85-102%; Iceland recovers 38% and holds essentially the whole
-residual. It is tempting to read this as recovery scaling with gauge density, and the v1
-write-up said as much -- but across six agencies that relationship is not established
-(Spearman rho = +0.257, p = 0.623). Iceland is one outlier, not a trend, and the claim
-should be stated as such.
+residual.
+
+Two density claims live near each other here and only one survives, so they are worth
+separating. The ZERO-SHOT drop does scale with gauge density: across the six agencies the
+paired drop against gauge count gives Spearman rho = +0.829, p = 0.042 -- denser networks
+lose less, which is what losing proximity should look like, and it is corroborating evidence
+for the mechanism. RECOVERY does not scale with it (rho = +0.257, p = 0.623), and the v1
+write-up claimed it did. Iceland is one outlier on recovery, not a trend. Both rest on six
+agencies whose density is confounded with region and climate, so neither is an independent
+measurement -- the surviving one supports a mechanism argued for on other grounds.
 
 The mechanism is visible directly: under blocked splitting the gain *rises* with isolation,
 from +0.0494 for stations ~62 km from the nearest other fold to +0.0881 at ~211 km
