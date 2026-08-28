@@ -1014,8 +1014,8 @@ Sources: `outputs/v2_runB/degenerate/degenerate_summary.json`,
 The zero-shot model's variability ratio alpha = std(sim)/std(obs) has a median of
 **0.813** with **71%** of gauges
 below 1.0: it swings less than the river does, flattening peaks. That is the specific
-defect daily-aggregate supervision is supposed to fix, and figure 4-4's bottom row now
-shows before, after and change rather than only before.
+defect daily-aggregate supervision is supposed to fix. Figure 4-4's bottom row now shows
+alpha and beta at M0 side by side, then how much of the alpha deficit is repaired.
 
 **It is not a regional problem.** Median alpha at M0 by agency spans only 0.746 to 0.839 —
 BOMAustralia 0.785, CAMELSH 0.839, Germany 0.791, Japan 0.770, LamaHCE 0.769,
@@ -1031,6 +1031,8 @@ actually improves is the *distance* to 1.0: median |log2 alpha| falls
 **0.464 → 0.342**, and **64.7%** of gauges move
 closer to 1.0. Daily aggregates tighten alpha toward 1.0 from both sides; they do not lift
 a systematically under-dispersed model up to it.
+
+**Beta hides its problem in the median.** At M0 its median is **1.025**, which reads as no volume bias at all, but the per-gauge 10-90% spread runs **0.63 to 1.91** — half the gauges are off by more than 20% in one direction or the other, and they cancel. Median |log2 beta| is 0.280 at M0 and 0.211 at M1. This is the same median-versus-distribution trap recorded elsewhere in this document, and it is why beta earns a panel on the map even though its median looks unremarkable.
 
 Measuring the repair as |log2 alpha| rather than as alpha itself matters: the raw
 difference would score an over-dispersed gauge drifting further above 1.0 as an
