@@ -515,6 +515,18 @@ def main() -> None:
         "outputs are averaged to a daily value, and that is compared with observed daily "
         "discharge over 1980–1995."
     )
+    note(doc, "Why 294 and not more, since 294 against 8,843 temperate gauges looks like a "
+              "filtering choice: it is not one. The global daily database holds 37,972 "
+              "stations with metadata and 16,166 with a discharge time series. Of the 1,577 "
+              "African entries with metadata, only 302 have a time series at all, and 294 of "
+              "those are used here -- 97% of what exists. The rest cannot be scored by "
+              "anyone. Africa is genuinely gauge-sparse, and that sparsity is the condition "
+              "this external test exists to confront, not an artefact of how the set was "
+              "assembled. The specific 294 are the test set of the continent-holdout PUB run "
+              "adopted verbatim, so these numbers sit directly against that baseline's "
+              "+0.279; whatever selection it applied is inherited, which is a real "
+              "limitation. They are small-to-medium catchments, median area 759 km2 "
+              "(19-9,839), with a median of 1,090 validation days each.")
     doc.add_heading("3.1 Temperate transfer applied to Africa", level=2)
     doc.add_paragraph(
         "This section applies a model fine-tuned on temperate target gauges to African "

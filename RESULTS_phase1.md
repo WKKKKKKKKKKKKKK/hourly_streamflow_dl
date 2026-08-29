@@ -358,6 +358,37 @@ stride 24 uses 73,808,280 of them (13.9%), all at the same clock hour.
 
 ## Africa: the same experiment on a continent with no training station
 
+### Why only 294 basins — the database has 302
+
+294 African catchments against 8,843 temperate gauges looks like a filtering choice. It is
+not one:
+
+| | count |
+|---|---|
+| stations in the global daily database (metadata) | 37,972 |
+| of those, with a discharge time series | 16,166 |
+| African stations with metadata | 1,577 |
+| **African stations with a discharge time series** | **302** |
+| used here | **294** (97% of what exists) |
+| scored after the ≥100-day requirement | 282 |
+
+**The daily discharge database carries 302 African records in total.** The 1,283 other
+African entries have station metadata and no time series in the processed dynamic file, so
+they cannot be scored by anyone. Africa is genuinely gauge-sparse, and that sparsity is the
+condition the external test exists to confront rather than an artefact of how this set was
+assembled.
+
+The specific 294 are the test set of the continent-holdout PUB run
+(`gscad_continent_lstm/47515076_africa`), adopted verbatim so the numbers here sit directly
+against that baseline's +0.279. Whatever selection that run applied is inherited, which is a
+real limitation: the eight basins with time series that it did not score are not scored here
+either. `scripts.build_africa_basins` reads the basin list from that run's own output columns
+rather than re-deriving it, so the two cannot drift apart.
+
+They are small-to-medium catchments — median area **759 km²** (19–9,839) — with a median of
+**1,090 validation days** each (quartiles 849–1,586), drawn from GRDC-Caravan 126, GRDC 119
+and the restricted ADHI archive 49.
+
 The 294 African basins have daily discharge and no hourly discharge — Phase I's
 premise, occurring naturally. None appears anywhere in the training data, so this is
 the only genuinely external test here. The model is driven by ERA5-Land hourly
