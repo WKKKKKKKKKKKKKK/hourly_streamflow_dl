@@ -307,17 +307,17 @@ def main() -> None:
     # subplots_adjust, laid the bars across the middle column's maps. That fixes an order
     # too: the bars read FINAL positions, so they come after suptitle and subplots_adjust,
     # and tight_layout must not run afterwards or it undoes them.
-    # Columns are placed by hand, because matplotlib's wspace is uniform and this figure
-    # needs two different gaps: M0 and M1 share a scale, so they sit as a tight pair with
-    # the bar that serves them after the pair, while the difference column stands apart with
-    # its own bar. A uniform gap left the space after column 1 looking empty next to two
-    # gaps that hold bars, which is the unevenness this replaces -- and the tight pairing
-    # now says "these two share a scale" without a word.
-    LEFT, RIGHT_PAD = 0.028, 0.012
-    GAP_PAIR, GAP_BAR = 0.014, 0.032
-    BAR_W, BAR_GAP = 0.0075, 0.005
-    width = (1.0 - LEFT - RIGHT_PAD - GAP_PAIR - 2 * GAP_BAR) / 3.0
-    xs = (LEFT, LEFT + width + GAP_PAIR, LEFT + 2 * width + GAP_PAIR + GAP_BAR)
+    # Both bars of a row sit together at its right edge, so none of the three map columns
+    # carries one and the twelve maps form a regular grid. The alternative -- putting the
+    # pair's bar after column 2, which is where the scale it serves ends -- left column 1
+    # with nothing beside it and the grid looking unfinished. A bar one column away from
+    # what it describes is the price; the row and the label make the pairing unambiguous.
+    LEFT, RIGHT_PAD, GAP = 0.028, 0.010, 0.026
+    BAR_W, BAR_GAP, BAR_SPACING = 0.0075, 0.014, 0.040
+    bars_width = 2 * BAR_W + BAR_GAP + BAR_SPACING
+    width = (1.0 - LEFT - RIGHT_PAD - 2 * GAP - bars_width) / 3.0
+    xs = tuple(LEFT + i * (width + GAP) for i in range(3))
+    bar_xs = (xs[2] + width + BAR_GAP, xs[2] + width + BAR_GAP + BAR_W + BAR_SPACING)
 
     fig.subplots_adjust(top=top_frac, bottom=0.045, hspace=0.22)
     for row in range(axes.shape[0]):
@@ -325,9 +325,9 @@ def main() -> None:
             box = axes[row, col].get_position()
             axes[row, col].set_position([xs[col], box.y0, width, box.height])
 
-    def place_bar(handle, ax, label, ratio, diverging):
+    def place_bar(handle, ax, label, ratio, diverging, x):
         box = ax.get_position()
-        cax = fig.add_axes([box.x1 + BAR_GAP, box.y0, BAR_W, box.height])
+        cax = fig.add_axes([x, box.y0, BAR_W, box.height])
         bar = fig.colorbar(handle, cax=cax,
                            extend="both" if (ratio or diverging) else "min",
                            ticks=log_ticks if ratio else None)
@@ -337,9 +337,9 @@ def main() -> None:
         bar.ax.tick_params(labelsize=7)
 
     for handle, axs, ratio, label in pair_bars:
-        place_bar(handle, axs[1], label, ratio, False)
+        place_bar(handle, axs[1], label, ratio, False, bar_xs[0])
     for handle, ax, label in diff_bars:
-        place_bar(handle, ax, label, False, True)
+        place_bar(handle, ax, label, False, True, bar_xs[1])
 
     path = out_dir / f"global_map_{args.domain}.png"
     fig.savefig(path, dpi=args.dpi, bbox_inches="tight")
