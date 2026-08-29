@@ -832,6 +832,39 @@ def main() -> None:
               "0 of 8,040 increments are negative -- a wrong accumulation boundary produces "
               "large negatives at every daily reset.")
 
+    shape = Path("outputs/v2_runB/degenerate/intraday_shape.csv")
+    within = Path("outputs/v2_africa_hourly/within_day_cv_per_basin.csv")
+    if shape.exists() and within.exists():
+        t = pd.read_csv(shape)
+        w = pd.read_csv(within)
+        ob = t["obs_diurnal_ratio"].dropna()
+        m1 = t["M1_diurnal_ratio"].dropna()
+        pcp = w["diurnal_ratio_pcp"].dropna()
+        a1 = w["diurnal_ratio_M1"].dropna()
+        doc.add_paragraph(
+            f'The figure\u2019s third column shows the average day: every day of the window '
+            f'aligned by hour and divided by that series\u2019 own mean. Averaging over ninety '
+            f'days destroys event-driven structure, since storms keep no fixed hour, so what '
+            f'survives is tied to the clock. Over all {len(w)} African basins the rainfall the '
+            f'model is given has a median peak-to-trough of {pcp.median():.2f}x across the day '
+            f'while the model\u2019s output has {a1.median():.2f}x: M1 damps the rainfall\u2019s '
+            f'clock-driven cycle {pcp.median() / a1.median():.1f}-fold, responding to events '
+            f'rather than to the time of day.')
+        para = doc.add_paragraph()
+        run = para.add_run(
+            f'Whether a flat average day is the CORRECT answer cannot be settled in Africa, '
+            f'and on the target domain it now can be: over {len(ob):,} gauges with hourly '
+            f'observations the observed average day has a median peak-to-trough of '
+            f'{ob.median():.3f}x against the model\u2019s {m1.median():.3f}x. The real river\u2019s '
+            f'average day is nearly flat, so near-flat is right, and the model is '
+            f'{m1.median() / ob.median():.2f}x the observed amplitude \u2014 marginally more '
+            f'variable than reality, not less.')
+        run.bold = True
+        note(doc, "This is measured on the temperate target domain rather than in Africa, and "
+                  "it concerns a systematic time-of-day cycle only: it says nothing about "
+                  "whether an individual peak arrives at the right hour, which no African "
+                  "observation can check.")
+
     figure(doc, "fig10_africa_hourly.png",
            "Figure 3-2  Africa at two resolutions, kept apart because only one of them can "
            "be scored. Left block, DAILY: the observation, our sMTS-LSTM in both states (M0 "

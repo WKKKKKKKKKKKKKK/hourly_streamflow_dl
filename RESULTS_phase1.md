@@ -514,6 +514,49 @@ standard deviation from 0.86× to 0.89× of observed, within-day range from 0.88
 (table in "The intra-day jitter was a v1 artefact"). Where it can be checked,
 daily-aggregate supervision moved sub-daily dispersion *toward* the observations.
 
+### Is a flat average day the right answer? Measured where it can be
+
+The hourly figure's third column shows the *average day*: every day of the window aligned by
+hour of day and divided by that series' own mean. Averaging across ninety days destroys
+event-driven structure, since storms keep no fixed hour, so whatever survives is tied to the
+clock. The model's average day is nearly flat and ERA5-Land's is not, and the argument for
+why flat is right was physical, not measured: a catchment of hundreds to thousands of square
+kilometres integrates over much longer than a day, so the rainfall's diurnal cycle should be
+damped nearly out by the time water passes a gauge.
+
+**Africa shows the damping, over all 284 basins.** The rainfall the model is given has a
+median peak-to-trough of **5.36x** across the day (quartiles
+2.59–8.27); the model's output has
+**1.23x** at M0 and **1.17x** at M1. M1 damps the rainfall's
+clock-driven cycle **4.6-fold**. It is responding to events, not
+to the time of day.
+
+**But Africa cannot say whether that is correct**, because it has no hourly observation. The
+target domain can, and `scripts.degenerate_check` now measures it over
+**8,424 gauges**:
+
+| average day, peak / trough | median | quartiles |
+|---|---|---|
+| **observed** | **1.044x** | 1.018–1.110 |
+| M0, zero-shot | 1.097x | 1.063–1.152 |
+| M1, after fine-tuning | 1.098x | 1.062–1.162 |
+
+**The real river's average day is nearly flat — 1.044x — and the model's is
+1.098x.** So a near-flat average day is the correct answer for catchments of this
+size, and the model neither invents a diurnal cycle nor over-suppresses one: it is
+1.05x the observed amplitude, marginally *more* variable than reality
+rather than less, with 25% of gauges flatter than their observation. The physical
+argument behind the hourly figure's third column is now a measurement.
+
+*Two limits.* This is measured on the temperate target domain, not in Africa, and the two
+domains differ; and it is a statement about a systematic time-of-day cycle only — it says
+nothing about whether an individual peak arrives at the right hour, which no African
+observation can check.
+
+**Evidence:** `outputs/v2_runB/degenerate/intraday_shape.csv` (`obs_diurnal_ratio`,
+`M0_diurnal_ratio`, `M1_diurnal_ratio`), `outputs/v2_africa_hourly/within_day_cv_per_basin.csv`
+(`diurnal_ratio_pcp`, `diurnal_ratio_M0`, `diurnal_ratio_M1`).
+
 ### First, the daily comparison done properly: three methods, identical days
 
 ERA5-Land per-basin scores already existed, but from the temperate-transfer Africa run of

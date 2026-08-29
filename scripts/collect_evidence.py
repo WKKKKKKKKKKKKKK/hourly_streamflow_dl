@@ -37,6 +37,9 @@ PATTERNS = (
     ("pairing, by agency", "v2_split_effect/by_agency_M*.csv"),
     ("pairing, recovery", "v2_split_effect/recovery_by_agency.csv"),
     ("significance with FDR", "*/significance/significance_summary.json"),
+    # intraday_shape.csv is deliberately NOT collected: at 2.6 MB it is a per-station
+    # table, not a summary, and MAX_BYTES would skip it anyway. Its medians -- including
+    # diurnal_ratio -- are in degenerate_summary.json, which is collected.
     ("within-day shape", "*/degenerate/degenerate_summary.json"),
     ("convergence and selection loss", "convergence_check/*"),
     ("fold-to-fold dispersion by split", "split_dispersion/*"),
