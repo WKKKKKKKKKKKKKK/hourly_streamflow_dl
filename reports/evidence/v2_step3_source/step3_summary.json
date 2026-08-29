@@ -1,0 +1,14 @@
+{
+  "n_folds": 5,
+  "n_source_stations": 7079,
+  "median_kge_before": 0.6366837608341223,
+  "median_kge_after": 0.5452313464650274,
+  "median_nse_before": 0.6211241167888628,
+  "median_nse_after": 0.5298429285707343,
+  "median_paired_delta_kge": -0.053893333688528555,
+  "paired_delta_range": [
+    -0.05584691661780622,
+    -0.043333471735591156
+  ],
+  "degraded_in_all_folds": true
+}

@@ -51,6 +51,7 @@ Each experiment below has one result section, in the same order. The chain is: f
     Could it be gaming the aggregate loss? & \S\ref{sec:e-degenerate} & \S\ref{sec:r-degenerate} \\
     Could it be a metric artefact? & \S\ref{sec:e-metrics} & \S\ref{sec:r-metrics} \\
     Could it be a training-budget artefact? & \S\ref{sec:e-convergence} & \S\ref{sec:r-convergence} \\
+    What does the adaptation cost elsewhere? & \S\ref{sec:e-step3} & \S\ref{sec:r-step3} \\
     Where does the gain land? & \S\ref{sec:e-strata} & \S\ref{sec:r-strata} \\
     What does spatial blocking cost? & \S\ref{sec:e-split} & \S\ref{sec:r-split} \\
     An external test, daily & \S\ref{sec:e-africa-daily} & \S\ref{sec:r-africa-daily} \\
@@ -90,6 +91,9 @@ KGE and point-wise absolute error can move in opposite directions on the same ga
 \section{Could it be a training-budget artefact?}\label{sec:e-convergence}
 If v2 had simply run out of epochs, its gain would be an artefact of the budget. v3's longer budget answers that. The same run also measures a cost the method imposes on itself: the checkpoint has to be selected on a daily-aggregate criterion, because the hourly truth is supposed to be hidden, and the difference against selecting on the hidden hourly truth is what daily-only model selection costs.
 
+\section{What the adaptation costs where the model already worked}\label{sec:e-step3}
+Fine-tuning on the target gauges' daily aggregates changes the weights, and those weights also serve the \SI{80}{\percent} of gauges that were never withheld. STEP~3 re-scores that source domain with the fine-tuned model, on its own hourly observations, and pairs each source gauge with itself so the comparison is not two medians differenced. The question is whether adapting to a daily-only domain is free elsewhere.
+
 \section{Where does the gain land?}\label{sec:e-strata}
 Per-gauge gains were stratified by catchment area, by distance to the nearest trainable gauge, by agency and by latitude band. The purpose is a boundary, not a headline: a method that works on average and nowhere in particular is not usable. The isolation stratification is also a check on the previous section -- if the gain were driven by proximity to training gauges, it would fall with distance.
 
@@ -123,6 +127,8 @@ Within run~B the forget gate is what separates a modest result from a clear one.
 
 \section{The main result, and the shape of the network it rests on}\label{sec:r-main}
 Under v2 with a random split, median target-domain hourly KGE rises from \num{0.5190} at M0 to \num{0.6210} at M1, a median change of \num{+0.0623} over 8,979 gauges. \SI{68}{\percent} of gauges improve, which is the part that matters: the gain is broad rather than an average pulled up by a few. Under the blocked split the same fine-tuning lifts \num{0.4185} to \num{0.6165}.
+
+NSE moves the same way and by less, from \num{0.5181} to \num{0.5896} (\num{+0.0320}). Both are reported because they answer different questions: NSE is squared error against the observed mean, KGE decomposes into the three terms Section~\ref{sec:r-mechanism} needs. The gap between them is itself a result, taken up in Section~\ref{sec:r-metrics}.
 
 The map that shows this also shows its limit. The gauge network is CAMELSH \num{5115}, BOMAustralia \num{1804}, LamaHCE \num{834}, Japan \num{690}, Germany \num{463}, LamaHIce \num{73}. There is not one gauge in Africa, South America or mainland Asia, and roughly four fifths sit between \SI{30}{\degree} and \SI{60}{\degree}~N. ``Global'' describes the model, not the gauge network, which is why the African test in Section~\ref{sec:r-africa-daily} cannot be substituted for.
 
@@ -220,6 +226,11 @@ v2 ended on early stopping, not on its epoch cap, in every fold -- so the gain i
   \label{fig:convergence}
 \end{figure}
 
+\section{The adaptation is not free on the source domain}\label{sec:r-step3}
+It is not free. Over \num{5} folds and about \num{7079} source gauges each, median hourly KGE on the source domain falls from \num{0.6367} to \num{0.5452} and median NSE from \num{0.6211} to \num{0.5298}. Paired gauge by gauge the median change is \num{-0.0539}, and it is negative in every fold (\num{-0.0558} to \num{-0.0433}), so this is a property of the procedure rather than one fold's luck.
+
+This is the clearest cost Phase~I measures and it should not be read past. The mechanism explains it: fine-tuning re-calibrates amplitude toward the target domain, and the source domain was already calibrated, so the same movement that helps one hurts the other. Whether that trade is acceptable depends on what the deployed model is for -- if the source gauges keep their hourly data, they do not need the fine-tuned weights, and the two can be served by separate checkpoints. Source replay was tested as a mitigation and is reported in the accompanying Word report; it damps the re-calibration and therefore trades some of the target-domain gain away.
+
 \section{Where the gain lands}\label{sec:r-strata}
 Small catchments gain most (Spearman $\rho=-0.17$ against area), which fits the mechanism: a small fast-responding catchment is where a zero-shot model is least calibrated and where a daily total adds most information. Isolation does \emph{not} reduce the gain -- under the blocked split it rises with distance to the nearest trainable gauge -- which is the opposite of what a proximity-driven result would do.
 
@@ -281,6 +292,8 @@ On \num{282} African catchments that appear nowhere in training and have no hour
 
 Paired over basins, which the medians cannot say: M1 beats the reanalysis on \SI{93.6}{\percent} of basins, and even the zero-shot M0 does on \SI{76.2}{\percent}. A model that has never seen an African catchment already outperforms the reanalysis on three basins in four.
 
+The plan's comparison is against the continent-holdout baseline these same \num{294} basins were drawn from, which reaches a median KGE of \num{+0.2790} and a median NSE of \num{+0.2450}. M1 exceeds it by \num{+0.2971} in median KGE. That baseline is a model trained with an entire continent held out, so it answers the same question this work does and is the right thing to be measured against.
+
 Africa is also where the timing claim of Section~\ref{sec:r-mechanism} stops holding as stated. Everywhere else $r$ barely moves because it was already right; in Africa it starts genuinely broken and does move. That is not a contradiction but a boundary: a daily total fixes which \emph{day} the water arrives, and only a domain whose day-scale timing is wrong can show it.
 
 \begin{figure}[htbp]
@@ -305,6 +318,38 @@ ERA5-Land is drawn beside the model in the hourly panels as a contrast and not a
   \caption{Africa at two resolutions, kept apart because only one can be scored. Left: daily, where the observation exists and every line carries a score. Right: hourly, where no observation exists anywhere on the continent, so the series can be compared only with each other. The rightmost panel aligns every day of the window by hour and divides each series by its own mean; a flat line means no dependence on the clock.}
   \label{fig:africa-hourly}
 \end{figure}
+
+\section{Against the plan}\label{sec:r-plan}
+Phase~I as written has five steps. Three are met as specified, one is met and returns the opposite of the hoped-for answer, and one cannot be carried out as written. The last two are the ones worth reading.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Phase~I against the plan it was written from.}
+  \label{tab:plan}
+  \begin{tabular}{p{0.50\linewidth}ll}
+    \toprule
+    Plan step & Status & Reported in \\
+    \midrule
+    1. 5-fold; train on \SI{80}{\percent} hourly, validate on \SI{20}{\percent}; KGE and NSE & Met & \S\ref{sec:r-main} \\
+    2. Fine-tune on the \SI{20}{\percent}'s daily data, early stopping on daily KGE, then re-validate hourly & Met & \S\ref{sec:r-main} \\
+    3. Re-score the \SI{80}{\percent} to check for no degradation & Met; there IS degradation & \S\ref{sec:r-step3} \\
+    4. Five models on Africa daily, against the traditional LSTM baseline & Met & \S\ref{sec:r-africa-daily} \\
+    5. Hourly KGE and NSE on Africa against ERA5-Land & Not possible as written & \S\ref{sec:r-africa-hourly} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\textbf{Step~3 returns a negative answer.} The plan asks whether there is no degradation on the source domain. There is, consistently, in every fold. It is reported in its own section rather than folded into an aggregate, because a method whose cost is unstated has not been evaluated.
+
+\textbf{Step~5 cannot be carried out as written, and the reason is the premise itself.} It asks for hourly KGE and NSE on Africa against ERA5-Land. No African catchment in this database has hourly discharge -- that absence is precisely why Africa is the external test -- so an hourly score there has no observation to be computed against. Nothing in the modelling can supply one: ERA5-Land is a model output, and scoring one model against another measures their disagreement, not skill.
+
+What was done instead, and what each substitute can and cannot support:
+\begin{enumerate}
+  \item \textbf{The daily comparison against ERA5-Land was made rigorous.} All three methods are re-scored on the identical basin-days rather than taken from runs over different periods, which is what makes Table~\ref{tab:threeway} a comparison at all. This carries the intent of Step~5 at the only resolution the observations permit.
+  \item \textbf{The hourly output is compared without being scored.} The model and ERA5-Land are drawn together hourly and the within-day statistics computed over every basin. That establishes that the hourly output is not a flattened daily mean, and quantifies how much daily-only supervision flattens it. It cannot establish that the hourly output is correct.
+  \item \textbf{The one hourly question that can be answered was moved to where observations exist.} Whether the hourly output has the right kind of structure is decided on the target domain, where the observed average day is measurable. That serves Step~5's intent, not its letter, and is reported as such.
+\end{enumerate}
+One deviation runs the other way: the plan does not ask for a blocked spatial split and Section~\ref{sec:r-split} reports one anyway. It was added because a random split of a dense gauge network leaves near-duplicate gauges on both sides, and without it the headline number would overstate both the level and the precision of the result.
 
 \section{What Phase~I establishes, and what it does not}\label{sec:r-summary}
 \begin{itemize}

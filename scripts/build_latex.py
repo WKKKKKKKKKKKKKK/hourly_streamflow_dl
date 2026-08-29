@@ -113,6 +113,9 @@ def gather() -> dict:
     d["disp"] = load("outputs/split_dispersion/summary.json")
     d["conv"] = load("outputs/convergence_check/summary.json")
     d["lat"] = load("outputs/v2_stratify/maps/by_latitude_target.csv")
+    d["step3"] = load("outputs/v2_step3_source/step3_summary.json")
+    pub = load("outputs/africa_runB/per_basin_pub_baseline.csv")
+    d["pub"] = pub
     comp = load("outputs/v2_runB/diagnostics_allhours/kge_components_target.csv")
     d["n_gauges"] = int(len(comp)) if comp is not None else 0
     if comp is not None:
@@ -144,6 +147,7 @@ def part_experiments(d: dict) -> str:
         ("Could it be gaming the aggregate loss?", "sec:e-degenerate", "sec:r-degenerate"),
         ("Could it be a metric artefact?", "sec:e-metrics", "sec:r-metrics"),
         ("Could it be a training-budget artefact?", "sec:e-convergence", "sec:r-convergence"),
+        ("What does the adaptation cost elsewhere?", "sec:e-step3", "sec:r-step3"),
         ("Where does the gain land?", "sec:e-strata", "sec:r-strata"),
         ("What does spatial blocking cost?", "sec:e-split", "sec:r-split"),
         ("An external test, daily", "sec:e-africa-daily", "sec:r-africa-daily"),
@@ -239,6 +243,17 @@ def part_experiments(d: dict) -> str:
         "itself: the checkpoint has to be selected on a daily-aggregate criterion, because the "
         "hourly truth is supposed to be hidden, and the difference against selecting on the "
         "hidden hourly truth is what daily-only model selection costs.")
+    s.append("")
+
+    s.append(r"\section{What the adaptation costs where the model already worked}"
+             r"\label{sec:e-step3}")
+    s.append(
+        "Fine-tuning on the target gauges' daily aggregates changes the weights, and those "
+        "weights also serve the \\SI{80}{\\percent} of gauges that were never withheld. "
+        "STEP~3 re-scores that source domain with the fine-tuned model, on its own hourly "
+        "observations, and pairs each source gauge with itself so the comparison is not two "
+        "medians differenced. The question is whether adapting to a daily-only domain is free "
+        "elsewhere.")
     s.append("")
 
     s.append(r"\section{Where does the gain land?}\label{sec:e-strata}")
@@ -338,6 +353,15 @@ def part_results(d: dict) -> str:
             f"few. Under the blocked split the same fine-tuning lifts "
             f"\\num{{{kgb.loc['kge', 'M0_median']:.4f}}} to "
             f"\\num{{{kgb.loc['kge', 'M1_median']:.4f}}}.")
+        s.append("")
+        nse = kge.loc["nse"]
+        s.append(
+            f"NSE moves the same way and by less, from \\num{{{nse['M0_median']:.4f}}} to "
+            f"\\num{{{nse['M1_median']:.4f}}} (\\num{{{nse['median_delta']:+.4f}}}). Both "
+            f"are reported because they answer different questions: NSE is squared error "
+            f"against the observed mean, KGE decomposes into the three terms "
+            f"Section~\\ref{{sec:r-mechanism}} needs. The gap between them is itself a "
+            f"result, taken up in Section~\\ref{{sec:r-metrics}}.")
         s.append("")
     if d.get("composition") is not None:
         comp = d["composition"]
@@ -485,6 +509,34 @@ def part_results_tail(d: dict) -> str:
                  "longer budget wanders around the same plateau rather than climbing above it.",
                  "convergence"))
 
+    s.append(r"\section{The adaptation is not free on the source domain}\label{sec:r-step3}")
+    st = d.get("step3")
+    if st:
+        s.append(
+            f"It is not free. Over \\num{{{st['n_folds']}}} folds and about "
+            f"\\num{{{st['n_source_stations']}}} source gauges each, median hourly KGE on the "
+            f"source domain falls from \\num{{{st['median_kge_before']:.4f}}} to "
+            f"\\num{{{st['median_kge_after']:.4f}}} and median NSE from "
+            f"\\num{{{st['median_nse_before']:.4f}}} to "
+            f"\\num{{{st['median_nse_after']:.4f}}}. Paired gauge by gauge the median change "
+            f"is \\num{{{st['median_paired_delta_kge']:+.4f}}}, and it is negative in "
+            f"{'every fold' if st['degraded_in_all_folds'] else 'most folds'} "
+            f"(\\num{{{st['paired_delta_range'][0]:+.4f}}} to "
+            f"\\num{{{st['paired_delta_range'][1]:+.4f}}}), so this is a property of the "
+            f"procedure rather than one fold's luck.")
+        s.append("")
+        s.append(
+            r"This is the clearest cost Phase~I measures and it should not be read past. The "
+            r"mechanism explains it: fine-tuning re-calibrates amplitude toward the target "
+            r"domain, and the source domain was already calibrated, so the same movement that "
+            r"helps one hurts the other. Whether that trade is acceptable depends on what the "
+            r"deployed model is for -- if the source gauges keep their hourly data, they do "
+            r"not need the fine-tuned weights, and the two can be served by separate "
+            r"checkpoints. Source replay was tested as a mitigation and is reported in the "
+            r"accompanying Word report; it damps the re-calibration and therefore trades some "
+            r"of the target-domain gain away.")
+        s.append("")
+
     s.append(r"\section{Where the gain lands}\label{sec:r-strata}")
     s.append(
         r"Small catchments gain most (Spearman $\rho=-0.17$ against area), which fits the "
@@ -582,6 +634,18 @@ def part_africa(d: dict) -> str:
             f"model that has never seen an African catchment already outperforms the reanalysis "
             f"on three basins in four.")
         s.append("")
+        pub = d.get("pub")
+        if pub is not None:
+            s.append(
+                f"The plan's comparison is against the continent-holdout baseline these same "
+                f"\\num{{{len(pub)}}} basins were drawn from, which reaches a median KGE of "
+                f"\\num{{{pub.pub_kge.median():+.4f}}} and a median NSE of "
+                f"\\num{{{pub.pub_nse.median():+.4f}}}. M1 exceeds it by "
+                f"\\num{{{m1['median_kge'] - pub.pub_kge.median():+.4f}}} in median KGE. "
+                f"That baseline is a model trained with an entire continent held out, so it "
+                f"answers the same question this work does and is the right thing to be "
+                f"measured against.")
+            s.append("")
         s.append(
             r"Africa is also where the timing claim of Section~\ref{sec:r-mechanism} stops "
             r"holding as stated. Everywhere else $r$ barely moves because it was already "
@@ -638,6 +702,67 @@ def part_africa(d: dict) -> str:
                  "can be compared only with each other. The rightmost panel aligns every day "
                  "of the window by hour and divides each series by its own mean; a flat line "
                  "means no dependence on the clock.", "africa-hourly", width=r"0.98\linewidth"))
+
+    s.append(r"\section{Against the plan}\label{sec:r-plan}")
+    s.append(
+        "Phase~I as written has five steps. Three are met as specified, one is met and "
+        "returns the opposite of the hoped-for answer, and one cannot be carried out as "
+        "written. The last two are the ones worth reading.")
+    s.append("")
+    rows = [
+        [r"1. 5-fold; train on \SI{80}{\percent} hourly, validate on \SI{20}{\percent}; "
+         r"KGE and NSE", "Met", r"\S\ref{sec:r-main}"],
+        [r"2. Fine-tune on the \SI{20}{\percent}'s daily data, early stopping on daily KGE, "
+         r"then re-validate hourly", "Met", r"\S\ref{sec:r-main}"],
+        [r"3. Re-score the \SI{80}{\percent} to check for no degradation",
+         "Met; there IS degradation", r"\S\ref{sec:r-step3}"],
+        [r"4. Five models on Africa daily, against the traditional LSTM baseline", "Met",
+         r"\S\ref{sec:r-africa-daily}"],
+        [r"5. Hourly KGE and NSE on Africa against ERA5-Land", "Not possible as written",
+         r"\S\ref{sec:r-africa-hourly}"],
+    ]
+    s.append(table(["Plan step", "Status", "Reported in"], rows,
+                   "Phase~I against the plan it was written from.", "plan",
+                   align=r"p{0.50\linewidth}ll"))
+    s.append(
+        r"\textbf{Step~3 returns a negative answer.} The plan asks whether there is no "
+        r"degradation on the source domain. There is, consistently, in every fold. It is "
+        r"reported in its own section rather than folded into an aggregate, because a method "
+        r"whose cost is unstated has not been evaluated.")
+    s.append("")
+    s.append(
+        r"\textbf{Step~5 cannot be carried out as written, and the reason is the premise "
+        r"itself.} It asks for hourly KGE and NSE on Africa against ERA5-Land. No African "
+        r"catchment in this database has hourly discharge -- that absence is precisely why "
+        r"Africa is the external test -- so an hourly score there has no observation to be "
+        r"computed against. Nothing in the modelling can supply one: ERA5-Land is a model "
+        r"output, and scoring one model against another measures their disagreement, not "
+        r"skill.")
+    s.append("")
+    s.append("What was done instead, and what each substitute can and cannot support:")
+    s.append(r"\begin{enumerate}")
+    s.append(r"  \item \textbf{The daily comparison against ERA5-Land was made rigorous.} All "
+             r"three methods are re-scored on the identical basin-days rather than taken from "
+             r"runs over different periods, which is what makes Table~\ref{tab:threeway} a "
+             r"comparison at all. This carries the intent of Step~5 at the only resolution the "
+             r"observations permit.")
+    s.append(r"  \item \textbf{The hourly output is compared without being scored.} The model "
+             r"and ERA5-Land are drawn together hourly and the within-day statistics computed "
+             r"over every basin. That establishes that the hourly output is not a flattened "
+             r"daily mean, and quantifies how much daily-only supervision flattens it. It "
+             r"cannot establish that the hourly output is correct.")
+    s.append(r"  \item \textbf{The one hourly question that can be answered was moved to where "
+             r"observations exist.} Whether the hourly output has the right kind of structure "
+             r"is decided on the target domain, where the observed average day is measurable. "
+             r"That serves Step~5's intent, not its letter, and is reported as such.")
+    s.append(r"\end{enumerate}")
+    s.append(
+        r"One deviation runs the other way: the plan does not ask for a blocked spatial split "
+        r"and Section~\ref{sec:r-split} reports one anyway. It was added because a random "
+        r"split of a dense gauge network leaves near-duplicate gauges on both sides, and "
+        r"without it the headline number would overstate both the level and the precision of "
+        r"the result.")
+    s.append("")
 
     s.append(r"\section{What Phase~I establishes, and what it does not}\label{sec:r-summary}")
     s.append(r"\begin{itemize}")
