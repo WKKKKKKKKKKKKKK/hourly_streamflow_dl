@@ -83,13 +83,13 @@ def panel(ax, lon, lat, values, title, cmap, norm, extend="neither", seed=0,
     # A tag, not a title. Everything a title used to carry -- which model, which metric,
     # what the colours mean, the medians -- is enumerated in the caption instead, so twelve
     # panels of running text do not compete with twelve maps for the reader's attention.
-    ax.annotate(title, (0.008, 0.965), xycoords="axes fraction", ha="left", va="top",
-                fontsize=11, fontweight="semibold", color="#0b0b0b")
+    ax.annotate(title, (0.010, 0.960), xycoords="axes fraction", ha="left", va="top",
+                fontsize=14, fontweight="semibold", color="#0b0b0b")
     ax.set_xlim(*XLIM)
     ax.set_ylim(*YLIM)
     ax.set_aspect("equal")
     ax.grid(alpha=0.15, linewidth=0.4)
-    ax.tick_params(labelsize=7)
+    ax.tick_params(labelsize=11)
     return handle
 
 
@@ -210,7 +210,7 @@ def main() -> None:
     # an axes rectangle taller than that letterboxes the map with white above and below -- which
     # is what narrowing the columns without shrinking the figure produced. 10.8 keeps each
     # rectangle at roughly the data aspect, so the maps fill them.
-    fig, axes = plt.subplots(4, 3, figsize=(18.6, 10.8))
+    fig, axes = plt.subplots(4, 3, figsize=(18.6, 9.6))
     # A 4x3 matrix: columns are M0 / M1 / difference, rows are KGE and its three
     # components. Every quantity therefore appears before, after, and as a change, and the
     # first two columns of a row share one scale so the pair can be compared by eye.
@@ -278,39 +278,13 @@ def main() -> None:
                             extend="both", overlay=a_over)
         diff_bars.append((diff_handle, axes[row, 2], f"change in {bar_label}"))
 
-    # Say plainly what the station cloud covers: "global" describes the model, not the
-    # gauge network. Africa, South America and mainland Asia contribute no stations.
+    # No suptitle. What it carried -- the agency composition, the run, and what the two
+    # marker sizes mean -- belongs in the caption, which is generated from the same files
+    # and can be read at reading size. Printed here so a run still reports it.
     agencies = table["source"].value_counts()
-    overlay_note = ""
-    if africa is not None:
-        # The distinction the marker size carries, said in words as well: same models, same
-        # daily-only fine-tuning, but the gauges are scored against hourly observations and
-        # the basins against daily ones, because no African catchment has hourly discharge.
-        # Phase I's premise is simulated on the gauges and genuine in Africa.
-        overlay_note = (f"\nSmall dots: {len(table)} target gauges, scored on HOURLY "
-                        f"observations, Phase I's premise simulated.  "
-                        f"Large outlined dots: {len(africa)} African basins, scored on "
-                        f"DAILY observations because no hourly discharge exists there, "
-                        f"Phase I's premise genuine.")
-    top_frac = 0.955 if africa is None else 0.925
-    fig.suptitle(
-        f"Target-domain hourly metrics, {len(table)} stations, one turn as target each "
-        f"({run.parent.name})\n"
-        + " | ".join(f"{name} {count}" for name, count in agencies.items())
-        + overlay_note,
-        fontsize=10,
-    )
-    # Two colorbars per row, in the same two places in every row: one after column 2 for
-    # the M0/M1 pair, which share a scale by construction, and one after column 3 for the
-    # difference. Eight bars rather than the seven a shared alpha/beta bar would give,
-    # because that shared bar had to span two rows and sat shortened between them, which
-    # made the grid visibly lopsided. Rows that look identical are worth one duplicate bar.
-    #
-    # Positioned explicitly from the axes' own boxes rather than by fig.colorbar(ax=[...]),
-    # which steals width from the axes it attaches to and, under this figure's manual
-    # subplots_adjust, laid the bars across the middle column's maps. That fixes an order
-    # too: the bars read FINAL positions, so they come after suptitle and subplots_adjust,
-    # and tight_layout must not run afterwards or it undoes them.
+    print("composition: " + " | ".join(f"{n} {c}" for n, c in agencies.items()))
+    top_frac = 0.985
+
     # One colorbar per panel, each hugging the map it belongs to, and the gaps between
     # panels pulled in. Scales are still shared wherever the colours are: M0 and M1 of a row
     # use one norm, so the pair is comparable at a glance, and alpha and beta use the same
@@ -325,17 +299,27 @@ def main() -> None:
     # was nearly an inch of white between columns. The figure width comes down with it, so
     # the maps keep filling their rectangles instead of being letterboxed inside wider ones
     # -- set_aspect("equal") holds the 2.6:1 data shape whatever the rectangle is.
-    LEFT, RIGHT_PAD, COL_GAP = 0.018, 0.005, 0.024
+    LEFT, RIGHT_PAD, COL_GAP = 0.022, 0.005, 0.016
     BAR_W, BAR_GAP = 0.006, 0.006
     width = (1.0 - LEFT - RIGHT_PAD - 2 * COL_GAP - 3 * (BAR_W + BAR_GAP)) / 3.0
     stride = width + BAR_GAP + BAR_W + COL_GAP
     xs = tuple(LEFT + i * stride for i in range(3))
 
-    fig.subplots_adjust(top=top_frac, bottom=0.045, hspace=0.13)
+    # Rows 1-3 carry no tick labels now, so the gap only has to separate the frames.
+    fig.subplots_adjust(top=top_frac, bottom=0.055, hspace=0.07)
+    last_row = axes.shape[0] - 1
     for row in range(axes.shape[0]):
         for col in range(axes.shape[1]):
-            box = axes[row, col].get_position()
-            axes[row, col].set_position([xs[col], box.y0, width, box.height])
+            ax = axes[row, col]
+            box = ax.get_position()
+            ax.set_position([xs[col], box.y0, width, box.height])
+            # Every panel shares one window, so repeating the numbers twelve times only
+            # spends ink and forces the columns apart. Longitude on the bottom row,
+            # latitude on the left column, nothing else.
+            if row != last_row:
+                ax.set_xticklabels([])
+            if col != 0:
+                ax.set_yticklabels([])
 
     def place_bar(handle, ax, label, ratio, diverging):
         box = ax.get_position()
@@ -345,8 +329,8 @@ def main() -> None:
                            ticks=log_ticks if ratio else None)
         if ratio:
             bar.ax.set_yticklabels(tick_text)
-        bar.set_label(label, fontsize=7.5)
-        bar.ax.tick_params(labelsize=6.5)
+        bar.set_label(label, fontsize=11)
+        bar.ax.tick_params(labelsize=10)
 
     # Every panel gets its own bar, including both halves of a shared-scale pair.
     for handle, axs, ratio, label in pair_bars:

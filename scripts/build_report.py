@@ -180,6 +180,8 @@ def build_map_caption(run: Path, africa_summary: Path) -> str:
 
     table = pd.read_csv(run / "kge_components_target.csv")
     table = table.loc[table["obs_std"] >= 1e-3]
+    composition = " | ".join(f"{name} {count}"
+                             for name, count in table["source"].value_counts().items())
     m0 = pd.read_csv(africa_summary / "ensemble_per_basin_M0.csv").set_index("station_id")
     m1 = pd.read_csv(africa_summary / "ensemble_per_basin_M1.csv").set_index("station_id")
     afr = m0.join(m1, lsuffix="_M0", rsuffix="_M1", how="inner")
@@ -224,8 +226,10 @@ def build_map_caption(run: Path, africa_summary: Path) -> str:
         "pretrained models and the same daily-only fine-tuning in both, so M0 and M1 mean "
         "structurally the same thing; only the observation the score is computed against "
         "differs, which is why the two are never pooled into one median and why the markers "
-        "differ. Alpha and beta are drawn on a log scale, so halving and doubling the "
-        "observed value sit equally far from the white centre. Panels: " + enumerated +
+        f"differ. Gauge composition: {composition}. Alpha and beta are drawn on a log "
+        "scale, so halving and doubling the observed value sit equally far from the white "
+        "centre; all twelve panels share one map window, so longitude is labelled on the "
+        "bottom row and latitude on the left column only. Panels: " + enumerated +
         "  In the difference column the sign is the verdict for KGE and r, where larger is "
         "better, but NOT for alpha and beta, whose ideal is 1.0: an increase helps a gauge "
         "below it and hurts one above it. Row (l) shows this directly -- the gauges' median "
