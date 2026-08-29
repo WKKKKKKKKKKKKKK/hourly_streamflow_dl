@@ -143,8 +143,15 @@ def main() -> None:
                              how="inner")
         africa = joined.rename(columns={
             "kge_M0": "M0_kge", "kge_M1": "M1_kge",
+            "kge_r_M0": "M0_kge_r", "kge_r_M1": "M1_kge_r",
             "kge_alpha_M0": "M0_kge_alpha", "kge_beta_M0": "M0_kge_beta",
             "kge_alpha_M1": "M1_kge_alpha", "kge_beta_M1": "M1_kge_beta"})
+        # Every column the panels ask for must exist, or a panel silently loses its overlay.
+        need = [f"{m}_kge_{c}" for m in ("M0", "M1") for c in ("r", "alpha", "beta")]
+        missing = [c for c in need if c not in africa]
+        if missing:
+            raise SystemExit(f"African table is missing {missing}; the per-basin files "
+                             "changed shape and the rename map above is stale")
         africa["gain"] = africa["M1_kge"] - africa["M0_kge"]
         print(f"{len(africa)} African basins overlaid (scored on DAILY observations; "
               f"the gauges above are scored on hourly)")
@@ -185,7 +192,7 @@ def main() -> None:
     # cannot be said with one panel: the median alpha moves 0.813 -> 0.851 while the share
     # of under-dispersed gauges barely shifts (71.4% -> 72.4%). What actually happens is a
     # tightening toward 1.0 from both sides, which needs before, after and change to show.
-    fig, axes = plt.subplots(2, 3, figsize=(20.5, 8))
+    fig, axes = plt.subplots(3, 3, figsize=(20.5, 12))
     kge_norm = Normalize(vmin=-0.4, vmax=0.9)
     panel(axes[0, 0], lon, lat, table["M0_kge"].to_numpy(),
           f"M0 zero-shot KGE (gauges, hourly: {table['M0_kge'].median():.3f}"
@@ -219,71 +226,84 @@ def main() -> None:
     # equally wrong and belong equidistant from the white centre. A linear scale centred at
     # 1.0 put 0.5 halfway down the bar and pushed 2.0 off the top, which rendered the alpha
     # panel as a near-uniform orange wash with 19.5% of gauges clipped to the end colour.
+    # Rows: result, then where the zero-shot model loses, then what the daily signal fixes.
+    # Every KGE component appears in both of the lower rows. An earlier version mapped only
+    # alpha at M0 and alpha's repair, on the reasoning that r "barely moves" -- 0.797 to
+    # 0.812 -- and would render as a uniform panel. That conflated a small median CHANGE
+    # with a uniform spatial distribution: r's level spans 0.091 to 0.519 across gauges at
+    # the 10-90 percentiles, so it maps perfectly well. And once Africa is overlaid the
+    # reasoning fails outright, because Africa's r repair is 32%, not 7%.
     marks = [0.25, 0.5, 0.71, 1.0, 1.41, 2.0, 4.0]
     log_ticks = [np.log2(m) for m in marks]
     tick_text = [f"{m:g}" for m in marks]
 
-    def log_ratio(column):
-        values = table[column].to_numpy()
-        with np.errstate(divide="ignore", invalid="ignore"):
-            return values, np.log2(np.where(values > 0, values, np.nan))
+    def deficit(values, component):
+        """Distance from the ideal: 1 - r for the correlation, |log2 x| for the two ratios.
 
-    # Bottom row: the two ratio components of KGE at M0 -- where the zero-shot model
-    # actually loses -- and then how much of the alpha deficit fine-tuning repairs.
-    # alpha at M1 used to occupy the middle slot, but the repair panel beside it already
-    # encodes before-versus-after, and beta appeared nowhere at all despite being the
-    # component that moves most in Africa (0.476 -> 0.953).
-    ratio_panels = (
-        ("M0_kge_alpha", "alpha at M0 = std(sim)/std(obs)",
-         "orange = swings too little", "alpha"),
-        ("M0_kge_beta", "beta at M0 = mean(sim)/mean(obs)",
-         "orange = too little water", "beta"),
+        A ratio's 0.5 and 2.0 are equally wrong and their arithmetic mean is not 1, so the
+        two kinds of component cannot share one definition of "how far off".
+        """
+        if component == "r":
+            return 1.0 - values
+        with np.errstate(divide="ignore", invalid="ignore"):
+            return np.abs(np.log2(np.where(values > 0, values, np.nan)))
+
+    SPEC = (
+        ("r", "r at M0 = correlation", "orange = timing too poor", "r"),
+        ("alpha", "alpha at M0 = std(sim)/std(obs)", "orange = swings too little", "alpha"),
+        ("beta", "beta at M0 = mean(sim)/mean(obs)", "orange = too little water", "beta"),
     )
-    alpha_logs = {}
-    for col, (column, heading, sense, label) in enumerate(ratio_panels):
-        values, log_values = log_ratio(column)
-        inside = float(np.mean((values >= 0.25) & (values <= 4.0)))
+    for col, (component, heading, sense, label) in enumerate(SPEC):
+        column = f"M0_kge_{component}"
+        values = table[column].to_numpy()
         lo, hi = np.nanpercentile(values, [10, 90])
-        # Two short lines. Longer ones ran under the colorbar and were clipped mid-number.
-        panel(axes[1, col], lon, lat, log_values,
-              f"{heading}, log scale (gauges {np.nanmedian(values):.3f}"
-              f"{afr(column, ' | basins {:.3f}')})\n"
-              f"{sense} ({np.mean(values < 1):.0%}), purple = too much; "
-              f"10-90%: {lo:.2f}-{hi:.2f}",
-              "PuOr", Normalize(vmin=-2.0, vmax=2.0), label,
-              extend="both", ticks=log_ticks, ticklabels=tick_text,
-              overlay=over_log(column))
-        if column == "M0_kge_alpha":
-            alpha_logs["M0"] = log_values
-    _, alpha_logs["M1"] = log_ratio("M1_kge_alpha")
+        if component == "r":
+            # r is not a ratio: it lives on (-inf, 1] with 1 the ideal, so it gets a
+            # sequential scale running to 1 rather than a log axis centred on it.
+            panel(axes[1, col], lon, lat, values,
+                  f"{heading} (gauges {np.nanmedian(values):.3f}"
+                  f"{afr(column, ' | basins {:.3f}')})\n"
+                  f"dark = timing wrong; 10-90%: {lo:.2f}-{hi:.2f}",
+                  "viridis", Normalize(vmin=0.0, vmax=1.0), label,
+                  extend="min", overlay=over(column))
+        else:
+            inside = float(np.mean((values >= 0.25) & (values <= 4.0)))
+            with np.errstate(divide="ignore", invalid="ignore"):
+                log_values = np.log2(np.where(values > 0, values, np.nan))
+            panel(axes[1, col], lon, lat, log_values,
+                  f"{heading}, log scale (gauges {np.nanmedian(values):.3f}"
+                  f"{afr(column, ' | basins {:.3f}')})\n"
+                  f"{sense} ({np.mean(values < 1):.0%}), purple = too much; "
+                  f"10-90%: {lo:.2f}-{hi:.2f}",
+                  "PuOr", Normalize(vmin=-2.0, vmax=2.0), label,
+                  extend="both", ticks=log_ticks, ticklabels=tick_text,
+                  overlay=over_log(column))
 
-    # The repair, measured as distance to 1.0 in LOG space -- the thing KGE actually pays
-    # for. Signed so that positive means improvement and drawn with RdBu_r, so red means
-    # improvement here exactly as it does in the gain panel above. An earlier version
-    # plotted (after - before) with RdBu, which made improvement red while its own caption
-    # said blue, and would have given the figure's two change panels opposite conventions.
-    d0 = np.abs(alpha_logs["M0"])
-    d1 = np.abs(alpha_logs["M1"])
-    repair = d0 - d1
-    rspan = float(np.nanpercentile(np.abs(repair), 90)) or 0.5
-    closer = float(np.nanmean(repair > 0))
-    a0 = table["M0_kge_alpha"].to_numpy()
-    a1 = table["M1_kge_alpha"].to_numpy()
-    africa_repair = None
-    if africa is not None:
-        with np.errstate(divide="ignore", invalid="ignore"):
-            ad0 = np.abs(np.log2(africa["M0_kge_alpha"].clip(lower=1e-6)))
-            ad1 = np.abs(np.log2(africa["M1_kge_alpha"].clip(lower=1e-6)))
-        africa_repair = (africa["long"].to_numpy(), africa["lat"].to_numpy(),
-                         (ad0 - ad1).to_numpy())
-    panel(axes[1, 2], lon, lat, repair,
-          f"alpha repair: how much closer to 1.0 (gauges {closer:.0%} improved"
-          + (f", basins {float(np.nanmean(africa_repair[2] > 0)):.0%}" if africa_repair
-             else "") + ")\n"
-          f"red = moved toward 1.0; |log2 alpha| {np.nanmedian(d0):.3f} -> "
-          f"{np.nanmedian(d1):.3f}, but {np.nanmean(a1 < 1):.0%} still under-dispersed",
-          "RdBu_r", TwoSlopeNorm(vmin=-rspan, vcenter=0.0, vmax=rspan),
-          "reduction in |log2 alpha|", extend="both", overlay=africa_repair)
+    # Bottom row: how much of each deficit the daily signal removes. Signed so POSITIVE is
+    # improvement and drawn with RdBu_r, so red is improvement here exactly as in the gain
+    # panel at the top -- the two change rows must not use opposite conventions.
+    for col, (component, _, _, _) in enumerate(SPEC):
+        d0 = deficit(table[f"M0_kge_{component}"].to_numpy(), component)
+        d1 = deficit(table[f"M1_kge_{component}"].to_numpy(), component)
+        repair = d0 - d1
+        rspan = float(np.nanpercentile(np.abs(repair), 90)) or 0.5
+        closer = float(np.nanmean(repair > 0))
+        removed = 100 * (np.nanmedian(d0) - np.nanmedian(d1)) / np.nanmedian(d0)
+        a_over = None
+        a_note = ""
+        if africa is not None:
+            ad0 = deficit(africa[f"M0_kge_{component}"].to_numpy(), component)
+            ad1 = deficit(africa[f"M1_kge_{component}"].to_numpy(), component)
+            a_over = (africa["long"].to_numpy(), africa["lat"].to_numpy(), ad0 - ad1)
+            a_removed = 100 * (np.nanmedian(ad0) - np.nanmedian(ad1)) / np.nanmedian(ad0)
+            a_note = (f"basins {np.nanmean(ad0 - ad1 > 0):.0%} improved, "
+                      f"{a_removed:.0f}% of deficit.  ")
+        panel(axes[2, col], lon, lat, repair,
+              f"{component} repair: gauges {closer:.0%} improved, "
+              f"{removed:.0f}% of deficit\n"
+              f"{a_note}red = moved toward the ideal, blue = away",
+              "RdBu_r", TwoSlopeNorm(vmin=-rspan, vcenter=0.0, vmax=rspan),
+              f"reduction in {component} deficit", extend="both", overlay=a_over)
 
     # Say plainly what the station cloud covers: "global" describes the model, not the
     # gauge network. Africa, South America and mainland Asia contribute no stations.
