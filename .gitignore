@@ -32,3 +32,6 @@ reports/latex/*.pdf
 # The source deck lives here for reference but is not a repository deliverable,
 # and this remote is public.
 reports/figures/*.pptx
+
+# The upload bundle is rebuilt from the .tex and the figures in one command.
+reports/latex/*.zip

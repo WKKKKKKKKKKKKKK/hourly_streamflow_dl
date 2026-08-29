@@ -864,7 +864,11 @@ def part_africa(d: dict) -> str:
 PREAMBLE = r"""\documentclass[11pt,a4paper]{article}
 \usepackage[margin=2.4cm]{geometry}
 \usepackage{graphicx}
-\graphicspath{{../figures/}}
+% Three search paths, so the document compiles whether it sits in the repository
+% (../figures/), is uploaded flat to Overleaf with the PNGs beside it (./), or is
+% unpacked with the figures in a subfolder (figures/). A missing figure is only a
+% warning in LaTeX, not an error, so a wrong single path yields a PDF with blanks.
+\graphicspath{{../figures/}{figures/}{./}}
 \usepackage{booktabs}
 \usepackage{siunitx}
 \usepackage{amsmath}
