@@ -66,7 +66,11 @@ def panel(ax, lon, lat, values, title, cmap, norm, label, extend="neither", seed
         ax.scatter(o_lon, o_lat, c=o_values, s=30, cmap=cmap, norm=norm,
                    linewidths=0.6, edgecolors="#0b0b0b", marker="o", zorder=4,
                    rasterized=True)
-    ax.set_title(title, fontsize=10)
+    # A tag, not a title. Everything a title used to carry -- which model, which metric,
+    # what the colours mean, the medians -- is enumerated in the caption instead, so twelve
+    # panels of running text do not compete with twelve maps for the reader's attention.
+    ax.annotate(title, (0.008, 0.965), xycoords="axes fraction", ha="left", va="top",
+                fontsize=11, fontweight="semibold", color="#0b0b0b")
     ax.set_xlim(-180, 180)
     ax.set_ylim(-60, 80)
     ax.set_aspect("equal")
@@ -204,24 +208,16 @@ def main() -> None:
         with np.errstate(divide="ignore", invalid="ignore"):
             return np.log2(np.where(values > 0, values, np.nan))
 
-    def deficit(values, kind):
-        """Distance from the ideal: 1 - x for KGE and r, |log2 x| for the two ratios."""
-        if kind == "ratio":
-            return np.abs(log2_of(values))
-        return 1.0 - values
-
+    # key, colourbar label, kind, colormap, shared norm for the M0/M1 pair. What each
+    # panel shows is enumerated in the caption, not printed on the panel.
     ROWS = (
-        # key, row label, kind, colormap, norm for the M0/M1 pair, extra title text
-        ("kge", "KGE", "score", "viridis", Normalize(vmin=-0.4, vmax=0.9), ""),
-        ("kge_r", "r = correlation", "score", "viridis", Normalize(vmin=0.0, vmax=1.0),
-         "dark = timing wrong"),
-        ("kge_alpha", "alpha = std(sim)/std(obs)", "ratio", "PuOr",
-         Normalize(vmin=-2.0, vmax=2.0), "orange = swings too little, purple = too much"),
-        ("kge_beta", "beta = mean(sim)/mean(obs)", "ratio", "PuOr",
-         Normalize(vmin=-2.0, vmax=2.0), "orange = too little water, purple = too much"),
+        ("kge", "KGE", "score", "viridis", Normalize(vmin=-0.4, vmax=0.9)),
+        ("kge_r", "r", "score", "viridis", Normalize(vmin=0.0, vmax=1.0)),
+        ("kge_alpha", "alpha", "ratio", "PuOr", Normalize(vmin=-2.0, vmax=2.0)),
+        ("kge_beta", "beta", "ratio", "PuOr", Normalize(vmin=-2.0, vmax=2.0)),
     )
 
-    for row, (key, row_label, kind, cmap, norm, sense) in enumerate(ROWS):
+    for row, (key, bar_label, kind, cmap, norm) in enumerate(ROWS):
         ratio = kind == "ratio"
         ticks = log_ticks if ratio else None
         labels = tick_text if ratio else None
@@ -229,16 +225,8 @@ def main() -> None:
             column = f"{tag}_{key}" if key != "kge" else f"{tag}_kge"
             values = table[column].to_numpy()
             drawn = log2_of(values) if ratio else values
-            when = "zero-shot" if tag == "M0" else "after daily-only fine-tuning"
-            # The reading note goes on the M0 panel only. Repeating it on M1 doubled the
-            # title length for nothing: the two share a scale, so it reads once.
-            lines = [f"{row_label} at {tag} ({when}){', log scale' if ratio else ''}",
-                     f"gauges {np.nanmedian(values):.3f}"
-                     f"{afr(column, ' | basins {:.3f}')}"]
-            if sense and tag == "M0":
-                lines.append(sense)
-            panel(axes[row, col], lon, lat, drawn, "\n".join(lines),
-                  cmap, norm, row_label.split(" =")[0],
+            panel(axes[row, col], lon, lat, drawn, f"({chr(ord('a') + row * 3 + col)})",
+                  cmap, norm, bar_label,
                   extend="both" if ratio else "min",
                   ticks=ticks, ticklabels=labels,
                   overlay=(over_log(column) if ratio else over(column)))
@@ -252,27 +240,14 @@ def main() -> None:
         m1 = table[f"M1_{key}" if key != "kge" else "M1_kge"].to_numpy()
         diff = m1 - m0
         span = float(np.nanpercentile(np.abs(diff), 90)) or 0.1
-        d0, d1 = deficit(m0, kind), deficit(m1, kind)
-        removed = 100 * (np.nanmedian(d0) - np.nanmedian(d1)) / np.nanmedian(d0)
-        note = f"gauges {np.nanmedian(diff):+.3f} ({removed:.0f}% of deficit removed)"
         a_over = None
         if africa is not None:
             am0 = africa[f"M0_{key}" if key != "kge" else "M0_kge"].to_numpy()
             am1 = africa[f"M1_{key}" if key != "kge" else "M1_kge"].to_numpy()
             a_over = (africa["long"].to_numpy(), africa["lat"].to_numpy(), am1 - am0)
-            ad0, ad1 = deficit(am0, kind), deficit(am1, kind)
-            a_removed = 100 * (np.nanmedian(ad0) - np.nanmedian(ad1)) / np.nanmedian(ad0)
-            note += (f"\nbasins {np.nanmedian(am1 - am0):+.3f} "
-                     f"({a_removed:.0f}% removed)")
-        # For KGE and r the sign IS the verdict. For the two ratios it is not: their ideal
-        # is 1, so an increase helps a gauge below it and hurts one above it, which is why
-        # the deficit figure is printed beside the raw difference.
-        caveat = ("red = larger; ideal is 1.0, so that helps below it, hurts above"
-                  if ratio else "red = larger, which here means better")
-        panel(axes[row, 2], lon, lat, diff,
-              f"{row_label.split(' =')[0]}: M1 - M0\n{note}\n{caveat}",
+        panel(axes[row, 2], lon, lat, diff, f"({chr(ord('a') + row * 3 + 2)})",
               "RdBu_r", TwoSlopeNorm(vmin=-span, vcenter=0.0, vmax=span),
-              f"change in {row_label.split(' =')[0]}", extend="both", overlay=a_over)
+              f"change in {bar_label}", extend="both", overlay=a_over)
 
     # Say plainly what the station cloud covers: "global" describes the model, not the
     # gauge network. Africa, South America and mainland Asia contribute no stations.

@@ -168,6 +168,76 @@ def components(path: Path) -> dict | None:
 
 
 
+def build_map_caption(run: Path, africa_summary: Path) -> str:
+    """Figure 4-4's caption, computed from the same files the map reads.
+
+    The map's panels carry only a letter now, so every number a reader needs is here. That
+    makes the caption load-bearing, and a load-bearing caption must not be typed by hand:
+    this repository has already been bitten once by prose numbers drifting away from the
+    tables beside them. Each of the twelve panels is enumerated from the CSVs.
+    """
+    import numpy as np
+
+    table = pd.read_csv(run / "kge_components_target.csv")
+    table = table.loc[table["obs_std"] >= 1e-3]
+    m0 = pd.read_csv(africa_summary / "ensemble_per_basin_M0.csv").set_index("station_id")
+    m1 = pd.read_csv(africa_summary / "ensemble_per_basin_M1.csv").set_index("station_id")
+    afr = m0.join(m1, lsuffix="_M0", rsuffix="_M1", how="inner")
+
+    def deficit(values, ratio):
+        """Distance from the ideal: 1 - x for KGE and r, |log2 x| for the two ratios."""
+        values = np.asarray(values, dtype=float)
+        if not ratio:
+            return 1.0 - values
+        with np.errstate(divide="ignore", invalid="ignore"):
+            return np.abs(np.log2(np.where(values > 0, values, np.nan)))
+
+    rows = (("KGE", "kge", False), ("r", "kge_r", False),
+            ("alpha", "kge_alpha", True), ("beta", "kge_beta", True))
+    letters = "abcdefghijkl"
+    parts = []
+    for i, (name, key, ratio) in enumerate(rows):
+        g0 = table[f"M0_{key}"].to_numpy()
+        g1 = table[f"M1_{key}"].to_numpy()
+        a0 = afr[f"{key}_M0"].to_numpy()
+        a1 = afr[f"{key}_M1"].to_numpy()
+        gr = 100 * (np.nanmedian(deficit(g0, ratio)) - np.nanmedian(deficit(g1, ratio))) \
+            / np.nanmedian(deficit(g0, ratio))
+        ar = 100 * (np.nanmedian(deficit(a0, ratio)) - np.nanmedian(deficit(a1, ratio))) \
+            / np.nanmedian(deficit(a0, ratio))
+        parts.append(
+            f"({letters[i * 3]}) {name} at M0, gauges {np.nanmedian(g0):.3f} and basins "
+            f"{np.nanmedian(a0):.3f}; ({letters[i * 3 + 1]}) {name} at M1, "
+            f"{np.nanmedian(g1):.3f} and {np.nanmedian(a1):.3f}; "
+            f"({letters[i * 3 + 2]}) the difference M1 - M0, median {np.nanmedian(g1 - g0):+.3f} "
+            f"and {np.nanmedian(a1 - a0):+.3f}, removing {gr:.0f}% and {ar:.0f}% of the deficit")
+    enumerated = ".  ".join(parts) + "."
+
+    return (
+        "Figure 4-4  Where the experiment stands, in one frame. A 4x3 matrix: columns are "
+        "M0, M1 and their difference; rows are KGE and its three components. The first two "
+        "columns of a row share a scale, so the pair can be compared by eye. Small dots are "
+        f"the {len(table):,} target gauges, scored against HOURLY observations -- Phase I's "
+        "premise SIMULATED, since their hourly data exists and is withheld. Large outlined "
+        f"dots are the {len(afr)} African basins, scored against DAILY observations -- the "
+        "same premise GENUINE, since no African catchment has hourly discharge at all. Same "
+        "pretrained models and the same daily-only fine-tuning in both, so M0 and M1 mean "
+        "structurally the same thing; only the observation the score is computed against "
+        "differs, which is why the two are never pooled into one median and why the markers "
+        "differ. Alpha and beta are drawn on a log scale, so halving and doubling the "
+        "observed value sit equally far from the white centre. Panels: " + enumerated +
+        "  In the difference column the sign is the verdict for KGE and r, where larger is "
+        "better, but NOT for alpha and beta, whose ideal is 1.0: an increase helps a gauge "
+        "below it and hurts one above it. Row (l) shows this directly -- the gauges' median "
+        "difference is negative while a quarter of their deficit is removed, because beta "
+        "started above 1 and moved down toward it. The deficit fraction, not the sign, is "
+        "what means better or worse. Africa carries the argument: worst at M0, largest gain, "
+        "close to the gauges by M1; and the rows give the mechanism, since a daily total "
+        "removes far more of the volume and variability deficits than of the timing one -- "
+        "which is what a daily total can and cannot carry."
+    )
+
+
 def figure(doc, name: str, caption: str, width: float = 6.4) -> bool:
     """Insert one generated figure with its caption, or say it is missing.
 
@@ -1081,10 +1151,12 @@ def main() -> None:
         doc.add_picture(str(map_path), width=Inches(6.5))
         doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
         cap = doc.add_paragraph()
-        run = cap.add_run(
-            "Figure 4-4  Where the experiment stands, in one frame: a 4x3 matrix, columns M0 / M1 / difference, rows KGE and its three components. The first two columns of each row share a scale, so the pair can be compared by eye. Small dots are the 8,843 target gauges, scored against HOURLY observations -- Phase I's premise SIMULATED, since their hourly data exists and is withheld. Large outlined dots are the 282 African basins, scored against DAILY observations -- the same premise GENUINE, since no African catchment has hourly discharge at all. Same pretrained models and the same daily-only fine-tuning in both, so M0 and M1 mean structurally the same thing; only the observation the score is computed against differs, which is why the two are never pooled into one median and why the markers differ. Alpha and beta are drawn on a log scale, so halving and doubling the observed value sit equally far from the white centre. In the difference column the sign is the verdict for KGE and r, where larger is better, but NOT for alpha and beta, whose ideal is 1.0: an increase helps a gauge below it and hurts one above it. The beta row shows this directly -- the gauges' median difference is -0.019 while 26% of their deficit is removed, because beta started at 1.020 and moved DOWN toward 1. Each difference panel therefore prints the fraction of the deficit removed beside the raw change, and that fraction is what means better or worse. Africa carries the argument: worst at M0 (KGE 0.114, alpha 0.440, beta 0.475), largest gain (+0.409 against +0.062), close to the gauges by M1 (0.576). The rows give the mechanism: a daily total removes 76% of Africa's beta deficit and 67% of its alpha deficit against 32% of its r deficit -- volume and variability far more than timing, which is what a daily total can and cannot carry. Two things the medians hide: alpha is only partly repaired, 74% of gauges still under-dispersed afterwards, and the gauges' beta median of 1.020 conceals a 10-90% spread of 0.63 to 1.79."
+        # `run` is the docx Run below; the diagnostics directory has to come from diag_dir,
+        # and the two names collided on the first attempt.
+        caption_run = cap.add_run(
+            build_map_caption(diag_dir(MAIN, "runB"), Path(AFRICA[MAIN]["insitu"]))
         )
-        run.font.size = Pt(9)
+        caption_run.font.size = Pt(9)
         cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
     lat_path = Path("outputs/v2_stratify/maps/by_latitude_target.csv")
     if lat_path.exists():
