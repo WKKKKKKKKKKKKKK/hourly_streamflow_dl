@@ -44,6 +44,13 @@ STATIC_CSV = (
 MIN_OBS_STD = 1e-3
 
 
+# Axis limits, set once from the data by main(). A fixed (-180, 180) x (-60, 80) window
+# spent 21% of every panel's width on empty ocean -- there is not one gauge west of -124 or
+# east of 153 -- which shrank the clusters that do carry data.
+XLIM = (-180.0, 180.0)
+YLIM = (-60.0, 80.0)
+
+
 def panel(ax, lon, lat, values, title, cmap, norm, extend="neither", seed=0,
           overlay=None):
     """Draw one map and return its mappable, WITHOUT a colorbar.
@@ -78,8 +85,8 @@ def panel(ax, lon, lat, values, title, cmap, norm, extend="neither", seed=0,
     # panels of running text do not compete with twelve maps for the reader's attention.
     ax.annotate(title, (0.008, 0.965), xycoords="axes fraction", ha="left", va="top",
                 fontsize=11, fontweight="semibold", color="#0b0b0b")
-    ax.set_xlim(-180, 180)
-    ax.set_ylim(-60, 80)
+    ax.set_xlim(*XLIM)
+    ax.set_ylim(*YLIM)
     ax.set_aspect("equal")
     ax.grid(alpha=0.15, linewidth=0.4)
     ax.tick_params(labelsize=7)
@@ -219,6 +226,17 @@ def main() -> None:
         ("kge_alpha", "alpha", "ratio", "PuOr", Normalize(vmin=-2.0, vmax=2.0)),
         ("kge_beta", "beta", "ratio", "PuOr", Normalize(vmin=-2.0, vmax=2.0)),
     )
+
+    # Fit the window to everything that will be drawn, gauges and basins alike, with a
+    # small margin. Computed rather than hard-coded so a different station set re-fits.
+    all_lon = np.concatenate([lon] + ([africa["long"].to_numpy()] if africa is not None else []))
+    all_lat = np.concatenate([lat] + ([africa["lat"].to_numpy()] if africa is not None else []))
+    pad_x = 0.03 * (np.nanmax(all_lon) - np.nanmin(all_lon))
+    pad_y = 0.05 * (np.nanmax(all_lat) - np.nanmin(all_lat))
+    global XLIM, YLIM
+    XLIM = (float(np.nanmin(all_lon) - pad_x), float(np.nanmax(all_lon) + pad_x))
+    YLIM = (float(np.nanmin(all_lat) - pad_y), float(np.nanmax(all_lat) + pad_y))
+    print(f"map window: lon {XLIM[0]:.0f} to {XLIM[1]:.0f}, lat {YLIM[0]:.0f} to {YLIM[1]:.0f}")
 
     pair_bars: list = []
     diff_bars: list = []
