@@ -590,9 +590,23 @@ def part_results_tail(d: dict) -> str:
         r"trainable gauge -- which is the opposite of what a proximity-driven result would "
         r"do (Figure~\ref{fig:strata})." )
     s.append("")
-    s.append(fig("fig02_gain_drivers.png",
-                 "Gain against isolation and against catchment area, by quintile. Isolation "
-                 "does not reduce the gain; area does.", "strata"))
+    trends = load("outputs/v2_stratify/gain_trends_target.csv")
+    caption = ("Median gain $M1-M0$ by quintile, against distance to the nearest trainable "
+               "gauge (left, one line per split) and against catchment area (right). ")
+    if trends is not None:
+        tr = trends.set_index("variable")
+        area = tr.loc["area_km2"]
+        blocked = tr.loc["nearest_other_fold_km_blocked"]
+        caption += (
+            f"Area is the stronger and the more interpretable driver (Spearman "
+            f"$\\rho={area.spearman_rho:.3f}$ over \\num{{{int(area.n)}}} gauges, "
+            f"$p={area.p:.0e}$): the gain falls from \\num{{0.112}} in the smallest quintile "
+            f"to \\num{{0.022}} in the largest. Isolation does not reduce the gain -- under "
+            f"the blocked split it rises with distance "
+            f"($\\rho={blocked.spearman_rho:+.3f}$) -- which is the opposite of what a "
+            f"result driven by proximity to training gauges would do, and is the reason this "
+            f"panel is here rather than the area panel alone.")
+    s.append(fig("fig02_gain_drivers.png", caption, "strata"))
 
     s.append(r"\section{What spatial blocking costs, and how much fine-tuning returns}"
              r"\label{sec:r-split}")
