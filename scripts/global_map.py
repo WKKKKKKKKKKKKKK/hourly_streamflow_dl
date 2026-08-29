@@ -192,118 +192,87 @@ def main() -> None:
     # cannot be said with one panel: the median alpha moves 0.813 -> 0.851 while the share
     # of under-dispersed gauges barely shifts (71.4% -> 72.4%). What actually happens is a
     # tightening toward 1.0 from both sides, which needs before, after and change to show.
-    fig, axes = plt.subplots(3, 3, figsize=(20.5, 12))
-    kge_norm = Normalize(vmin=-0.4, vmax=0.9)
-    panel(axes[0, 0], lon, lat, table["M0_kge"].to_numpy(),
-          f"M0 zero-shot KGE (gauges, hourly: {table['M0_kge'].median():.3f}"
-          f"{afr('M0_kge', ' | basins, daily {:.3f}')})",
-          "viridis", kge_norm, "KGE", overlay=over("M0_kge"))
-    panel(axes[0, 1], lon, lat, table["M1_kge"].to_numpy(),
-          f"M1 after daily-only fine-tuning (gauges {table['M1_kge'].median():.3f}"
-          f"{afr('M1_kge', ' | basins {:.3f}')})",
-          "viridis", kge_norm, "KGE", overlay=over("M1_kge"))
-    # Span from the 10-90% range, not the extremes, so the bulk of the distribution is
-    # resolvable; the colorbar arrows say values run past the ends.
-    gain = table["gain"].to_numpy()
-    span = float(max(abs(np.nanpercentile(gain, 10)), abs(np.nanpercentile(gain, 90)))) or 0.1
-    clipped = float(np.mean(np.abs(gain) > span))
-    panel(axes[0, 2], lon, lat, gain,
-          f"gain M1 - M0 (gauges {table['gain'].median():+.3f}, "
-          f"{(gain > 0).mean():.0%} improved"
-          f"{afr('gain', ' | basins {:+.3f}')})",
-          "RdBu_r", TwoSlopeNorm(vmin=-span, vcenter=0.0, vmax=span), "ΔKGE",
-          extend="both", overlay=over("gain"))
-    # Alpha on a LOG axis, and this is not cosmetic. Alpha is a ratio, so 0.5 (half the
-    # observed variability) and 2.0 (double it) are equally wrong, but a linear scale
-    # centred at 1.0 put 0.5 halfway down the bar and pushed 2.0 off the top. With the
-    # 10-90 percentile range it used before, 19.5% of stations fell outside the bar and
-    # rendered at the end colour -- alpha 0.08 looked identical to 0.40 -- while 35% of
-    # them crowded into 0.6-0.9, one narrow slice of orange. The panel came out a nearly
-    # uniform orange wash that could not be read. log2 with a symmetric range of +/-2
-    # (a factor of four each way) puts 1.0 at the centre by construction, spaces halving
-    # and doubling equally, and covers 93% of stations.
-    # Both alpha and beta are RATIOS, so both go on a log axis: halving and doubling are
-    # equally wrong and belong equidistant from the white centre. A linear scale centred at
-    # 1.0 put 0.5 halfway down the bar and pushed 2.0 off the top, which rendered the alpha
-    # panel as a near-uniform orange wash with 19.5% of gauges clipped to the end colour.
-    # Rows: result, then where the zero-shot model loses, then what the daily signal fixes.
-    # Every KGE component appears in both of the lower rows. An earlier version mapped only
-    # alpha at M0 and alpha's repair, on the reasoning that r "barely moves" -- 0.797 to
-    # 0.812 -- and would render as a uniform panel. That conflated a small median CHANGE
-    # with a uniform spatial distribution: r's level spans 0.091 to 0.519 across gauges at
-    # the 10-90 percentiles, so it maps perfectly well. And once Africa is overlaid the
-    # reasoning fails outright, because Africa's r repair is 32%, not 7%.
+    fig, axes = plt.subplots(4, 3, figsize=(20.5, 15.5))
+    # A 4x3 matrix: columns are M0 / M1 / difference, rows are KGE and its three
+    # components. Every quantity therefore appears before, after, and as a change, and the
+    # first two columns of a row share one scale so the pair can be compared by eye.
     marks = [0.25, 0.5, 0.71, 1.0, 1.41, 2.0, 4.0]
     log_ticks = [np.log2(m) for m in marks]
     tick_text = [f"{m:g}" for m in marks]
 
-    def deficit(values, component):
-        """Distance from the ideal: 1 - r for the correlation, |log2 x| for the two ratios.
-
-        A ratio's 0.5 and 2.0 are equally wrong and their arithmetic mean is not 1, so the
-        two kinds of component cannot share one definition of "how far off".
-        """
-        if component == "r":
-            return 1.0 - values
+    def log2_of(values):
         with np.errstate(divide="ignore", invalid="ignore"):
-            return np.abs(np.log2(np.where(values > 0, values, np.nan)))
+            return np.log2(np.where(values > 0, values, np.nan))
 
-    SPEC = (
-        ("r", "r at M0 = correlation", "orange = timing too poor", "r"),
-        ("alpha", "alpha at M0 = std(sim)/std(obs)", "orange = swings too little", "alpha"),
-        ("beta", "beta at M0 = mean(sim)/mean(obs)", "orange = too little water", "beta"),
+    def deficit(values, kind):
+        """Distance from the ideal: 1 - x for KGE and r, |log2 x| for the two ratios."""
+        if kind == "ratio":
+            return np.abs(log2_of(values))
+        return 1.0 - values
+
+    ROWS = (
+        # key, row label, kind, colormap, norm for the M0/M1 pair, extra title text
+        ("kge", "KGE", "score", "viridis", Normalize(vmin=-0.4, vmax=0.9), ""),
+        ("kge_r", "r = correlation", "score", "viridis", Normalize(vmin=0.0, vmax=1.0),
+         "dark = timing wrong"),
+        ("kge_alpha", "alpha = std(sim)/std(obs)", "ratio", "PuOr",
+         Normalize(vmin=-2.0, vmax=2.0), "orange = swings too little, purple = too much"),
+        ("kge_beta", "beta = mean(sim)/mean(obs)", "ratio", "PuOr",
+         Normalize(vmin=-2.0, vmax=2.0), "orange = too little water, purple = too much"),
     )
-    for col, (component, heading, sense, label) in enumerate(SPEC):
-        column = f"M0_kge_{component}"
-        values = table[column].to_numpy()
-        lo, hi = np.nanpercentile(values, [10, 90])
-        if component == "r":
-            # r is not a ratio: it lives on (-inf, 1] with 1 the ideal, so it gets a
-            # sequential scale running to 1 rather than a log axis centred on it.
-            panel(axes[1, col], lon, lat, values,
-                  f"{heading} (gauges {np.nanmedian(values):.3f}"
-                  f"{afr(column, ' | basins {:.3f}')})\n"
-                  f"dark = timing wrong; 10-90%: {lo:.2f}-{hi:.2f}",
-                  "viridis", Normalize(vmin=0.0, vmax=1.0), label,
-                  extend="min", overlay=over(column))
-        else:
-            inside = float(np.mean((values >= 0.25) & (values <= 4.0)))
-            with np.errstate(divide="ignore", invalid="ignore"):
-                log_values = np.log2(np.where(values > 0, values, np.nan))
-            panel(axes[1, col], lon, lat, log_values,
-                  f"{heading}, log scale (gauges {np.nanmedian(values):.3f}"
-                  f"{afr(column, ' | basins {:.3f}')})\n"
-                  f"{sense} ({np.mean(values < 1):.0%}), purple = too much; "
-                  f"10-90%: {lo:.2f}-{hi:.2f}",
-                  "PuOr", Normalize(vmin=-2.0, vmax=2.0), label,
-                  extend="both", ticks=log_ticks, ticklabels=tick_text,
-                  overlay=over_log(column))
 
-    # Bottom row: how much of each deficit the daily signal removes. Signed so POSITIVE is
-    # improvement and drawn with RdBu_r, so red is improvement here exactly as in the gain
-    # panel at the top -- the two change rows must not use opposite conventions.
-    for col, (component, _, _, _) in enumerate(SPEC):
-        d0 = deficit(table[f"M0_kge_{component}"].to_numpy(), component)
-        d1 = deficit(table[f"M1_kge_{component}"].to_numpy(), component)
-        repair = d0 - d1
-        rspan = float(np.nanpercentile(np.abs(repair), 90)) or 0.5
-        closer = float(np.nanmean(repair > 0))
+    for row, (key, row_label, kind, cmap, norm, sense) in enumerate(ROWS):
+        ratio = kind == "ratio"
+        ticks = log_ticks if ratio else None
+        labels = tick_text if ratio else None
+        for col, tag in enumerate(("M0", "M1")):
+            column = f"{tag}_{key}" if key != "kge" else f"{tag}_kge"
+            values = table[column].to_numpy()
+            drawn = log2_of(values) if ratio else values
+            when = "zero-shot" if tag == "M0" else "after daily-only fine-tuning"
+            # The reading note goes on the M0 panel only. Repeating it on M1 doubled the
+            # title length for nothing: the two share a scale, so it reads once.
+            lines = [f"{row_label} at {tag} ({when}){', log scale' if ratio else ''}",
+                     f"gauges {np.nanmedian(values):.3f}"
+                     f"{afr(column, ' | basins {:.3f}')}"]
+            if sense and tag == "M0":
+                lines.append(sense)
+            panel(axes[row, col], lon, lat, drawn, "\n".join(lines),
+                  cmap, norm, row_label.split(" =")[0],
+                  extend="both" if ratio else "min",
+                  ticks=ticks, ticklabels=labels,
+                  overlay=(over_log(column) if ratio else over(column)))
+
+        # Third column: the plain difference M1 - M0, in the quantity's own units. For KGE
+        # and r that is unambiguous -- higher is better, so red is better. For alpha and
+        # beta it is NOT: their ideal is 1, so an increase helps a gauge below 1 and hurts
+        # one above it. The title says so, and carries the fraction of the DEFICIT removed
+        # beside it, which is the number that does mean better or worse.
+        m0 = table[f"M0_{key}" if key != "kge" else "M0_kge"].to_numpy()
+        m1 = table[f"M1_{key}" if key != "kge" else "M1_kge"].to_numpy()
+        diff = m1 - m0
+        span = float(np.nanpercentile(np.abs(diff), 90)) or 0.1
+        d0, d1 = deficit(m0, kind), deficit(m1, kind)
         removed = 100 * (np.nanmedian(d0) - np.nanmedian(d1)) / np.nanmedian(d0)
+        note = f"gauges {np.nanmedian(diff):+.3f} ({removed:.0f}% of deficit removed)"
         a_over = None
-        a_note = ""
         if africa is not None:
-            ad0 = deficit(africa[f"M0_kge_{component}"].to_numpy(), component)
-            ad1 = deficit(africa[f"M1_kge_{component}"].to_numpy(), component)
-            a_over = (africa["long"].to_numpy(), africa["lat"].to_numpy(), ad0 - ad1)
+            am0 = africa[f"M0_{key}" if key != "kge" else "M0_kge"].to_numpy()
+            am1 = africa[f"M1_{key}" if key != "kge" else "M1_kge"].to_numpy()
+            a_over = (africa["long"].to_numpy(), africa["lat"].to_numpy(), am1 - am0)
+            ad0, ad1 = deficit(am0, kind), deficit(am1, kind)
             a_removed = 100 * (np.nanmedian(ad0) - np.nanmedian(ad1)) / np.nanmedian(ad0)
-            a_note = (f"basins {np.nanmean(ad0 - ad1 > 0):.0%} improved, "
-                      f"{a_removed:.0f}% of deficit.  ")
-        panel(axes[2, col], lon, lat, repair,
-              f"{component} repair: gauges {closer:.0%} improved, "
-              f"{removed:.0f}% of deficit\n"
-              f"{a_note}red = moved toward the ideal, blue = away",
-              "RdBu_r", TwoSlopeNorm(vmin=-rspan, vcenter=0.0, vmax=rspan),
-              f"reduction in {component} deficit", extend="both", overlay=a_over)
+            note += (f"\nbasins {np.nanmedian(am1 - am0):+.3f} "
+                     f"({a_removed:.0f}% removed)")
+        # For KGE and r the sign IS the verdict. For the two ratios it is not: their ideal
+        # is 1, so an increase helps a gauge below it and hurts one above it, which is why
+        # the deficit figure is printed beside the raw difference.
+        caveat = ("red = larger; ideal is 1.0, so that helps below it, hurts above"
+                  if ratio else "red = larger, which here means better")
+        panel(axes[row, 2], lon, lat, diff,
+              f"{row_label.split(' =')[0]}: M1 - M0\n{note}\n{caveat}",
+              "RdBu_r", TwoSlopeNorm(vmin=-span, vcenter=0.0, vmax=span),
+              f"change in {row_label.split(' =')[0]}", extend="both", overlay=a_over)
 
     # Say plainly what the station cloud covers: "global" describes the model, not the
     # gauge network. Africa, South America and mainland Asia contribute no stations.
