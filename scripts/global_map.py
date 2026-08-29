@@ -220,7 +220,7 @@ def main() -> None:
         ("kge_beta", "beta", "ratio", "PuOr", Normalize(vmin=-2.0, vmax=2.0)),
     )
 
-    pair_handles: dict = {}
+    pair_bars: list = []
     diff_bars: list = []
     for row, (key, bar_label, kind, cmap, norm) in enumerate(ROWS):
         ratio = kind == "ratio"
@@ -232,11 +232,9 @@ def main() -> None:
                            f"({chr(ord('a') + row * 3 + col)})", cmap, norm,
                            extend="both" if ratio else "min",
                            overlay=(over_log(column) if ratio else over(column)))
-        # One bar for the pair, and for alpha and beta one bar for all four of their panels,
-        # since those two rows share an identical log axis. Deferred to a list so the bar can
-        # be attached to every axes it serves and sized against them together.
-        pair_handles.setdefault(bar_label if not ratio else "ratio", []).append(
-            (handle, [axes[row, 0], axes[row, 1]], ratio, bar_label))
+        # One bar for the M0/M1 pair, deferred until the layout is final so it can be
+        # placed from the axes' settled positions.
+        pair_bars.append((handle, [axes[row, 0], axes[row, 1]], ratio, bar_label))
 
         # Third column: the plain difference M1 - M0, in the quantity's own units. For KGE
         # and r that is unambiguous -- higher is better, so red is better. For alpha and
@@ -280,48 +278,50 @@ def main() -> None:
         + overlay_note,
         fontsize=10,
     )
-    # Seven colorbars for twelve panels: one per distinct scale rather than one per axes.
-    # Positioned explicitly rather than by fig.colorbar(ax=[...]), which steals width from
-    # the axes it is attached to and, under a manual subplots_adjust, laid the bars straight
-    # over the middle column's maps.
-    fig.subplots_adjust(left=0.035, right=0.90, top=top_frac, bottom=0.045,
-                        hspace=0.22, wspace=0.24)
+    # Two colorbars per row, in the same two places in every row: one after column 2 for
+    # the M0/M1 pair, which share a scale by construction, and one after column 3 for the
+    # difference. Eight bars rather than the seven a shared alpha/beta bar would give,
+    # because that shared bar had to span two rows and sat shortened between them, which
+    # made the grid visibly lopsided. Rows that look identical are worth one duplicate bar.
+    #
+    # Positioned explicitly from the axes' own boxes rather than by fig.colorbar(ax=[...]),
+    # which steals width from the axes it attaches to and, under this figure's manual
+    # subplots_adjust, laid the bars across the middle column's maps. That fixes an order
+    # too: the bars read FINAL positions, so they come after suptitle and subplots_adjust,
+    # and tight_layout must not run afterwards or it undoes them.
+    # Columns are placed by hand, because matplotlib's wspace is uniform and this figure
+    # needs two different gaps: M0 and M1 share a scale, so they sit as a tight pair with
+    # the bar that serves them after the pair, while the difference column stands apart with
+    # its own bar. A uniform gap left the space after column 1 looking empty next to two
+    # gaps that hold bars, which is the unevenness this replaces -- and the tight pairing
+    # now says "these two share a scale" without a word.
+    LEFT, RIGHT_PAD = 0.028, 0.012
+    GAP_PAIR, GAP_BAR = 0.014, 0.032
+    BAR_W, BAR_GAP = 0.0075, 0.005
+    width = (1.0 - LEFT - RIGHT_PAD - GAP_PAIR - 2 * GAP_BAR) / 3.0
+    xs = (LEFT, LEFT + width + GAP_PAIR, LEFT + 2 * width + GAP_PAIR + GAP_BAR)
 
-    def place_bar(handle, axs, label, ratio, gap_right, height_frac=1.0):
-        """A bar in the margin to the right of ``axs``.
+    fig.subplots_adjust(top=top_frac, bottom=0.045, hspace=0.22)
+    for row in range(axes.shape[0]):
+        for col in range(axes.shape[1]):
+            box = axes[row, col].get_position()
+            axes[row, col].set_position([xs[col], box.y0, width, box.height])
 
-        ``height_frac`` shortens and re-centres it. A bar shared across two rows spans the
-        gap between them as well, which made the alpha/beta bar taller than any panel and
-        left a void beside it; 0.55 keeps it clearly paired with both rows without that.
-        """
-        boxes = [a.get_position() for a in axs]
-        y0, y1 = min(b.y0 for b in boxes), max(b.y1 for b in boxes)
-        span = (y1 - y0) * height_frac
-        y0 = y0 + ((y1 - y0) - span) / 2
-        x = max(b.x1 for b in boxes) + gap_right
-        cax = fig.add_axes([x, y0, 0.008, span])
-        bar = fig.colorbar(handle, cax=cax, extend="both" if ratio else "min",
+    def place_bar(handle, ax, label, ratio, diverging):
+        box = ax.get_position()
+        cax = fig.add_axes([box.x1 + BAR_GAP, box.y0, BAR_W, box.height])
+        bar = fig.colorbar(handle, cax=cax,
+                           extend="both" if (ratio or diverging) else "min",
                            ticks=log_ticks if ratio else None)
         if ratio:
             bar.ax.set_yticklabels(tick_text)
         bar.set_label(label, fontsize=8)
         bar.ax.tick_params(labelsize=7)
 
-    for group, entries in pair_handles.items():
-        if group == "ratio":
-            # alpha and beta share an identical log axis, so one bar serves all four of
-            # their M0/M1 panels.
-            axs = [a for _, pair, _, _ in entries for a in pair]
-            place_bar(entries[0][0], axs, "alpha, beta", True, 0.014, height_frac=0.55)
-        else:
-            handle, axs, ratio, label = entries[0]
-            place_bar(handle, axs, label, ratio, 0.014)
+    for handle, axs, ratio, label in pair_bars:
+        place_bar(handle, axs[1], label, ratio, False)
     for handle, ax, label in diff_bars:
-        boxes = ax.get_position()
-        cax = fig.add_axes([boxes.x1 + 0.014, boxes.y0, 0.008, boxes.height])
-        bar = fig.colorbar(handle, cax=cax, extend="both")
-        bar.set_label(label, fontsize=8)
-        bar.ax.tick_params(labelsize=7)
+        place_bar(handle, ax, label, False, True)
 
     path = out_dir / f"global_map_{args.domain}.png"
     fig.savefig(path, dpi=args.dpi, bbox_inches="tight")
