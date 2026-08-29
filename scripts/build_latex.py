@@ -123,6 +123,51 @@ def gather() -> dict:
     return d
 
 
+def map_caption(d: dict) -> str:
+    """Figure 9's caption, enumerating all twelve panels from the files the map reads.
+
+    The panels carry only a letter, so the caption is the only place a reader learns what
+    each one shows. It is generated rather than written out, for the same reason every other
+    number here is: a caption that is the sole carrier of twelve pairs of numbers is exactly
+    where hand-typed values drift. An earlier revision punted to "the corresponding Word
+    report figure", which left this document incomplete on its own.
+    """
+    table = d["kge"]
+    comp = load("outputs/v2_runB/diagnostics_allhours/kge_components_target.csv")
+    m0 = load("outputs/v2_africa_insitu_summary/ensemble_per_basin_M0.csv")
+    m1 = load("outputs/v2_africa_insitu_summary/ensemble_per_basin_M1.csv")
+    if comp is None or m0 is None or m1 is None:
+        return "Target-domain and African metrics in space."
+    comp = comp.loc[comp["obs_std"] >= 1e-3]
+    afr = m0.set_index("station_id").join(m1.set_index("station_id"),
+                                          lsuffix="_M0", rsuffix="_M1", how="inner")
+    letters = "abcdefghijkl"
+    parts = []
+    for i, (name, key, ratio) in enumerate((("KGE", "kge", False), ("$r$", "kge_r", False),
+                                            (r"$\alpha$", "kge_alpha", True),
+                                            (r"$\beta$", "kge_beta", True))):
+        g0, g1 = comp[f"M0_{key}"], comp[f"M1_{key}"]
+        a0, a1 = afr[f"{key}_M0"], afr[f"{key}_M1"]
+        parts.append(
+            f"({letters[i * 3]}) {name} at M0, gauges {g0.median():.3f}, basins "
+            f"{a0.median():.3f}; ({letters[i * 3 + 1]}) at M1, {g1.median():.3f} and "
+            f"{a1.median():.3f}; ({letters[i * 3 + 2]}) the difference, median "
+            f"{(g1 - g0).median():+.3f} and {(a1 - a0).median():+.3f}")
+    return (
+        "Columns are M0, M1 and their difference; rows are KGE and its three components, "
+        "with the first two columns of a row sharing one scale. Small dots are the target "
+        "gauges, scored against hourly observations, where Phase~I's premise is simulated; "
+        "large outlined dots are the African basins, scored against daily observations, "
+        "where it is genuine. The two are never pooled into one median because the "
+        r"observation each score rests on differs. $\alpha$ and $\beta$ use a log scale, so "
+        "halving and doubling the observed value sit equally far from the white centre. "
+        "Longitude is labelled on the bottom row and latitude on the left column only, since "
+        "all twelve panels share one window. Panels: " + ".\\ ".join(parts) + ". In the "
+        "difference column the sign is the verdict for KGE and $r$, where larger is better, "
+        r"but not for $\alpha$ and $\beta$, whose ideal is 1.0: an increase helps a gauge "
+        "below it and hurts one above it.")
+
+
 def part_experiments(d: dict) -> str:
     """Part I, section for section with Part II and in the same order.
 
@@ -154,6 +199,8 @@ def part_experiments(d: dict) -> str:
         ("The same test, hourly", "sec:e-africa-hourly", "sec:r-africa-hourly"),
     ]
     rows = [[q, rf"\S\ref{{{e}}}", rf"\S\ref{{{r}}}"] for q, e, r in pairs]
+    s.append("The pairing is set out in Table~\\ref{tab:chain}.")
+    s.append("")
     s.append(table(["Question", "Experiment", "Result"], rows,
                    "The correspondence between the two parts.", "chain", align="lcc"))
 
@@ -330,7 +377,7 @@ def part_results(d: dict) -> str:
         r"Under v1 the blocked split reaches \num{0.475}; under v2 it reaches \num{0.621}. "
         r"v3's longer budget changes almost nothing (\num{0.624} blocked, \num{0.627} true "
         r"daily), which is the first evidence that v2 was not simply stopped early. "
-        r"v2 is the primary configuration throughout.")
+        r"v2 is the primary configuration throughout (Figure~\ref{fig:config})." )
     s.append("")
     s.append(fig("fig03_configurations.png",
                  "Every configuration, as an M0 (open) to M1 (filled) movement in median "
@@ -350,7 +397,7 @@ def part_results(d: dict) -> str:
             f"a median change of \\num{{{row['median_delta']:+.4f}}} over {n:,} gauges. "
             f"\\SI{{{100 * (1 - row['frac_worse']):.0f}}}{{\\percent}} of gauges improve, which "
             f"is the part that matters: the gain is broad rather than an average pulled up by a "
-            f"few. Under the blocked split the same fine-tuning lifts "
+            f"few (Figure~\\ref{{fig:map}}). Under the blocked split the same fine-tuning lifts "
             f"\\num{{{kgb.loc['kge', 'M0_median']:.4f}}} to "
             f"\\num{{{kgb.loc['kge', 'M1_median']:.4f}}}.")
         s.append("")
@@ -373,14 +420,7 @@ def part_results(d: dict) -> str:
               "``Global'' describes the model, not the gauge network, which is why the African "
               "test in Section~\\ref{sec:r-africa-daily} cannot be substituted for.")
         s.append("")
-    s.append(fig("fig09_global_map.png",
-                 "Columns are M0, M1 and their difference; rows are KGE and its three "
-                 "components. Small dots are the target gauges, scored against hourly "
-                 "observations, where Phase~I's premise is simulated. Large outlined dots are "
-                 "the African basins, scored against daily observations, where it is genuine. "
-                 "The two are never pooled into one median, because the observation the score "
-                 "rests on differs. Panel letters are used in the text; the full enumeration is "
-                 "in the caption of the corresponding Word report figure.", "map"))
+    s.append(fig("fig09_global_map.png", map_caption(d), "map"))
 
     # ---- corresponds to sec:e-setup (mechanism)
     s.append(r"\section{The gain is a variance repair, not a timing repair}"
@@ -395,7 +435,8 @@ def part_results(d: dict) -> str:
             f"\\num{{{a_['median_delta']:+.4f}}}, and the bias ratio $\\beta$ moves from "
             f"\\num{{{b_['M0_median']:.3f}}} toward \\num{{{b_['M1_median']:.3f}}}. A daily "
             f"total carries how much water, not which hour it arrived, so this is what it "
-            f"should repair -- and it is a falsifiable prediction, not a description.")
+            f"should repair -- and it is a falsifiable prediction, not a description "
+            f"(Figure~\\ref{{fig:components}})." )
         s.append("")
     s.append(fig("fig01_kge_components.png",
                  "M0 to M1 movement in each KGE component, under both splits. $r$ barely "
@@ -421,7 +462,8 @@ def part_results(d: dict) -> str:
                  f"\\SI{{{100 * v['timing_fraction_removed']:.0f}}}{{\\percent}} "
                  f"(\\num{{{v['ratio']:.1f}}}$\\times$)" for dom, v in mech.items()]
         s.append("The prediction holds on two domains whose zero-shot deficits differ by about "
-                 "a factor of four. Magnitude against timing: " + "; ".join(parts) + ".")
+                 "a factor of four (Table~\\ref{tab:deficits}, Figure~\\ref{fig:mechanism}). "
+                 "Magnitude against timing: " + "; ".join(parts) + ".")
         s.append("")
     s.append(fig("fig11_component_deficits.png",
                  "One axis per component, because $1-r$ and $|\\log_2 x|$ are not in the same "
@@ -452,7 +494,8 @@ def part_results_tail(d: dict) -> str:
                              f"{m[key]['M1'] / o:.2f}$\\times$"])
         s.append(
             "A model gaming the aggregate loss would flatten the day. It does not: within-day "
-            "variability survives, and under v2 it is neither suppressed nor exaggerated.")
+            "variability survives, and under v2 it is neither suppressed nor exaggerated "
+            "(Table~\\ref{tab:degenerate}, Figure~\\ref{fig:intraday})." )
         s.append("")
         s.append(table(["Metric", "Observed", "M0 / obs", "M1 / obs"], rows,
                        "Within-day behaviour against the observed median, configuration v2. "
@@ -484,7 +527,7 @@ def part_results_tail(d: dict) -> str:
         r"worsens, and an eighth do the reverse. This is a consequence of the mechanism rather "
         r"than a contradiction of it -- restoring variance moves peaks, which improves the "
         r"shape metrics and can increase squared error at individual hours. A per-gauge claim "
-        r"must therefore say which metric it is made under.")
+        r"must therefore say which metric it is made under (Figure~\ref{fig:metrics})." )
     s.append("")
     s.append(fig("fig05_metric_disagreement.png",
                  "Change in KGE against reduction in point-wise absolute error, one hexagon "
@@ -501,7 +544,7 @@ def part_results_tail(d: dict) -> str:
         r"checkpoint on a daily-aggregate criterion instead of on the hidden hourly truth costs "
         r"\num{0.0035} in median KGE, against a fold-to-fold noise level of \num{0.0078}: the "
         r"cost of the method's own model-selection constraint is smaller than the noise it is "
-        r"measured against.")
+        r"measured against (Figure~\ref{fig:convergence})." )
     s.append("")
     s.append(fig("fig06_convergence.png",
                  "Source-domain validation KGE per epoch, five folds per configuration, zoomed "
@@ -532,9 +575,10 @@ def part_results_tail(d: dict) -> str:
             r"helps one hurts the other. Whether that trade is acceptable depends on what the "
             r"deployed model is for -- if the source gauges keep their hourly data, they do "
             r"not need the fine-tuned weights, and the two can be served by separate "
-            r"checkpoints. Source replay was tested as a mitigation and is reported in the "
-            r"accompanying Word report; it damps the re-calibration and therefore trades some "
-            r"of the target-domain gain away.")
+            r"checkpoints. Mixing a fraction of source samples back into the fine-tuning was "
+            r"tested as a mitigation: it damps the re-calibration, which is what protects the "
+            r"source domain, and therefore trades away part of the target-domain gain. It is "
+            r"a dial between the two domains rather than a way out of the trade.")
         s.append("")
 
     s.append(r"\section{Where the gain lands}\label{sec:r-strata}")
@@ -543,7 +587,8 @@ def part_results_tail(d: dict) -> str:
         r"mechanism: a small fast-responding catchment is where a zero-shot model is least "
         r"calibrated and where a daily total adds most information. Isolation does \emph{not} "
         r"reduce the gain -- under the blocked split it rises with distance to the nearest "
-        r"trainable gauge -- which is the opposite of what a proximity-driven result would do.")
+        r"trainable gauge -- which is the opposite of what a proximity-driven result would "
+        r"do (Figure~\ref{fig:strata})." )
     s.append("")
     s.append(fig("fig02_gain_drivers.png",
                  "Gain against isolation and against catchment area, by quintile. Isolation "
@@ -566,7 +611,7 @@ def part_results_tail(d: dict) -> str:
             f"$p=\\num{{{pval:.1e}}}$. The drop is negative in all six agencies, so it is not "
             f"one region's peculiarity. Daily-aggregate fine-tuning then returns "
             f"\\SI{{{recovered:.1f}}}{{\\percent}} of it: the residual at M1 is only "
-            f"\\num{{{drop1:+.4f}}}.")
+            f"\\num{{{drop1:+.4f}}} (Table~\\ref{{tab:recovery}}, Figure~\\ref{{fig:split}}).")
         s.append("")
         rec = load("outputs/v2_split_effect/recovery_by_agency.csv")
         if rec is not None:
@@ -611,7 +656,7 @@ def part_africa(d: dict) -> str:
             f"lifts it to \\num{{{m1['median_kge']:.4f}}}, a paired median change of "
             f"\\num{{{afr['paired']['median_delta_kge']:+.4f}}} with "
             f"\\SI{{{100 * afr['paired']['frac_improved']:.1f}}}{{\\percent}} of basins "
-            f"improving.")
+            f"improving (Figure~\\ref{{fig:africa-daily}}).")
         s.append("")
         rows = [["ERA5-Land runoff", f"{three['era5_land']['median_kge']:+.4f}",
                  f"{three['era5_land']['median_nse']:+.4f}"],
@@ -681,7 +726,8 @@ def part_africa(d: dict) -> str:
             r"Whether that flattening loses \emph{real} structure cannot be settled in Africa, "
             r"because no hourly observation exists there. On the target domain, where it does, "
             r"the same step moved within-day standard deviation from \num{0.86} to \num{0.89} "
-            r"of observed -- toward the observations, not away.")
+            r"of observed -- toward the observations, not away "
+            r"(Figure~\ref{fig:africa-hourly}).")
         s.append("")
         s.append(
             r"ERA5-Land is drawn beside the model in the hourly panels as a contrast and not "
@@ -708,7 +754,7 @@ def part_africa(d: dict) -> str:
         "Phase~I as written has five steps. Four are met, one of those returns the opposite "
         "of the hoped-for answer, and the fifth is met under the reading its wording most "
         "likely intends while a stricter reading of it is not achievable at all. The last two "
-        "are the ones worth reading.")
+        "are the ones worth reading; Table~\\ref{tab:plan} summarises them.")
     s.append("")
     rows = [
         [r"1. 5-fold; train on \SI{80}{\percent} hourly, validate on \SI{20}{\percent}; "
@@ -725,7 +771,7 @@ def part_africa(d: dict) -> str:
     ]
     s.append(table(["Plan step", "Status", "Reported in"], rows,
                    "Phase~I against the plan it was written from.", "plan",
-                   align=r"p{0.50\linewidth}ll"))
+                   align=r"p{0.42\linewidth}p{0.30\linewidth}l"))
     s.append(
         r"\textbf{Step~3 returns a negative answer.} The plan asks whether there is no "
         r"degradation on the source domain. There is, consistently, in every fold. It is "
@@ -819,8 +865,8 @@ PREAMBLE = r"""\documentclass[11pt,a4paper]{article}
 
 \title{Global hourly streamflow under daily-only supervision\\[0.3em]
   \large Phase~I: experiments and results}
-\author{}
-\date{}
+\author{__AUTHOR__}
+\date{__DATE__}
 
 \begin{document}
 \maketitle
@@ -841,13 +887,20 @@ Part~II reports what came out, section for section in the same order.
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build the Phase I report as LaTeX.")
     parser.add_argument("--out", default="reports/latex/PhaseI_report.tex", type=Path)
+    # Defaults name the person who ran the work. Pass --author to add an advisor or to
+    # change the order; a report going to a supervisor should not carry a guessed byline.
+    parser.add_argument("--author", default="Weikang Kong")
+    parser.add_argument("--date", default=None, help="Defaults to today.")
     args = parser.parse_args()
     args.out.parent.mkdir(parents=True, exist_ok=True)
 
     d = gather()
     body = "\n\n".join([part_experiments(d), r"\clearpage", part_results(d),
                         part_results_tail(d), part_africa(d)])
-    args.out.write_text(PREAMBLE + body + "\n\n\\end{document}\n", encoding="utf-8")
+    from datetime import date
+    preamble = (PREAMBLE.replace("__AUTHOR__", args.author)
+                .replace("__DATE__", args.date or date.today().isoformat()))
+    args.out.write_text(preamble + body + "\n\n\\end{document}\n", encoding="utf-8")
     print(f"wrote {args.out} ({args.out.stat().st_size / 1024:.0f} KB)")
     missing = [n for n in ("fig01_kge_components.png", "fig02_gain_drivers.png",
                            "fig03_configurations.png", "fig04_agency_recovery.png",
