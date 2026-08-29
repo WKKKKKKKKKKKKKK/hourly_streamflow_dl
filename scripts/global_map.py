@@ -307,39 +307,45 @@ def main() -> None:
     # subplots_adjust, laid the bars across the middle column's maps. That fixes an order
     # too: the bars read FINAL positions, so they come after suptitle and subplots_adjust,
     # and tight_layout must not run afterwards or it undoes them.
-    # Both bars of a row sit together at its right edge, so none of the three map columns
-    # carries one and the twelve maps form a regular grid. The alternative -- putting the
-    # pair's bar after column 2, which is where the scale it serves ends -- left column 1
-    # with nothing beside it and the grid looking unfinished. A bar one column away from
-    # what it describes is the price; the row and the label make the pairing unambiguous.
-    LEFT, RIGHT_PAD, GAP = 0.028, 0.010, 0.026
-    BAR_W, BAR_GAP, BAR_SPACING = 0.0075, 0.014, 0.040
-    bars_width = 2 * BAR_W + BAR_GAP + BAR_SPACING
-    width = (1.0 - LEFT - RIGHT_PAD - 2 * GAP - bars_width) / 3.0
-    xs = tuple(LEFT + i * (width + GAP) for i in range(3))
-    bar_xs = (xs[2] + width + BAR_GAP, xs[2] + width + BAR_GAP + BAR_W + BAR_SPACING)
+    # One colorbar per panel, each hugging the map it belongs to, and the gaps between
+    # panels pulled in. Scales are still shared wherever the colours are: M0 and M1 of a row
+    # use one norm, so the pair is comparable at a glance, and alpha and beta use the same
+    # log norm as each other.
+    #
+    # The four difference panels are the one place a shared scale is NOT applied. They are
+    # all RdBu_r, but their magnitudes differ eightfold -- change in KGE spans +/-0.65 and
+    # change in r +/-0.085 -- so one scale would render the r panel uniformly white. With a
+    # bar beside every panel the differing spans are stated where they are used, which is
+    # what makes per-panel bars safe here.
+    LEFT, RIGHT_PAD, COL_GAP = 0.020, 0.006, 0.042
+    BAR_W, BAR_GAP = 0.006, 0.006
+    width = (1.0 - LEFT - RIGHT_PAD - 2 * COL_GAP - 3 * (BAR_W + BAR_GAP)) / 3.0
+    stride = width + BAR_GAP + BAR_W + COL_GAP
+    xs = tuple(LEFT + i * stride for i in range(3))
 
-    fig.subplots_adjust(top=top_frac, bottom=0.045, hspace=0.22)
+    fig.subplots_adjust(top=top_frac, bottom=0.045, hspace=0.13)
     for row in range(axes.shape[0]):
         for col in range(axes.shape[1]):
             box = axes[row, col].get_position()
             axes[row, col].set_position([xs[col], box.y0, width, box.height])
 
-    def place_bar(handle, ax, label, ratio, diverging, x):
+    def place_bar(handle, ax, label, ratio, diverging):
         box = ax.get_position()
-        cax = fig.add_axes([x, box.y0, BAR_W, box.height])
+        cax = fig.add_axes([box.x1 + BAR_GAP, box.y0, BAR_W, box.height])
         bar = fig.colorbar(handle, cax=cax,
                            extend="both" if (ratio or diverging) else "min",
                            ticks=log_ticks if ratio else None)
         if ratio:
             bar.ax.set_yticklabels(tick_text)
-        bar.set_label(label, fontsize=8)
-        bar.ax.tick_params(labelsize=7)
+        bar.set_label(label, fontsize=7.5)
+        bar.ax.tick_params(labelsize=6.5)
 
+    # Every panel gets its own bar, including both halves of a shared-scale pair.
     for handle, axs, ratio, label in pair_bars:
-        place_bar(handle, axs[1], label, ratio, False, bar_xs[0])
+        for ax in axs:
+            place_bar(handle, ax, label, ratio, False)
     for handle, ax, label in diff_bars:
-        place_bar(handle, ax, label, False, True, bar_xs[1])
+        place_bar(handle, ax, label, False, True)
 
     path = out_dir / f"global_map_{args.domain}.png"
     fig.savefig(path, dpi=args.dpi, bbox_inches="tight")
