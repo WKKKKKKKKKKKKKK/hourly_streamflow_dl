@@ -34,11 +34,11 @@ Where to start, depending on what you want:
 | every number with its provenance and status | `RESULTS_phase1.md` |
 | which config produced which output | `python -m scripts.inventory` |
 | how to re-run any of it | the Reproducing section of `RESULTS_phase1.md` |
-| the figures on their own | [reports/figures/](reports/figures/) — ten PNGs, regenerate with `python -m scripts.make_figures` |
+| the figures on their own | [reports/figures/](reports/figures/) — eleven PNGs, regenerate with `python -m scripts.make_figures` |
 | the file behind any number | [reports/evidence/](reports/evidence/) — mirrors `outputs/` paths, so a citation resolves directly |
 | what was planned versus what was done | [PLAN.md](PLAN.md), whose header lists the deviations |
 
-**`reports/figures/` is the only figure directory that counts.** Ten PNGs, tracked in git,
+**`reports/figures/` is the only figure directory that counts.** Eleven PNGs, tracked in git,
 one per figure in the report, all ten refreshed by `python -m scripts.make_figures`.
 
 Two other places hold images and neither is a deliverable:

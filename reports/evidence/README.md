@@ -36,8 +36,11 @@ Regenerate with `python -m scripts.collect_evidence`.
 | Africa, three-way daily per basin | `v2_africa_hourly/daily_three_way_per_basin.csv` | 1 |
 | Africa, three-way daily summary | `v2_africa_hourly/daily_three_way_summary.json` | 1 |
 | Africa, three-way daily log | `v2_africa_hourly/daily_three_way.log` | 1 |
+| KGE component deficits, both domains | `v2_component_deficits/component_deficits.csv` | 1 |
+| KGE component deficits summary | `v2_component_deficits/component_deficits_summary.json` | 1 |
+| KGE component deficits log | `v2_component_deficits/component_deficits.log` | 1 |
 
-Total 1009 KB.
+Total 1023 KB.
 
 Mostly summary-level. The exceptions, kept because they are the direct evidence for a
 headline claim rather than a rollup of it:

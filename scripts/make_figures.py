@@ -852,6 +852,96 @@ def fig_global_map(out: Path) -> str | None:
     return None
 
 
+# ---------------------------------------------------------------- figure 11
+# Component names as they should read on an axis, and the order they are argued in:
+# timing first because it is the one a daily total cannot carry.
+COMPONENT_LABEL = {
+    "r": "r  —  timing\n(deficit 1 − r)",
+    "alpha": "alpha  —  variability\nstd(sim)/std(obs), deficit |log2|",
+    "beta": "beta  —  volume\nmean(sim)/mean(obs), deficit |log2|",
+}
+
+
+def fig_component_deficits(out: Path) -> str | None:
+    """What a daily total can and cannot repair, on two domains four times apart in scale.
+
+    The mechanism claim of the whole experiment is that a 24-hour total carries MAGNITUDE
+    information and not sub-daily timing information, so it should repair alpha and beta and
+    leave r largely alone. This is the figure that tests it, and it tests it twice: on the
+    temperate target domain where the deficits are small, and on Africa where they are about
+    four times larger and the model has never seen a catchment.
+
+    One axis per component, not one shared axis. The deficits are in different units --
+    1 − r for a correlation, |log2 x| for the two ratios -- so a shared scale would invite
+    reading "alpha 0.464 against r 0.203" as though alpha were 2.3 times worse, which is not
+    a statement those units support. The fraction of the deficit removed IS comparable across
+    components, so that is what is printed on each dumbbell and what the argument rests on.
+    """
+    table = Path("outputs/v2_component_deficits/component_deficits.csv")
+    if not table.exists():
+        return None
+    frame = pd.read_csv(table)
+    domains = list(dict.fromkeys(frame["domain"]))
+    if len(domains) < 2:
+        return None
+
+    fig, axes = plt.subplots(1, 3, figsize=(12.6, 3.5))
+    for ax, component in zip(axes, ("r", "alpha", "beta")):
+        rows = frame.loc[frame.component.eq(component)].set_index("domain")
+        ys = []
+        for k, domain in enumerate(domains):
+            if domain not in rows.index:
+                continue
+            row = rows.loc[domain]
+            y = len(domains) - 1 - k
+            ys.append((y, domain, row))
+            # Blue open dot = M0, orange filled dot = M1, as in every other figure here.
+            # The connecting line is grey so it reads as the distance travelled rather than
+            # as a third series.
+            ax.plot([row.median_deficit_M0, row.median_deficit_M1], [y, y],
+                    color=GREY, lw=2.4, solid_capstyle="round", zorder=2)
+            ax.scatter([row.median_deficit_M0], [y], s=70, facecolor="white",
+                       edgecolor=BLUE, lw=2.0, zorder=3)
+            ax.scatter([row.median_deficit_M1], [y], s=70, facecolor=ORANGE,
+                       edgecolor="white", lw=1.2, zorder=4)
+            ax.annotate(f"{100 * row.fraction_removed:.0f}% removed",
+                        (row.median_deficit_M1, y), textcoords="offset points",
+                        xytext=(-10, 13), ha="left", va="center", fontsize=9,
+                        color=INK, fontweight="semibold")
+        ax.set_yticks([y for y, _, _ in ys])
+        ax.set_yticklabels([d.split(" (")[0] for _, d, _ in ys], fontsize=9.5)
+        ax.set_ylim(-0.62, len(domains) - 0.32)
+        ax.set_xlim(left=0)
+        ax.set_xlabel("distance from ideal (0 = perfect)", fontsize=8.5)
+        ax.set_title(COMPONENT_LABEL[component], fontsize=9.5, loc="left", pad=8)
+        tidy(ax, "x")
+
+    handles = [Line2D([], [], marker="o", ls="", markerfacecolor="white",
+                      markeredgecolor=BLUE, markeredgewidth=2.0, markersize=9,
+                      label="M0, zero-shot"),
+               Line2D([], [], marker="o", ls="", markerfacecolor=ORANGE,
+                      markeredgecolor="white", markersize=9,
+                      label="M1, after daily-only fine-tuning")]
+    fig.legend(handles=handles, loc="lower center", ncol=2, bbox_to_anchor=(0.5, 0.075),
+               fontsize=9.5, labelcolor=INK, frameon=False, columnspacing=2.4)
+    fig.suptitle("What a daily total repairs: magnitude, not timing — on both domains",
+                 fontsize=11.5, fontweight="semibold", color=INK, y=0.995)
+    fig.subplots_adjust(left=0.155, right=0.985, top=0.79, bottom=0.345, wspace=0.62)
+    summary = Path("outputs/v2_component_deficits/component_deficits_summary.json")
+    extra = ""
+    if summary.exists():
+        v = json.loads(summary.read_text())
+        parts = [f"{d.split(' (')[0]}: {100 * s['magnitude_fraction_removed']:.0f}% of the "
+                 f"magnitude deficit against {100 * s['timing_fraction_removed']:.0f}% of the "
+                 f"timing deficit ({s['ratio']:.1f}x)" for d, s in v.items()]
+        extra = "Magnitude here is alpha and beta averaged. " + "; ".join(parts) + "."
+    stamp(fig, extra, y=0.045, size=8.4, wrap_at=140)
+    path = out / "fig11_component_deficits.png"
+    fig.savefig(path)
+    plt.close(fig)
+    return path.name
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate the report's figures.")
     # reports/, not outputs/: these are deliverables, and outputs/ is gitignored,
@@ -864,7 +954,7 @@ def main() -> None:
 
     makers = [fig_components, fig_gain_drivers, fig_configurations, fig_agency_recovery,
               fig_metric_disagreement, fig_convergence, fig_africa_hydrographs,
-              fig_intraday, fig_global_map, fig_africa_hourly]
+              fig_intraday, fig_global_map, fig_africa_hourly, fig_component_deficits]
     for maker in makers:
         try:
             name = maker(out)

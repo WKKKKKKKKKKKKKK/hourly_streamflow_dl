@@ -71,3 +71,27 @@
 17:42:06 INFO M1: 24 x mean(hourly) vs the scored daily prediction over 2908 basin-days -- max |diff| 1.88e-06 mm/d (float32 rounding is ~1e-6)
 17:42:08 INFO within-day CV over 284 basins: M0 median 0.1246, M1 median 0.1053, median paired difference -0.0192, higher after fine-tuning in 40.1% of basins, Wilcoxon p = 0.000169
 17:42:08 INFO wrote outputs/v2_africa_hourly/within_day_cv_per_basin.csv
+00:54:00 INFO full hourly series for: GRDCCaravan__1160725, GRDCCaravan__1199200, restricted_ADHI__258
+00:54:00 INFO basins in this pass: 294
+00:54:01 INFO hourly forcing: 294 stations x 140255 hours (1980-01-01 01:00:00 .. 1995-12-31 23:00:00), 100.00% finite
+00:54:02 INFO observed daily q_mm: 2249595 station-days over 294 stations (46.6% of the grid)
+00:54:03 WARNING KGZ_detailed: 40 Koeppen substitutions applied (e.g. ['GRDC__1259500:Cwc->Cwa', 'GRDC__1259520:Cwc->Cwa', 'GRDC__1577100:Cwb->Cwa'])
+00:54:03 INFO no static feature needed imputation
+00:54:22 INFO Africa windows (run B layout): 320540 samples over 284 basins | D=365 daily means, H=336 hourly | 0 dropped for a non-finite window -> 627 chunks of <=512
+00:54:22 INFO fold 0 M0: predicting hourly
+00:54:33 INFO fold 0 M1: predicting hourly
+00:54:44 INFO fold 1 M0: predicting hourly
+00:54:55 INFO fold 1 M1: predicting hourly
+00:55:06 INFO fold 2 M0: predicting hourly
+00:55:18 INFO fold 2 M1: predicting hourly
+00:55:29 INFO fold 3 M0: predicting hourly
+00:55:40 INFO fold 3 M1: predicting hourly
+00:55:51 INFO fold 4 M0: predicting hourly
+00:56:02 INFO fold 4 M1: predicting hourly
+00:56:16 INFO wrote outputs/v2_africa_hourly/hourly_series.csv.gz: 69792 rows, 3 basins, 1986-03-22 00:00:00 .. 1995-12-31 23:00:00
+00:56:17 INFO M0: 24 x mean(hourly) vs the scored daily prediction over 2908 basin-days -- max |diff| 6.71e-06 mm/d (float32 rounding is ~1e-6)
+00:56:17 INFO M1: 24 x mean(hourly) vs the scored daily prediction over 2908 basin-days -- max |diff| 1.88e-06 mm/d (float32 rounding is ~1e-6)
+00:56:32 INFO rainfall diurnal ratio over 284 basins: median 5.36x
+00:56:32 INFO median diurnal peak-to-trough: rainfall 5.36x -> M0 1.23x, M1 1.17x (M1 damps the rainfall's clock-driven cycle 4.6-fold)
+00:56:33 INFO within-day CV over 284 basins: M0 median 0.1246, M1 median 0.1053, median paired difference -0.0192, higher after fine-tuning in 40.1% of basins, Wilcoxon p = 0.000169
+00:56:33 INFO wrote outputs/v2_africa_hourly/within_day_cv_per_basin.csv

@@ -218,7 +218,6 @@ def main() -> None:
 
     logger.info("%d stations over %d folds", len(table), table["fold"].nunique())
     summary = {}
-    logger.info("%-16s %>10s", "", "")
     header = f'{"metric":22s} {"observed":>10s} {"M0":>10s} {"M1":>10s} {"M1/obs":>8s} {"M1/M0":>8s}'
     logger.info(header)
     for metric in ("flashiness", "intraday_std", "intraday_range", "q95_events_per_year",

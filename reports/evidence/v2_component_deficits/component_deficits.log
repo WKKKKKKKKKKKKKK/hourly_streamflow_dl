@@ -1,0 +1,26 @@
+10:25:00 INFO target domain (temperate, hourly truth) -- 8979 gauges
+10:25:00 INFO           deficit M0 deficit M1    removed  fraction
+10:25:00 INFO   r            0.203      0.188      0.015        7%
+10:25:00 INFO   alpha        0.464      0.342      0.121       26%
+10:25:00 INFO   beta         0.280      0.211      0.070       25%
+10:25:00 INFO Africa (external, daily truth only) -- 282 basins
+10:25:00 INFO           deficit M0 deficit M1    removed  fraction
+10:25:00 INFO   r            0.294      0.201      0.094       32%
+10:25:00 INFO   alpha        1.209      0.394      0.815       67%
+10:25:00 INFO   beta         1.169      0.274      0.894       77%
+10:25:00 INFO target domain (temperate, hourly truth): daily aggregates remove 25% of the magnitude deficit (alpha and beta) against 7% of the timing deficit (r) -- 3.4x
+10:25:00 INFO Africa (external, daily truth only): daily aggregates remove 72% of the magnitude deficit (alpha and beta) against 32% of the timing deficit (r) -- 2.3x
+10:25:00 INFO wrote outputs/v2_component_deficits/component_deficits.csv
+10:25:19 INFO target domain (temperate, hourly truth) -- 8979 gauges
+10:25:19 INFO           deficit M0 deficit M1    removed  fraction
+10:25:19 INFO   r            0.203      0.188      0.015        7%
+10:25:19 INFO   alpha        0.464      0.342      0.121       26%
+10:25:19 INFO   beta         0.280      0.211      0.070       25%
+10:25:19 INFO Africa (external, daily truth only) -- 282 basins
+10:25:19 INFO           deficit M0 deficit M1    removed  fraction
+10:25:19 INFO   r            0.294      0.201      0.094       32%
+10:25:19 INFO   alpha        1.209      0.394      0.815       67%
+10:25:19 INFO   beta         1.169      0.274      0.894       77%
+10:25:19 INFO target domain (temperate, hourly truth): daily aggregates remove 25% of the magnitude deficit (alpha and beta) against 7% of the timing deficit (r) -- 3.4x
+10:25:19 INFO Africa (external, daily truth only): daily aggregates remove 72% of the magnitude deficit (alpha and beta) against 32% of the timing deficit (r) -- 2.3x
+10:25:19 INFO wrote outputs/v2_component_deficits/component_deficits.csv

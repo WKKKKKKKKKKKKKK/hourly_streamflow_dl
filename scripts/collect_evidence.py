@@ -52,6 +52,9 @@ PATTERNS = (
     ("Africa, three-way daily per basin", "v2_africa_hourly/daily_three_way_per_basin.csv"),
     ("Africa, three-way daily summary", "v2_africa_hourly/daily_three_way_summary.json"),
     ("Africa, three-way daily log", "v2_africa_hourly/daily_three_way.log"),
+    ("KGE component deficits, both domains", "v2_component_deficits/component_deficits.csv"),
+    ("KGE component deficits summary", "v2_component_deficits/component_deficits_summary.json"),
+    ("KGE component deficits log", "v2_component_deficits/component_deficits.log"),
 )
 
 MAX_BYTES = 512 * 1024  # anything larger is a per-gauge table, not a summary

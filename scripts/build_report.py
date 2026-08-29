@@ -675,6 +675,62 @@ def main() -> None:
             "because their timing was already right."
         )
 
+    doc.add_heading("3.3b What a daily total repairs, on both domains", level=2)
+    deficits = Path("outputs/v2_component_deficits/component_deficits.csv")
+    verdict = Path("outputs/v2_component_deficits/component_deficits_summary.json")
+    if deficits.exists() and verdict.exists():
+        frame = pd.read_csv(deficits)
+        doc.add_paragraph(
+            "The mechanism claim behind this whole experiment is that a 24-hour total "
+            "carries magnitude information and not sub-daily timing information. It should "
+            "therefore repair alpha and beta and leave r largely alone -- a falsifiable "
+            "prediction, and one that can be checked twice, because Africa and the target "
+            "domain differ by about a factor of four in how broken the zero-shot model is.")
+        table = doc.add_table(rows=1, cols=6)
+        table.style = "Light Grid Accent 1"
+        for cell, text in zip(table.rows[0].cells,
+                              ("Domain", "Component", "Deficit at M0", "Deficit at M1",
+                               "Removed", "Gauges improved")):
+            cell.text = text
+        for row in frame.itertuples():
+            cells = table.add_row().cells
+            cells[0].text = row.domain
+            cells[1].text = {"r": "r (timing)", "alpha": "alpha (variability)",
+                             "beta": "beta (volume)"}[row.component]
+            cells[2].text = f"{row.median_deficit_M0:.3f}"
+            cells[3].text = f"{row.median_deficit_M1:.3f}"
+            cells[4].text = f"{100 * row.fraction_removed:.0f}%"
+            cells[5].text = f"{100 * row.share_of_gauges_improved:.0f}%"
+        note(doc, "Deficit means distance from the ideal: 1 - r for the correlation and "
+                  "|log2 x| for the two ratios, since 0.5 and 2.0 are equally wrong for a "
+                  "ratio and their arithmetic mean is not 1. The two are not in the same "
+                  "units, so only the fraction removed is comparable across components. "
+                  "Medians are taken over per-gauge distances, never as the distance of a "
+                  "median: |log2(median beta)| would report the target domain as unbiased "
+                  "because its over- and under-predicting gauges cancel.")
+        v = json.loads(verdict.read_text())
+        para = doc.add_paragraph()
+        run = para.add_run("; ".join(
+            f'{d.split(" (")[0]}: {100 * x["magnitude_fraction_removed"]:.0f}% of the '
+            f'magnitude deficit removed against {100 * x["timing_fraction_removed"]:.0f}% '
+            f'of the timing deficit, {x["ratio"]:.1f}x' for d, x in v.items()) + ".")
+        run.bold = True
+        note(doc, "The prediction holds on both, and the two domains are not alike: Africa's "
+                  "zero-shot deficits are about four times the target domain's, and its "
+                  "model has never seen an African catchment. Beta is repaired most "
+                  "completely of all (77% in Africa), which is what a daily total should do "
+                  "-- it IS the volume. Alpha is repaired less (67%), because a daily total "
+                  "constrains variability only indirectly, and that is the same limit "
+                  "section 4.4 reaches from the other direction: 74% of target gauges are "
+                  "still under-dispersed after fine-tuning.")
+
+    figure(doc, "fig11_component_deficits.png",
+           "Figure 3-3  What a daily total repairs. One axis per component, because the "
+           "deficits are in different units and a shared scale would invite comparing them "
+           "directly; the fraction removed, printed on each pair, is what is comparable. "
+           "Open blue marker is M0, filled orange is M1, as everywhere else in this report.",
+           width=6.6)
+
     doc.add_heading("3.4 Africa at two resolutions: daily, which can be scored, and hourly, which cannot", level=2)
     doc.add_paragraph(
         "Every African number so far is daily, because African discharge is observed daily "

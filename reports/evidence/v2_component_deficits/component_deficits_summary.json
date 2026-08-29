@@ -1,0 +1,12 @@
+{
+  "target domain (temperate, hourly truth)": {
+    "magnitude_fraction_removed": 0.25487830723935745,
+    "timing_fraction_removed": 0.07491818511387455,
+    "ratio": 3.4020886497977245
+  },
+  "Africa (external, daily truth only)": {
+    "magnitude_fraction_removed": 0.7197396896110384,
+    "timing_fraction_removed": 0.3181641086407978,
+    "ratio": 2.2621649333288345
+  }
+}

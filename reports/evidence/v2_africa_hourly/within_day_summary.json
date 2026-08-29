@@ -4,6 +4,10 @@
   "median_cv_M1": 0.10525902360677719,
   "median_paired_difference": -0.019184153527021408,
   "share_of_basins_with_higher_cv_after_finetuning": 0.4014084507042254,
+  "median_diurnal_ratio_pcp": 5.3572258949279785,
+  "median_diurnal_ratio_M0": 1.2299613952636719,
+  "median_diurnal_ratio_M1": 1.1710379123687744,
+  "diurnal_damping_M1": 4.57476725419708,
   "wilcoxon_statistic": 15024.0,
   "wilcoxon_p": 0.00016873431779711954
 }

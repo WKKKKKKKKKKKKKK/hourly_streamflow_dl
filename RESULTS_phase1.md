@@ -544,6 +544,40 @@ because its volume over that window is close to observed (7.75 against 7.58 mm/d
 gets wrong there is the distribution, not the total — and that is precisely what the hourly
 panels make visible.
 
+## What a daily total repairs: magnitude, not timing — tested on both domains
+
+The mechanism claim behind the whole experiment is that a 24-hour total carries **magnitude**
+information and not **sub-daily timing** information, so it should repair alpha and beta and
+leave r largely alone. That is falsifiable, and it can be checked twice: the target domain
+and Africa differ by about a factor of four in how broken the zero-shot model is.
+
+| domain | component | deficit M0 | deficit M1 | removed | gauges improved |
+|---|---|---|---|---|---|
+| target domain | r (timing) | 0.203 | 0.188 | **7%** | 59% |
+| target domain | alpha (variability) | 0.464 | 0.342 | **26%** | 65% |
+| target domain | beta (volume) | 0.280 | 0.211 | **25%** | 58% |
+| Africa | r (timing) | 0.294 | 0.201 | **32%** | 88% |
+| Africa | alpha (variability) | 1.209 | 0.394 | **67%** | 82% |
+| Africa | beta (volume) | 1.169 | 0.274 | **77%** | 81% |
+
+**Magnitude against timing:** **target domain** 25% vs 7% (**3.4x**); **Africa** 72% vs 32% (**2.3x**). The prediction holds on both domains.
+
+*Beta is repaired most completely of all* (77% in Africa), which is exactly what a daily
+total should do — it **is** the volume. *Alpha is repaired less* (67%), because a daily total
+constrains variability only indirectly. That is the same limit the target-domain map reaches
+from the other direction: 74% of gauges are still under-dispersed after fine-tuning.
+
+**Deficit means distance from the ideal**: `1 - r` for the correlation, `|log2 x|` for the
+two ratios — 0.5 and 2.0 are equally wrong for a ratio, and their arithmetic mean is not 1.
+The two are not in the same units, so **only the fraction removed is comparable across
+components**; the figure gives each component its own axis for that reason. Medians are taken
+over per-gauge distances, never as the distance of a median: `|log2(median beta)|` would
+report the target domain as unbiased purely because its over- and under-predicting gauges
+cancel.
+
+**Figure:** `reports/figures/fig11_component_deficits.png`
+**Evidence:** `outputs/v2_component_deficits/`
+
 ### ERA5-Land as an hourly baseline: usable as a contrast, not as a reference
 
 ERA5-Land runoff already serves as the physical baseline in the daily African
@@ -1376,6 +1410,7 @@ python -m scripts.global_map          --run outputs/v2_runB/diagnostics_allhours
 python -m scripts.paired_split_effect --random-run v2_runB --blocked-run v2_blocked --tag M0 --out-dir outputs/v2_split_effect
 python -m scripts.paired_split_effect --random-run v2_runB --blocked-run v2_blocked --tag M1 --out-dir outputs/v2_split_effect
 python -m scripts.convergence_check
+python -m scripts.component_deficits   # KGE component deficits, both domains
 python -m scripts.build_report --out reports/PhaseI_report.docx
 python -m scripts.check_english_only   # no CJK in any tracked file or commit message
 

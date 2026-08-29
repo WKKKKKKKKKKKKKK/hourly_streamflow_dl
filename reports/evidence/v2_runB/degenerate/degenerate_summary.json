@@ -25,6 +25,11 @@
       "observed": 0.04832633398473263,
       "M0": 0.05073714070022106,
       "M1": 0.04955265298485756
+    },
+    "diurnal_ratio": {
+      "observed": 1.0437743067741394,
+      "M0": 1.0971549153327942,
+      "M1": 1.0975288152694702
     }
   },
   "verdict": "M1 keeps 88.8% of the observed within-day standard deviation and 101.8% of its flashiness. Intra-day variability survives, so the daily-aggregate term is not being satisfied by flattening the day."
