@@ -1487,6 +1487,8 @@ python -m scripts.paired_split_effect --random-run v2_runB --blocked-run v2_bloc
 python -m scripts.convergence_check
 python -m scripts.component_deficits   # KGE component deficits, both domains
 python -m scripts.build_report --out reports/PhaseI_report.docx
+python -m scripts.build_latex          # the same report as LaTeX, Experiments + Results
+module load texlive/2022 && cd reports/latex && pdflatex PhaseI_report.tex  # x2 for the ToC
 python -m scripts.check_english_only   # no CJK in any tracked file or commit message
 
 # Africa (needs the rescaled forcing, not raw ERA5-Land)

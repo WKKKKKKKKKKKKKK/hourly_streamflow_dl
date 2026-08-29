@@ -31,6 +31,7 @@ Where to start, depending on what you want:
 | You want | Read |
 |---|---|
 | the results and what they mean | `reports/PhaseI_report.docx` — 8 chapters plus an appendix |
+| the same, as a paper-shaped LaTeX report | [reports/latex/PhaseI_report.tex](reports/latex/PhaseI_report.tex) — Experiments and Results, section for section; `python -m scripts.build_latex` |
 | every number with its provenance and status | `RESULTS_phase1.md` |
 | which config produced which output | `python -m scripts.inventory` |
 | how to re-run any of it | the Reproducing section of `RESULTS_phase1.md` |

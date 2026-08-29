@@ -1,0 +1,319 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{graphicx}
+\graphicspath{{../figures/}}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{amsmath}
+\usepackage[hidelinks]{hyperref}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf}
+\sisetup{detect-all,group-separator={,}}
+\DeclareSIUnit{\mm}{mm}
+\DeclareSIUnit{\km}{km}
+\setlength{\parskip}{0.5em}
+\setlength{\parindent}{0pt}
+
+\title{Global hourly streamflow under daily-only supervision\\[0.3em]
+  \large Phase~I: experiments and results}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+\noindent
+Hourly streamflow models are trained where hourly discharge is recorded, which is a small
+and geographically narrow part of the world. This report asks whether hourly skill survives
+at gauges that supply only daily totals. A fifth of the network is held out, its hourly
+observations are hidden, and only the 24-hour aggregate supervises it; the hidden hourly
+series is used once, to score. Part~I states what was run and why each step was necessary;
+Part~II reports what came out, section for section in the same order.
+\end{abstract}
+\tableofcontents
+\clearpage
+\part{Experiments}
+
+\section*{The chain, and where each link is reported}
+Each experiment below has one result section, in the same order. The chain is: fix the configuration, show the effect, explain why it works, rule out the three ways it could be spurious, bound where it applies, then test it where the premise is real rather than simulated.
+
+\begin{table}[htbp]
+  \centering
+  \caption{The correspondence between the two parts.}
+  \label{tab:chain}
+  \begin{tabular}{lcc}
+    \toprule
+    Question & Experiment & Result \\
+    \midrule
+    Configuration and data path & \S\ref{sec:e-config} & \S\ref{sec:r-config} \\
+    The task, the network, the main comparison & \S\ref{sec:e-setup} & \S\ref{sec:r-main} \\
+    Why a daily total should help at all & \S\ref{sec:e-mechanism} & \S\ref{sec:r-mechanism} \\
+    Could it be gaming the aggregate loss? & \S\ref{sec:e-degenerate} & \S\ref{sec:r-degenerate} \\
+    Could it be a metric artefact? & \S\ref{sec:e-metrics} & \S\ref{sec:r-metrics} \\
+    Could it be a training-budget artefact? & \S\ref{sec:e-convergence} & \S\ref{sec:r-convergence} \\
+    Where does the gain land? & \S\ref{sec:e-strata} & \S\ref{sec:r-strata} \\
+    What does spatial blocking cost? & \S\ref{sec:e-split} & \S\ref{sec:r-split} \\
+    An external test, daily & \S\ref{sec:e-africa-daily} & \S\ref{sec:r-africa-daily} \\
+    The same test, hourly & \S\ref{sec:e-africa-hourly} & \S\ref{sec:r-africa-hourly} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{Configuration and data path}\label{sec:e-config}
+Two design choices had to be settled before any result could be attributed to the method rather than to the setup.
+
+\textbf{How the daily branch is built.} Run~A feeds it a power-law subsample of the hourly record; run~B feeds it 365 genuine daily means. These are different inputs of different lengths, not a tuning knob, so both were run to completion rather than one being chosen in advance.
+
+\textbf{Look-back and forget gate.} v1 used a \SI{72}{\hour} hourly look-back and PyTorch's default forget-gate initialisation; v2 uses \SI{336}{\hour} and an initial forget bias of 3. The forget gate is part of the published method this model follows and was absent from v1 by oversight: at the default the effective forget gate is 0.500, a memory of about two steps, against 0.953 and about twenty-one steps at bias~3. v3 repeats v2 with 50 epochs and patience 10, purely to check that v2 was not stopped prematurely. All eleven combinations were run and all are reported.
+
+\section{The task, the network, and the main comparison}\label{sec:e-setup}
+Hourly streamflow models are trained where hourly discharge is recorded, which is a small and geographically narrow part of the world. The question is whether hourly skill survives at gauges that supply only daily totals. The premise is made testable by withholding: a fifth of the gauges are held out, their hourly observations hidden, and only the 24-hour aggregate used to supervise them. The hidden hourly series is then used once, to score.
+
+The model is an sMTS-LSTM with two branches: the daily branch reads the past 365 days and hands its state to the hourly branch, which reads the last \SI{336}{\hour}. Three states are distinguished throughout:
+\begin{description}
+  \item[M0] zero-shot -- pretrained on the source gauges, evaluated on the held-out target gauges without ever seeing them.
+  \item[M1] after fine-tuning on the target gauges' \emph{daily aggregates} only.
+  \item[STEP 3] the source domain re-scored afterwards, to check what the adaptation cost where the model already worked.
+\end{description}
+
+A five-fold design gives every one of the 8,979 gauges exactly one turn as a target gauge, so the target-domain scores cover the whole network rather than a fifth of it and no result depends on which fifth was drawn.
+
+\section{Why a daily total should help at all}\label{sec:e-mechanism}
+A 24-hour total carries how much water arrived, not which hour it arrived in. If that is the whole of what it contributes, then fine-tuning on it should repair the amplitude and volume terms of KGE and leave the correlation term largely alone. That is a falsifiable prediction, so KGE was decomposed into $r$, $\alpha=\sigma_{\text{sim}}/\sigma_{\text{obs}}$ and $\beta=\mu_{\text{sim}}/\mu_{\text{obs}}$ per gauge, and the same decomposition was repeated on the African catchments, whose zero-shot deficits are about four times larger. A mechanism that only holds on one domain is a description.
+
+\section{Could it be gaming the aggregate loss?}\label{sec:e-degenerate}
+The aggregate loss constrains only the mean of 24 hourly outputs, so a model emitting a constant value within each day would satisfy it perfectly and be useless hourly. Stride-24 sampling makes each sample's last 24 outputs one calendar day and consecutive days stitch into a continuous series, so within-day variability can be measured directly against the observations. A sharper form of the same question was added later: averaging every day by hour of day destroys event-driven structure, so whatever survives that average is tied to the clock rather than to rainfall.
+
+\section{Could it be a metric artefact?}\label{sec:e-metrics}
+KGE and point-wise absolute error can move in opposite directions on the same gauge. Both were computed per gauge so the disagreement could be quantified rather than assumed away, and per-gauge significance was tested with a paired Wilcoxon test under Benjamini--Hochberg control.
+
+\section{Could it be a training-budget artefact?}\label{sec:e-convergence}
+If v2 had simply run out of epochs, its gain would be an artefact of the budget. v3's longer budget answers that. The same run also measures a cost the method imposes on itself: the checkpoint has to be selected on a daily-aggregate criterion, because the hourly truth is supposed to be hidden, and the difference against selecting on the hidden hourly truth is what daily-only model selection costs.
+
+\section{Where does the gain land?}\label{sec:e-strata}
+Per-gauge gains were stratified by catchment area, by distance to the nearest trainable gauge, by agency and by latitude band. The purpose is a boundary, not a headline: a method that works on average and nowhere in particular is not usable. The isolation stratification is also a check on the previous section -- if the gain were driven by proximity to training gauges, it would fall with distance.
+
+\section{What does spatial blocking cost?}\label{sec:e-split}
+The held-out fifth can be drawn at random or in spatial blocks. Random splitting leaves target gauges with trainable neighbours a median of \SI{10.4}{\km} away; \num{120} k-means blocks on the sphere push that to \SI{94.9}{\km}. Both were run with everything else identical, because the difference measures how much of the zero-shot skill is genuine generalisation and how much is proximity. Fold-to-fold dispersion was recorded for both, which turned out to matter as much as the level.
+
+\section{An external test, daily}\label{sec:e-africa-daily}
+Everything above simulates the premise: the hourly data exists and is withheld. Africa does not need the simulation. Of the African entries in the daily database only \num{302} carry a discharge time series at all and \num{294} of those are used here -- the test set of a published continent-holdout run, adopted verbatim so the numbers sit directly against its baseline. Not one appears anywhere in training and not one has hourly discharge; \num{282} are scored after a \num{100}-day minimum.
+
+The same pretrained models are driven by hourly ERA5-Land forcing, their last 24 hourly outputs averaged to a daily value and compared with observed daily discharge; fine-tuning then uses African daily observations themselves. ERA5-Land's own runoff is carried alongside as a physical baseline, re-scored on the identical basin-days, because the per-basin scores that already existed came from a different run over a different period and would not have been comparable.
+
+\section{The same test, hourly}\label{sec:e-africa-hourly}
+No African catchment has hourly discharge, so the hourly output there can be compared between series but never scored. Two questions remain askable. First, whether the hourly output carries sub-daily structure at all, which is measured as the within-day coefficient of variation over every basin. Second, whether that structure is of the right kind -- event-driven rather than clock-driven -- which is answered on the target domain, where hourly observations exist and the observed average day can be measured directly.
+
+
+\clearpage
+
+\part{Results}
+
+\section{Only one data path gains, and the forget gate decides how much}\label{sec:r-config}
+Run~A moves \emph{backwards} under both configurations: its median target-domain hourly KGE falls from \num{0.427} to \num{0.397} under v1 and from \num{0.424} to \num{0.397} under v2. A power-law subsample of the hourly record is not a daily branch, and no amount of fine-tuning repairs that. Every run~B variant gains.
+
+Within run~B the forget gate is what separates a modest result from a clear one. Under v1 the blocked split reaches \num{0.475}; under v2 it reaches \num{0.621}. v3's longer budget changes almost nothing (\num{0.624} blocked, \num{0.627} true daily), which is the first evidence that v2 was not simply stopped early. v2 is the primary configuration throughout.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{fig03_configurations.png}
+  \caption{Every configuration, as an M0 (open) to M1 (filled) movement in median target-domain hourly KGE. Run~A is the only path that moves backwards. Within run~B, v1 to v2 -- the forget-gate initialisation and the longer hourly look-back -- is what lifts the blocked split from \num{0.475} to \num{0.621}; v3's extra epochs add nothing.}
+  \label{fig:config}
+\end{figure}
+
+\section{The main result, and the shape of the network it rests on}\label{sec:r-main}
+Under v2 with a random split, median target-domain hourly KGE rises from \num{0.5190} at M0 to \num{0.6210} at M1, a median change of \num{+0.0623} over 8,979 gauges. \SI{68}{\percent} of gauges improve, which is the part that matters: the gain is broad rather than an average pulled up by a few. Under the blocked split the same fine-tuning lifts \num{0.4185} to \num{0.6165}.
+
+The map that shows this also shows its limit. The gauge network is CAMELSH \num{5115}, BOMAustralia \num{1804}, LamaHCE \num{834}, Japan \num{690}, Germany \num{463}, LamaHIce \num{73}. There is not one gauge in Africa, South America or mainland Asia, and roughly four fifths sit between \SI{30}{\degree} and \SI{60}{\degree}~N. ``Global'' describes the model, not the gauge network, which is why the African test in Section~\ref{sec:r-africa-daily} cannot be substituted for.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{fig09_global_map.png}
+  \caption{Columns are M0, M1 and their difference; rows are KGE and its three components. Small dots are the target gauges, scored against hourly observations, where Phase~I's premise is simulated. Large outlined dots are the African basins, scored against daily observations, where it is genuine. The two are never pooled into one median, because the observation the score rests on differs. Panel letters are used in the text; the full enumeration is in the caption of the corresponding Word report figure.}
+  \label{fig:map}
+\end{figure}
+
+\section{The gain is a variance repair, not a timing repair}\label{sec:r-mechanism}
+Decomposing KGE separates the claim. Correlation, which carries timing, moves by \num{+0.0054} (\num{0.797} to \num{0.812}). The variability ratio $\alpha=\sigma_{\text{sim}}/\sigma_{\text{obs}}$ moves by \num{+0.0370}, and the bias ratio $\beta$ moves from \num{1.025} toward \num{0.996}. A daily total carries how much water, not which hour it arrived, so this is what it should repair -- and it is a falsifiable prediction, not a description.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{fig01_kge_components.png}
+  \caption{M0 to M1 movement in each KGE component, under both splits. $r$ barely moves while $\alpha$ moves substantially, which is the finding that daily-aggregate supervision re-calibrates amplitude rather than disturbing timing.}
+  \label{fig:components}
+\end{figure}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Distance from the ideal before and after fine-tuning. Deficit is $1-r$ for the correlation and $|\log_2 x|$ for the two ratios, since $0.5$ and $2.0$ are equally wrong for a ratio and their arithmetic mean is not~1. The two are not in the same units, so only the fraction removed is comparable across components.}
+  \label{tab:deficits}
+  \begin{tabular}{lrrrr}
+    \toprule
+    Domain & Component & Deficit M0 & Deficit M1 & Removed \\
+    \midrule
+    target domain & $r$ (timing) & 0.203 & 0.188 & 7\% \\
+    target domain & $\alpha$ (variability) & 0.464 & 0.342 & 26\% \\
+    target domain & $\beta$ (volume) & 0.280 & 0.211 & 25\% \\
+    Africa & $r$ (timing) & 0.294 & 0.201 & 32\% \\
+    Africa & $\alpha$ (variability) & 1.209 & 0.394 & 67\% \\
+    Africa & $\beta$ (volume) & 1.169 & 0.274 & 77\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The prediction holds on two domains whose zero-shot deficits differ by about a factor of four. Magnitude against timing: target domain: \SI{25}{\percent} against \SI{7}{\percent} (\num{3.4}$\times$); Africa: \SI{72}{\percent} against \SI{32}{\percent} (\num{2.3}$\times$).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.95\linewidth]{fig11_component_deficits.png}
+  \caption{One axis per component, because $1-r$ and $|\log_2 x|$ are not in the same units and a shared axis would invite comparing them directly. The fraction removed, printed on each pair, is what is comparable.}
+  \label{fig:mechanism}
+\end{figure}
+
+
+\section{Not a degenerate solution, and not over-dispersed either}\label{sec:r-degenerate}
+A model gaming the aggregate loss would flatten the day. It does not: within-day variability survives, and under v2 it is neither suppressed nor exaggerated.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Within-day behaviour against the observed median, configuration v2. v1's zero-shot model was \num{6.8}$\times$ too flashy and \num{3.1}$\times$ too variable within the day; the forget-gate initialisation is what removed that.}
+  \label{tab:degenerate}
+  \begin{tabular}{lrrr}
+    \toprule
+    Metric & Observed & M0 / obs & M1 / obs \\
+    \midrule
+    Flashiness & 0.0285 & 0.95$\times$ & 1.02$\times$ \\
+    Within-day std & 0.0058 & 0.86$\times$ & 0.89$\times$ \\
+    Within-day range & 0.0187 & 0.88$\times$ & 0.91$\times$ \\
+    Q95 events / yr & 11.9395 & 0.99$\times$ & 1.02$\times$ \\
+    Mean flow & 0.0483 & 1.05$\times$ & 1.03$\times$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+A sharper version of the same question: is the hourly output responding to rainfall events, or echoing the clock? Averaging every day by hour of day destroys event-driven structure, so what survives is systematic. The observed average day has a peak-to-trough ratio of \num{1.044} and the model's \num{1.098} -- the real river's average day is nearly flat, so near-flat is the correct answer for catchments of this size, and the model is \num{1.05}$\times$ the observed amplitude: marginally more variable than reality, not less.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{fig08_intraday_shape.png}
+  \caption{Ratio to the observed median on a log scale, v1 against v2. v1 was over-dispersed rather than flattened, which is a different failure from the one the degenerate check was built to catch; v2 is calibrated before fine-tuning and stays so after it.}
+  \label{fig:intraday}
+\end{figure}
+
+\section{The two metrics disagree on a third of gauges}\label{sec:r-metrics}
+KGE and point-wise absolute error agree on about \SI{68}{\percent} of gauges and disagree on the rest: roughly a fifth improve on KGE while their point-wise error worsens, and an eighth do the reverse. This is a consequence of the mechanism rather than a contradiction of it -- restoring variance moves peaks, which improves the shape metrics and can increase squared error at individual hours. A per-gauge claim must therefore say which metric it is made under.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.72\linewidth]{fig05_metric_disagreement.png}
+  \caption{Change in KGE against reduction in point-wise absolute error, one hexagon per group of gauges. Quadrant counts use all gauges; the density window omits those outside it, which the caption states rather than silently clipping them into the corner bins.}
+  \label{fig:metrics}
+\end{figure}
+
+\section{Training was long enough, and daily-only selection is nearly free}\label{sec:r-convergence}
+v2 ended on early stopping, not on its epoch cap, in every fold -- so the gain is not a budget artefact. The blocked split stopped earliest, which is consistent with its noisier validation signal rather than with worse convergence. Selecting the checkpoint on a daily-aggregate criterion instead of on the hidden hourly truth costs \num{0.0035} in median KGE, against a fold-to-fold noise level of \num{0.0078}: the cost of the method's own model-selection constraint is smaller than the noise it is measured against.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{fig06_convergence.png}
+  \caption{Source-domain validation KGE per epoch, five folds per configuration, zoomed to the plateau. v2's stopping epochs are marked; none reaches the cap. v3's longer budget wanders around the same plateau rather than climbing above it.}
+  \label{fig:convergence}
+\end{figure}
+
+\section{Where the gain lands}\label{sec:r-strata}
+Small catchments gain most (Spearman $\rho=-0.17$ against area), which fits the mechanism: a small fast-responding catchment is where a zero-shot model is least calibrated and where a daily total adds most information. Isolation does \emph{not} reduce the gain -- under the blocked split it rises with distance to the nearest trainable gauge -- which is the opposite of what a proximity-driven result would do.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{fig02_gain_drivers.png}
+  \caption{Gain against isolation and against catchment area, by quintile. Isolation does not reduce the gain; area does.}
+  \label{fig:strata}
+\end{figure}
+
+\section{What spatial blocking costs, and how much fine-tuning returns}\label{sec:r-split}
+Blocking the split costs the zero-shot model a paired median of \num{-0.0594} in KGE, which is \SI{11.0}{\percent} of its random-split level, with \SI{63.7}{\percent} of gauges worse and Wilcoxon $p=\num{1.6e-168}$. The drop is negative in all six agencies, so it is not one region's peculiarity. Daily-aggregate fine-tuning then returns \SI{89.7}{\percent} of it: the residual at M1 is only \num{-0.0061}.
+
+\begin{table}[htbp]
+  \centering
+  \caption{The blocking cost per agency and how much fine-tuning returns. The one network that does not recover is the sparsest.}
+  \label{tab:recovery}
+  \begin{tabular}{lrrrr}
+    \toprule
+    Agency & Gauges & Drop at M0 & Drop at M1 & Recovered \\
+    \midrule
+    Germany & 458 & -0.0730 & +0.0012 & 102\% \\
+    LamaHCE & 834 & -0.1213 & -0.0017 & 99\% \\
+    CAMELSH & 5,047 & -0.0501 & -0.0055 & 89\% \\
+    BOMAustralia & 1,607 & -0.0644 & -0.0076 & 88\% \\
+    Japan & 690 & -0.0719 & -0.0106 & 85\% \\
+    LamaHIce & 73 & -0.1515 & -0.0942 & 38\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+A second, less comfortable finding sits beside it. Random splitting does not only overstate the \emph{level} of the result, it overstates its \emph{precision}: the fold-to-fold standard deviation of M1 is \num{0.0035} under the random split against \num{0.0411} under the blocked one, a factor of \num{11.8} (Levene $p=\num{0.034}$). Near-duplicate gauges on both sides of a random split mean its validation metric averages over fewer independent catchments than its gauge count suggests. The honest statement of the blocked result is ``about $0.62\pm0.04$'', not ``$0.628\pm0.004$''.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{fig04_agency_recovery.png}
+  \caption{Paired median KGE drop from blocking, per agency, at M0 (open) and after fine-tuning (filled). Every agency is negative at M0; recovery is above \SI{85}{\percent} everywhere except the sparsest network.}
+  \label{fig:split}
+\end{figure}
+
+
+\section{Africa, daily: the premise occurring naturally}\label{sec:r-africa-daily}
+On \num{282} African catchments that appear nowhere in training and have no hourly discharge at all, the zero-shot model reaches a median KGE of \num{0.1143}. Fine-tuning on African daily observations alone lifts it to \num{0.5761}, a paired median change of \num{+0.4094} with \SI{87.6}{\percent} of basins improving.
+
+\begin{table}[htbp]
+  \centering
+  \caption{All three scored on the identical \num{320540} basin-days over \num{282} basins. ERA5-Land's per-basin scores that already existed came from a different run and period; printing those beside these would compare numbers computed on different days.}
+  \label{tab:threeway}
+  \begin{tabular}{lrr}
+    \toprule
+    Method & Median KGE & Median NSE \\
+    \midrule
+    ERA5-Land runoff & -0.3616 & -1.6762 \\
+    M0, zero-shot & +0.1143 & +0.2028 \\
+    M1, after African daily fine-tuning & +0.5761 & +0.5572 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Paired over basins, which the medians cannot say: M1 beats the reanalysis on \SI{93.6}{\percent} of basins, and even the zero-shot M0 does on \SI{76.2}{\percent}. A model that has never seen an African catchment already outperforms the reanalysis on three basins in four.
+
+Africa is also where the timing claim of Section~\ref{sec:r-mechanism} stops holding as stated. Everywhere else $r$ barely moves because it was already right; in Africa it starts genuinely broken and does move. That is not a contradiction but a boundary: a daily total fixes which \emph{day} the water arrives, and only a domain whose day-scale timing is wrong can show it.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.86\linewidth]{fig07_africa_hydrographs.png}
+  \caption{Three catchments spanning the outcome rather than three good ones: the lower-quartile, median and upper-quartile catchment by M1 KGE. M0 under-predicts every peak and fine-tuning lifts them toward the observed hydrograph.}
+  \label{fig:africa-daily}
+\end{figure}
+
+\section{Africa, hourly: what can and cannot be said}\label{sec:r-africa-hourly}
+The hourly output is not a flattened daily mean. Over all \num{284} African basins the within-day coefficient of variation is \num{0.1246} at M0 and \num{0.1053} at M1, neither near zero.
+
+But daily-only supervision does measurably flatten it. The paired median change is \num{-0.0192}, about \SI{15}{\percent} of M0's value, at Wilcoxon $p=\num{1.7e-04}$, and within-day variation rises in only \SI{40}{\percent} of basins. This is a cost of the method that had not previously been measured.
+
+Whether that flattening loses \emph{real} structure cannot be settled in Africa, because no hourly observation exists there. On the target domain, where it does, the same step moved within-day standard deviation from \num{0.86} to \num{0.89} of observed -- toward the observations, not away.
+
+ERA5-Land is drawn beside the model in the hourly panels as a contrast and not as a reference. It has no river routing, so its basin average is runoff generation leaving the soil column rather than water passing a gauge: on \texttt{restricted\_ADHI\_\_258} its instantaneous rate reaches \SI{199}{\mm\per\day} where the daily observation peaks near \num{20}, while its daily mean matches (\SI{7.75}{\mm\per\day} against an observed \num{7.58}). The volume is close; the distribution inside the day is not. Its average day swings by a factor of \num{4.2} with a 15:00~UTC peak -- afternoon convective rainfall passed straight through -- while the model damps the rainfall's clock-driven cycle \num{4.6}-fold across all \num{284} basins.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.98\linewidth]{fig10_africa_hourly.png}
+  \caption{Africa at two resolutions, kept apart because only one can be scored. Left: daily, where the observation exists and every line carries a score. Right: hourly, where no observation exists anywhere on the continent, so the series can be compared only with each other. The rightmost panel aligns every day of the window by hour and divides each series by its own mean; a flat line means no dependence on the clock.}
+  \label{fig:africa-hourly}
+\end{figure}
+
+\section{What Phase~I establishes, and what it does not}\label{sec:r-summary}
+\begin{itemize}
+  \item Daily-aggregate supervision recovers most of the hourly skill lost to withholding hourly data, on \num{8843} gauges and on \num{282} African catchments that were never in training.
+  \item The repair is of magnitude, not of sub-daily timing, and that prediction holds across two domains four times apart in deficit scale.
+  \item It is not a degenerate solution, not a metric artefact and not a training-budget artefact; each was tested separately.
+  \item Under-dispersion is reduced, not removed: \SI{74}{\percent} of gauges remain under-dispersed after fine-tuning, so this does not yet deliver a model to be trusted on peak magnitude.
+  \item Random splitting overstates both the level and the precision of the result. Blocked-split numbers, with their honest fold-to-fold spread, are the ones to quote.
+  \item The gauge network is temperate and Northern-Hemisphere; ``global'' describes the model. The African test is the only genuinely external evidence here and it rests on \num{302} records, which is all the daily database holds for the continent.
+\end{itemize}
+
+\end{document}
