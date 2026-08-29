@@ -30,9 +30,12 @@ import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 from matplotlib.colors import Normalize, TwoSlopeNorm
+
+from common.config import resolve
 
 STATIC_CSV = (
     "/ibex/project/c2266/abbaa0a/data/gscad_database/processed/20250630/"
@@ -42,7 +45,7 @@ MIN_OBS_STD = 1e-3
 
 
 def panel(ax, lon, lat, values, title, cmap, norm, label, extend="neither", seed=0,
-          ticks=None, ticklabels=None):
+          ticks=None, ticklabels=None, overlay=None):
     # RANDOM plot order. Sorting by value puts the extremes on top, and at this point
     # density that silently repaints whole regions in the tail colour: an earlier
     # version showed the gain panel as mostly deep red when the median gain is +0.026,
@@ -52,6 +55,17 @@ def panel(ax, lon, lat, values, title, cmap, norm, label, extend="neither", seed
         lon[order], lat[order], c=values[order], s=4, cmap=cmap, norm=norm,
         linewidths=0, rasterized=True,
     )
+    if overlay is not None:
+        # African basins, drawn LARGER and with a dark edge. 282 of them against 8,843
+        # gauges would otherwise vanish, and the edge is what tells a reader that these
+        # markers are a different kind of measurement: the gauges are scored on hourly
+        # observations, the basins on daily ones, because no African catchment has hourly
+        # discharge. Same metric, same colour scale, different observation resolution --
+        # a distinction that has to be visible in the marks, not only in the caption.
+        o_lon, o_lat, o_values = overlay
+        ax.scatter(o_lon, o_lat, c=o_values, s=30, cmap=cmap, norm=norm,
+                   linewidths=0.6, edgecolors="#0b0b0b", marker="o", zorder=4,
+                   rasterized=True)
     ax.set_title(title, fontsize=10)
     ax.set_xlim(-180, 180)
     ax.set_ylim(-60, 80)
@@ -71,6 +85,12 @@ def main() -> None:
     parser.add_argument("--domain", default="target")
     parser.add_argument("--out-dir", default=None)
     parser.add_argument("--dpi", type=int, default=170)
+    parser.add_argument("--africa", default=None,
+                        help="Directory with ensemble_per_basin_M{0,1}.csv, to overlay the "
+                             "African basins. They are scored on DAILY observations because "
+                             "no African catchment has hourly discharge, so they are drawn "
+                             "as larger dark-edged markers rather than blended in.")
+    parser.add_argument("--basins", default="africa/africa_basins.gpkg")
     args = parser.parse_args()
 
     run = Path(args.run)
@@ -99,6 +119,66 @@ def main() -> None:
     lon = table["long"].to_numpy()
     lat = table["lat"].to_numpy()
 
+    # The African basins, on the same axes. Phase I's premise is "pretend these gauges have
+    # no hourly observations and supervise with daily aggregates only". On the target domain
+    # that premise is SIMULATED; in Africa it is genuine -- the continent has daily discharge
+    # and no hourly discharge at all. Same pretrained models, same daily-only fine-tuning,
+    # so M0 and M1 mean structurally the same thing in both places. What differs is the
+    # observation the score is computed against: hourly for the gauges, daily for the basins.
+    africa = None
+    if args.africa:
+        summary = Path(args.africa)
+        m0 = pd.read_csv(summary / "ensemble_per_basin_M0.csv").set_index("station_id")
+        m1 = pd.read_csv(summary / "ensemble_per_basin_M1.csv").set_index("station_id")
+        joined = m0.join(m1, lsuffix="_M0", rsuffix="_M1", how="inner")
+        basins = gpd.read_file(resolve(args.basins))
+        basins["station_id"] = basins["station_id"].astype(str)
+        # The centroid is a point on a map of the whole world; the polygon is irrelevant at
+        # this scale. Taken in an equal-area projection and converted back, because a
+        # centroid of raw lat/lon is not a centroid of the shape -- shapely warns about
+        # exactly this, and the warning is right even if the error is small here.
+        projected = basins.set_index("station_id").to_crs(6933)
+        centroids = projected.geometry.centroid.to_crs(4326)
+        joined = joined.join(pd.DataFrame({"long": centroids.x, "lat": centroids.y}),
+                             how="inner")
+        africa = joined.rename(columns={
+            "kge_M0": "M0_kge", "kge_M1": "M1_kge",
+            "kge_alpha_M0": "M0_kge_alpha", "kge_beta_M0": "M0_kge_beta",
+            "kge_alpha_M1": "M1_kge_alpha", "kge_beta_M1": "M1_kge_beta"})
+        africa["gain"] = africa["M1_kge"] - africa["M0_kge"]
+        print(f"{len(africa)} African basins overlaid (scored on DAILY observations; "
+              f"the gauges above are scored on hourly)")
+
+    def over(column):
+        """The overlay triple for one column, or None when Africa was not requested."""
+        if africa is None or column not in africa:
+            return None
+        return (africa["long"].to_numpy(), africa["lat"].to_numpy(),
+                africa[column].to_numpy())
+
+    def afr(column, fmt):
+        """Africa's own median for a column, as a title suffix. Empty when not overlaid.
+
+        ``fmt`` carries the whole suffix, separator included, so a panel that is not
+        overlaid gets nothing rather than a dangling separator.
+
+        Stated separately and never pooled with the gauges: the gauge medians are computed
+        against hourly observations and Africa's against daily ones, so a single combined
+        median would average two different measurements.
+        """
+        if africa is None or column not in africa:
+            return ""
+        return fmt.format(float(np.nanmedian(africa[column])))
+
+    def over_log(column):
+        """Same, on the log2 axis the two ratio panels use."""
+        raw = over(column)
+        if raw is None:
+            return None
+        o_lon, o_lat, values = raw
+        with np.errstate(divide="ignore", invalid="ignore"):
+            return o_lon, o_lat, np.log2(np.where(values > 0, values, np.nan))
+
     # 2x3, not 2x2. The top row is before / after / change for KGE; the bottom row was
     # only ever "before" for alpha, which showed the defect and left the reader to assume
     # from the KGE panels that it had been repaired. It is repaired only partly, and that
@@ -108,20 +188,24 @@ def main() -> None:
     fig, axes = plt.subplots(2, 3, figsize=(20.5, 8))
     kge_norm = Normalize(vmin=-0.4, vmax=0.9)
     panel(axes[0, 0], lon, lat, table["M0_kge"].to_numpy(),
-          f"M0 zero-shot hourly KGE (median {table['M0_kge'].median():.3f})",
-          "viridis", kge_norm, "KGE")
+          f"M0 zero-shot KGE (gauges, hourly: {table['M0_kge'].median():.3f}"
+          f"{afr('M0_kge', ' | basins, daily {:.3f}')})",
+          "viridis", kge_norm, "KGE", overlay=over("M0_kge"))
     panel(axes[0, 1], lon, lat, table["M1_kge"].to_numpy(),
-          f"M1 after daily-only fine-tuning (median {table['M1_kge'].median():.3f})",
-          "viridis", kge_norm, "KGE")
+          f"M1 after daily-only fine-tuning (gauges {table['M1_kge'].median():.3f}"
+          f"{afr('M1_kge', ' | basins {:.3f}')})",
+          "viridis", kge_norm, "KGE", overlay=over("M1_kge"))
     # Span from the 10-90% range, not the extremes, so the bulk of the distribution is
     # resolvable; the colorbar arrows say values run past the ends.
     gain = table["gain"].to_numpy()
     span = float(max(abs(np.nanpercentile(gain, 10)), abs(np.nanpercentile(gain, 90)))) or 0.1
     clipped = float(np.mean(np.abs(gain) > span))
     panel(axes[0, 2], lon, lat, gain,
-          f"gain M1 - M0 (median {table['gain'].median():+.3f}, "
-          f"{(gain > 0).mean():.0%} improved; {clipped:.0%} beyond ±{span:.2f})",
-          "RdBu_r", TwoSlopeNorm(vmin=-span, vcenter=0.0, vmax=span), "ΔKGE", extend="both")
+          f"gain M1 - M0 (gauges {table['gain'].median():+.3f}, "
+          f"{(gain > 0).mean():.0%} improved"
+          f"{afr('gain', ' | basins {:+.3f}')})",
+          "RdBu_r", TwoSlopeNorm(vmin=-span, vcenter=0.0, vmax=span), "ΔKGE",
+          extend="both", overlay=over("gain"))
     # Alpha on a LOG axis, and this is not cosmetic. Alpha is a ratio, so 0.5 (half the
     # observed variability) and 2.0 (double it) are equally wrong, but a linear scale
     # centred at 1.0 put 0.5 halfway down the bar and pushed 2.0 off the top. With the
@@ -162,11 +246,13 @@ def main() -> None:
         lo, hi = np.nanpercentile(values, [10, 90])
         # Two short lines. Longer ones ran under the colorbar and were clipped mid-number.
         panel(axes[1, col], lon, lat, log_values,
-              f"{heading}, log scale (median {np.nanmedian(values):.3f})\n"
+              f"{heading}, log scale (gauges {np.nanmedian(values):.3f}"
+              f"{afr(column, ' | basins {:.3f}')})\n"
               f"{sense} ({np.mean(values < 1):.0%}), purple = too much; "
               f"10-90%: {lo:.2f}-{hi:.2f}",
               "PuOr", Normalize(vmin=-2.0, vmax=2.0), label,
-              extend="both", ticks=log_ticks, ticklabels=tick_text)
+              extend="both", ticks=log_ticks, ticklabels=tick_text,
+              overlay=over_log(column))
         if column == "M0_kge_alpha":
             alpha_logs["M0"] = log_values
     _, alpha_logs["M1"] = log_ratio("M1_kge_alpha")
@@ -183,23 +269,44 @@ def main() -> None:
     closer = float(np.nanmean(repair > 0))
     a0 = table["M0_kge_alpha"].to_numpy()
     a1 = table["M1_kge_alpha"].to_numpy()
+    africa_repair = None
+    if africa is not None:
+        with np.errstate(divide="ignore", invalid="ignore"):
+            ad0 = np.abs(np.log2(africa["M0_kge_alpha"].clip(lower=1e-6)))
+            ad1 = np.abs(np.log2(africa["M1_kge_alpha"].clip(lower=1e-6)))
+        africa_repair = (africa["long"].to_numpy(), africa["lat"].to_numpy(),
+                         (ad0 - ad1).to_numpy())
     panel(axes[1, 2], lon, lat, repair,
-          f"alpha repair: how much closer to 1.0 ({closer:.0%} improved)\n"
+          f"alpha repair: how much closer to 1.0 (gauges {closer:.0%} improved"
+          + (f", basins {float(np.nanmean(africa_repair[2] > 0)):.0%}" if africa_repair
+             else "") + ")\n"
           f"red = moved toward 1.0; |log2 alpha| {np.nanmedian(d0):.3f} -> "
           f"{np.nanmedian(d1):.3f}, but {np.nanmean(a1 < 1):.0%} still under-dispersed",
           "RdBu_r", TwoSlopeNorm(vmin=-rspan, vcenter=0.0, vmax=rspan),
-          "reduction in |log2 alpha|", extend="both")
+          "reduction in |log2 alpha|", extend="both", overlay=africa_repair)
 
     # Say plainly what the station cloud covers: "global" describes the model, not the
     # gauge network. Africa, South America and mainland Asia contribute no stations.
     agencies = table["source"].value_counts()
+    overlay_note = ""
+    if africa is not None:
+        # The distinction the marker size carries, said in words as well: same models, same
+        # daily-only fine-tuning, but the gauges are scored against hourly observations and
+        # the basins against daily ones, because no African catchment has hourly discharge.
+        # Phase I's premise is simulated on the gauges and genuine in Africa.
+        overlay_note = (f"\nSmall dots: {len(table)} target gauges, scored on HOURLY "
+                        f"observations, Phase I's premise simulated.  "
+                        f"Large outlined dots: {len(africa)} African basins, scored on "
+                        f"DAILY observations because no hourly discharge exists there, "
+                        f"Phase I's premise genuine.")
     fig.suptitle(
         f"Target-domain hourly metrics, {len(table)} stations, one turn as target each "
         f"({run.parent.name})\n"
-        + " | ".join(f"{name} {count}" for name, count in agencies.items()),
+        + " | ".join(f"{name} {count}" for name, count in agencies.items())
+        + overlay_note,
         fontsize=10,
     )
-    fig.tight_layout(rect=(0, 0, 1, 0.97))
+    fig.tight_layout(rect=(0, 0, 1, 0.955 if africa is None else 0.925))
     path = out_dir / f"global_map_{args.domain}.png"
     fig.savefig(path, dpi=args.dpi, bbox_inches="tight")
     plt.close(fig)

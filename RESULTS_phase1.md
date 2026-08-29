@@ -1449,7 +1449,8 @@ CONFIG=$CFG sbatch slurm/33_significance.sbatch
 
 # CPU only, from finished outputs
 python -m scripts.stratify_gain       --run outputs/v2_runB/diagnostics_allhours --out-dir outputs/v2_stratify
-python -m scripts.global_map          --run outputs/v2_runB/diagnostics_allhours --out-dir outputs/v2_stratify/maps
+python -m scripts.global_map          --run outputs/v2_runB/diagnostics_allhours --out-dir outputs/v2_stratify/maps \
+  --africa outputs/v2_africa_insitu_summary   # overlays the African basins on the same axes
 python -m scripts.paired_split_effect --random-run v2_runB --blocked-run v2_blocked --tag M0 --out-dir outputs/v2_split_effect
 python -m scripts.paired_split_effect --random-run v2_runB --blocked-run v2_blocked --tag M1 --out-dir outputs/v2_split_effect
 python -m scripts.convergence_check
