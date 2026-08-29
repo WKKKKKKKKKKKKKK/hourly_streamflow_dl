@@ -206,7 +206,11 @@ def main() -> None:
     # cannot be said with one panel: the median alpha moves 0.813 -> 0.851 while the share
     # of under-dispersed gauges barely shifts (71.4% -> 72.4%). What actually happens is a
     # tightening toward 1.0 from both sides, which needs before, after and change to show.
-    fig, axes = plt.subplots(4, 3, figsize=(20.5, 11.6))
+    # Height is tied to width on purpose. set_aspect("equal") holds the data's 2.6:1 shape, so
+    # an axes rectangle taller than that letterboxes the map with white above and below -- which
+    # is what narrowing the columns without shrinking the figure produced. 10.8 keeps each
+    # rectangle at roughly the data aspect, so the maps fill them.
+    fig, axes = plt.subplots(4, 3, figsize=(18.6, 10.8))
     # A 4x3 matrix: columns are M0 / M1 / difference, rows are KGE and its three
     # components. Every quantity therefore appears before, after, and as a change, and the
     # first two columns of a row share one scale so the pair can be compared by eye.
@@ -317,7 +321,11 @@ def main() -> None:
     # change in r +/-0.085 -- so one scale would render the r panel uniformly white. With a
     # bar beside every panel the differing spans are stated where they are used, which is
     # what makes per-panel bars safe here.
-    LEFT, RIGHT_PAD, COL_GAP = 0.020, 0.006, 0.042
+    # COL_GAP only has to clear the bar's tick labels and the next map's y labels; 0.042
+    # was nearly an inch of white between columns. The figure width comes down with it, so
+    # the maps keep filling their rectangles instead of being letterboxed inside wider ones
+    # -- set_aspect("equal") holds the 2.6:1 data shape whatever the rectangle is.
+    LEFT, RIGHT_PAD, COL_GAP = 0.018, 0.005, 0.024
     BAR_W, BAR_GAP = 0.006, 0.006
     width = (1.0 - LEFT - RIGHT_PAD - 2 * COL_GAP - 3 * (BAR_W + BAR_GAP)) / 3.0
     stride = width + BAR_GAP + BAR_W + COL_GAP
