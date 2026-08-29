@@ -44,8 +44,15 @@ STATIC_CSV = (
 MIN_OBS_STD = 1e-3
 
 
-def panel(ax, lon, lat, values, title, cmap, norm, label, extend="neither", seed=0,
-          ticks=None, ticklabels=None, overlay=None):
+def panel(ax, lon, lat, values, title, cmap, norm, extend="neither", seed=0,
+          overlay=None):
+    """Draw one map and return its mappable, WITHOUT a colorbar.
+
+    Twelve panels once meant twelve colorbars, and the figure only has seven distinct
+    scales: the M0/M1 pair of each row shares one by construction, and alpha and beta share
+    the same log axis as each other. Colorbars are therefore attached per scale by the
+    caller, spanning the axes they serve.
+    """
     # RANDOM plot order. Sorting by value puts the extremes on top, and at this point
     # density that silently repaints whole regions in the tail colour: an earlier
     # version showed the gain panel as mostly deep red when the median gain is +0.026,
@@ -76,11 +83,7 @@ def panel(ax, lon, lat, values, title, cmap, norm, label, extend="neither", seed
     ax.set_aspect("equal")
     ax.grid(alpha=0.15, linewidth=0.4)
     ax.tick_params(labelsize=7)
-    bar = plt.colorbar(handle, ax=ax, fraction=0.03, pad=0.02, extend=extend, ticks=ticks)
-    if ticklabels is not None:
-        bar.ax.set_yticklabels(ticklabels)
-    bar.set_label(label, fontsize=8)
-    bar.ax.tick_params(labelsize=7)
+    return handle
 
 
 def main() -> None:
@@ -196,7 +199,7 @@ def main() -> None:
     # cannot be said with one panel: the median alpha moves 0.813 -> 0.851 while the share
     # of under-dispersed gauges barely shifts (71.4% -> 72.4%). What actually happens is a
     # tightening toward 1.0 from both sides, which needs before, after and change to show.
-    fig, axes = plt.subplots(4, 3, figsize=(20.5, 15.5))
+    fig, axes = plt.subplots(4, 3, figsize=(20.5, 11.6))
     # A 4x3 matrix: columns are M0 / M1 / difference, rows are KGE and its three
     # components. Every quantity therefore appears before, after, and as a change, and the
     # first two columns of a row share one scale so the pair can be compared by eye.
@@ -217,19 +220,23 @@ def main() -> None:
         ("kge_beta", "beta", "ratio", "PuOr", Normalize(vmin=-2.0, vmax=2.0)),
     )
 
+    pair_handles: dict = {}
+    diff_bars: list = []
     for row, (key, bar_label, kind, cmap, norm) in enumerate(ROWS):
         ratio = kind == "ratio"
-        ticks = log_ticks if ratio else None
-        labels = tick_text if ratio else None
         for col, tag in enumerate(("M0", "M1")):
             column = f"{tag}_{key}" if key != "kge" else f"{tag}_kge"
             values = table[column].to_numpy()
             drawn = log2_of(values) if ratio else values
-            panel(axes[row, col], lon, lat, drawn, f"({chr(ord('a') + row * 3 + col)})",
-                  cmap, norm, bar_label,
-                  extend="both" if ratio else "min",
-                  ticks=ticks, ticklabels=labels,
-                  overlay=(over_log(column) if ratio else over(column)))
+            handle = panel(axes[row, col], lon, lat, drawn,
+                           f"({chr(ord('a') + row * 3 + col)})", cmap, norm,
+                           extend="both" if ratio else "min",
+                           overlay=(over_log(column) if ratio else over(column)))
+        # One bar for the pair, and for alpha and beta one bar for all four of their panels,
+        # since those two rows share an identical log axis. Deferred to a list so the bar can
+        # be attached to every axes it serves and sized against them together.
+        pair_handles.setdefault(bar_label if not ratio else "ratio", []).append(
+            (handle, [axes[row, 0], axes[row, 1]], ratio, bar_label))
 
         # Third column: the plain difference M1 - M0, in the quantity's own units. For KGE
         # and r that is unambiguous -- higher is better, so red is better. For alpha and
@@ -245,9 +252,11 @@ def main() -> None:
             am0 = africa[f"M0_{key}" if key != "kge" else "M0_kge"].to_numpy()
             am1 = africa[f"M1_{key}" if key != "kge" else "M1_kge"].to_numpy()
             a_over = (africa["long"].to_numpy(), africa["lat"].to_numpy(), am1 - am0)
-        panel(axes[row, 2], lon, lat, diff, f"({chr(ord('a') + row * 3 + 2)})",
-              "RdBu_r", TwoSlopeNorm(vmin=-span, vcenter=0.0, vmax=span),
-              f"change in {bar_label}", extend="both", overlay=a_over)
+        diff_handle = panel(axes[row, 2], lon, lat, diff,
+                            f"({chr(ord('a') + row * 3 + 2)})", "RdBu_r",
+                            TwoSlopeNorm(vmin=-span, vcenter=0.0, vmax=span),
+                            extend="both", overlay=a_over)
+        diff_bars.append((diff_handle, axes[row, 2], f"change in {bar_label}"))
 
     # Say plainly what the station cloud covers: "global" describes the model, not the
     # gauge network. Africa, South America and mainland Asia contribute no stations.
@@ -263,6 +272,7 @@ def main() -> None:
                         f"Large outlined dots: {len(africa)} African basins, scored on "
                         f"DAILY observations because no hourly discharge exists there, "
                         f"Phase I's premise genuine.")
+    top_frac = 0.955 if africa is None else 0.925
     fig.suptitle(
         f"Target-domain hourly metrics, {len(table)} stations, one turn as target each "
         f"({run.parent.name})\n"
@@ -270,7 +280,49 @@ def main() -> None:
         + overlay_note,
         fontsize=10,
     )
-    fig.tight_layout(rect=(0, 0, 1, 0.955 if africa is None else 0.925))
+    # Seven colorbars for twelve panels: one per distinct scale rather than one per axes.
+    # Positioned explicitly rather than by fig.colorbar(ax=[...]), which steals width from
+    # the axes it is attached to and, under a manual subplots_adjust, laid the bars straight
+    # over the middle column's maps.
+    fig.subplots_adjust(left=0.035, right=0.90, top=top_frac, bottom=0.045,
+                        hspace=0.22, wspace=0.24)
+
+    def place_bar(handle, axs, label, ratio, gap_right, height_frac=1.0):
+        """A bar in the margin to the right of ``axs``.
+
+        ``height_frac`` shortens and re-centres it. A bar shared across two rows spans the
+        gap between them as well, which made the alpha/beta bar taller than any panel and
+        left a void beside it; 0.55 keeps it clearly paired with both rows without that.
+        """
+        boxes = [a.get_position() for a in axs]
+        y0, y1 = min(b.y0 for b in boxes), max(b.y1 for b in boxes)
+        span = (y1 - y0) * height_frac
+        y0 = y0 + ((y1 - y0) - span) / 2
+        x = max(b.x1 for b in boxes) + gap_right
+        cax = fig.add_axes([x, y0, 0.008, span])
+        bar = fig.colorbar(handle, cax=cax, extend="both" if ratio else "min",
+                           ticks=log_ticks if ratio else None)
+        if ratio:
+            bar.ax.set_yticklabels(tick_text)
+        bar.set_label(label, fontsize=8)
+        bar.ax.tick_params(labelsize=7)
+
+    for group, entries in pair_handles.items():
+        if group == "ratio":
+            # alpha and beta share an identical log axis, so one bar serves all four of
+            # their M0/M1 panels.
+            axs = [a for _, pair, _, _ in entries for a in pair]
+            place_bar(entries[0][0], axs, "alpha, beta", True, 0.014, height_frac=0.55)
+        else:
+            handle, axs, ratio, label = entries[0]
+            place_bar(handle, axs, label, ratio, 0.014)
+    for handle, ax, label in diff_bars:
+        boxes = ax.get_position()
+        cax = fig.add_axes([boxes.x1 + 0.014, boxes.y0, 0.008, boxes.height])
+        bar = fig.colorbar(handle, cax=cax, extend="both")
+        bar.set_label(label, fontsize=8)
+        bar.ax.tick_params(labelsize=7)
+
     path = out_dir / f"global_map_{args.domain}.png"
     fig.savefig(path, dpi=args.dpi, bbox_inches="tight")
     plt.close(fig)
