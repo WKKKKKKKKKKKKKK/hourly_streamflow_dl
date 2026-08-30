@@ -210,42 +210,19 @@ def part_experiments(d: dict) -> str:
     s.append("")
 
     s.append(r"\section{Data}\label{sec:data}")
-    if d.get("composition") is not None:
-        comp = d["composition"]
-        s.append(
-            f"The training network holds {n:,} gauges with hourly discharge, drawn from six "
-            f"national and regional archives: "
-            + ", ".join(f"{name} ({c:,})" for name, c in comp.items()) + ".")
+    # The data section is long enough, and referenced often enough, to live in its own
+    # file. It is written by hand rather than generated: the counts in it are structural
+    # facts about the archive, not results, and they do not change when a run is repeated.
+    # The few that could drift are checked against the files by scripts.check_data_section.
+    section = Path("reports/latex/data_description.tex")
+    if section.exists():
+        s.append(section.read_text(encoding="utf-8").split(r"\section{Data}\label{sec:data}")[1]
+                 .strip())
         s.append("")
-        s.append(
-            "The geography of that network is a limitation worth stating at the outset. "
-            "There is no gauge in Africa, none in South America, and none in mainland Asia. "
-            "About four fifths of the gauges lie between \\SI{30}{\\degree} and "
-            "\\SI{60}{\\degree} north. The word global in this report describes the model. It "
-            "does not describe the gauge network. Section~\\ref{sec:africa} exists because of "
-            "this.")
+    else:
+        s.append(r"\section{Data}\label{sec:data}")
+        s.append(r"\textit{reports/latex/data\_description.tex is missing.}")
         s.append("")
-    s.append(
-        r"Forcing is hourly precipitation, temperature and potential evapotranspiration. "
-        r"Each sample gives the model the past 365 days at daily resolution and the past "
-        r"\SI{336}{\hour} at hourly resolution, and asks for the discharge at the target "
-        r"hour.")
-    s.append("")
-    s.append(
-        "Two ways of building the daily input were available and both were run to "
-        "completion. Run~A takes the prepared training batches as they are. Their daily "
-        "branch is a 1000-step power-law subsample of the hourly record, dense near the "
-        "target hour and sparse further back. Run~B rebuilds the windows from the raw hourly "
-        "source and computes 365 genuine daily means.")
-    s.append("")
-    s.append(
-        "The two are not interchangeable. Counting how the 1000 subsampled points fall "
-        "across the 365 days shows why: 8 days carry all 24 hours, 176 days carry exactly "
-        "one point, and 7 days carry none. A single instantaneous sample is a poor estimate "
-        "of a daily mean for precipitation, where most hours are zero. The daily mean cannot "
-        "be recovered from the subsample, so it has to be rebuilt from the source. "
-        "Appendix~\\ref{app:config} reports what this costs.")
-    s.append("")
 
     s.append(r"\section{Model and configuration}\label{sec:model}")
     s.append(

@@ -37,6 +37,10 @@ def main() -> None:
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(args.out, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.write(args.tex, args.tex.name)
+        # The data section is \input by the document, so the archive is incomplete without it.
+        section = args.tex.parent / "data_description.tex"
+        if section.exists():
+            archive.write(section, section.name)
         for name in wanted:
             archive.write(args.figdir / name, name)
         archive.writestr("README.txt", (

@@ -54,15 +54,139 @@ Three model states are compared throughout, and the whole report turns on them:
 The gap between M0 and M1 is the quantity of interest. It says how much of the hourly skill lost by hiding hourly data can be bought back with daily totals alone.
 
 \section{Data}\label{sec:data}
-The training network holds 8,979 gauges with hourly discharge, drawn from six national and regional archives: CAMELSH (5,115), BOMAustralia (1,804), LamaHCE (834), Japan (690), Germany (463), LamaHIce (73).
+\subsection{Discharge observations and the training network}
 
-The geography of that network is a limitation worth stating at the outset. There is no gauge in Africa, none in South America, and none in mainland Asia. About four fifths of the gauges lie between \SI{30}{\degree} and \SI{60}{\degree} north. The word global in this report describes the model. It does not describe the gauge network. Section~\ref{sec:africa} exists because of this.
+The hourly training network comprises \num{9181} gauges compiled into a single archive of
+\num{403248} hourly steps. The record begins at 00:00 UTC on 1 January 1980 and ends at
+23:00 UTC on 31 December 2025, covering \num{16802} days, that is \num{46} complete
+calendar years with no gap in the time axis. Six national and regional collections contribute, in descending order of
+size: CAMELS-H for the conterminous United States (\num{5278} gauges), the Australian
+Bureau of Meteorology network (\num{1840}), LamaH-CE for central Europe (\num{835}), a
+Japanese national collection (\num{690}), a German collection (\num{463}), and LamaH-Ice for
+Iceland (\num{75}).
 
-Forcing is hourly precipitation, temperature and potential evapotranspiration. Each sample gives the model the past 365 days at daily resolution and the past \SI{336}{\hour} at hourly resolution, and asks for the discharge at the target hour.
+The prediction target is specific discharge $q$, expressed in \si{\mm\per\hour} at hourly
+resolution and \si{\mm\per\day} at daily resolution. Normalising by catchment area in this
+way makes gauges of different size directly comparable and lets one model serve all of them.
 
-Two ways of building the daily input were available and both were run to completion. Run~A takes the prepared training batches as they are. Their daily branch is a 1000-step power-law subsample of the hourly record, dense near the target hour and sparse further back. Run~B rebuilds the windows from the raw hourly source and computes 365 genuine daily means.
+Gauges whose observed hourly series has a standard deviation below \num{e-3} are excluded
+from every reported metric, since a variance ratio and a correlation are both undefined for a
+constant series. That filter removes \num{136} gauges. The \num{8843} that remain constitute
+the target-domain population for all target-domain results in this report.
 
-The two are not interchangeable. Counting how the 1000 subsampled points fall across the 365 days shows why: 8 days carry all 24 hours, 176 days carry exactly one point, and 7 days carry none. A single instantaneous sample is a poor estimate of a daily mean for precipitation, where most hours are zero. The daily mean cannot be recovered from the subsample, so it has to be rebuilt from the source. Appendix~\ref{app:config} reports what this costs.
+The geography of this network is a limitation of the study and belongs here rather than in a
+closing caveat. The network contains no gauge in Africa, none in South America and none in
+mainland Asia. Approximately four fifths of its gauges lie between \SI{30}{\degree} and
+\SI{60}{\degree} north. The word \emph{global} in this report describes the intended scope of
+the model. It does not describe the observational coverage available to train it. Section
+\ref{sec:africa-design} exists to address that gap directly.
+
+\subsection{Meteorological forcing and catchment attributes}
+
+Three hourly meteorological variables drive the model: precipitation, air temperature, and
+potential evapotranspiration. Precipitation is taken from MSWEP version 3.16. Potential
+evapotranspiration is computed by the Penman method rather than by a temperature-only
+approximation, since the latter degrades most in exactly the arid and tropical settings the
+African test emphasises.
+
+Forty-two static catchment attributes are available per gauge. Seventeen are withheld from
+the model. Sixteen of these are socio-economic proxies: gridded population counts and
+densities, gross domestic product at two resolutions, the Human Development Index, and the
+pedigree fields that accompany them. They are withheld because a model may exploit them to
+identify a region rather than to characterise a catchment, which would inflate apparent
+generalisation. The seventeenth withheld field is a duplicate elevation product already
+represented by another attribute. Twenty-five attributes remain in use.
+
+\subsection{Sample construction}
+
+A sample is one target hour together with the meteorological history preceding it. The
+model receives two views of that history. The daily branch receives the \num{365} days
+immediately before the target day. The hourly branch receives the final \SI{336}{\hour}. The
+forcing at the target hour itself is withheld from the input, so that forcing up to hour
+$t-1$ predicts discharge at hour $t$.
+
+Target hours are sampled with a stride of \num{24} at hour 23 of each day, which places each
+sample's final \num{24} hourly outputs on one calendar day and allows consecutive samples to
+be joined into a continuous hourly series without overlap or gaps. That property is what
+makes the within-day diagnostics of Section~\ref{sec:falsify} possible. The construction
+yields \num{73808280} samples over the full network.
+
+Training and validation are separated in time within each gauge rather than by holding out
+whole gauges. The first \SI{70}{\percent} of a gauge's valid samples train and the final
+\SI{30}{\percent} validate, giving \num{51665658} training samples and \num{22142622}
+validation samples. A temporal split of this form ensures that no validation sample precedes
+a training sample at the same gauge, so the evaluation cannot benefit from having seen the
+future of its own series.
+
+\subsection{Construction of the daily branch}
+
+Prepared training batches were available and were used in a first set of experiments. In
+those batches the daily branch is not a daily series. It is a \num{1000}-step subsample of
+the hourly record drawn under a power law, dense in the hours immediately before the target
+and increasingly sparse further back, spanning \num{8760} hours in total.
+
+That subsample cannot supply a daily mean, and the reason is quantitative rather than a
+matter of preference. Distributing the \num{1000} sampled points across the \num{365} days
+they cover gives the following: \num{8} days retain all \num{24} hours, \num{176} days retain
+exactly one point, \num{7} days retain none, and the remainder lie between. For
+precipitation, where the majority of hours are zero, a single instantaneous sample is a poor
+estimator of the daily mean, and it is biased in an uncontrolled direction depending on
+whether the sampled hour happened to be wet.
+
+The windows were therefore rebuilt from the raw hourly source, computing the daily branch as
+$\bar{x}_d = \frac{1}{24}\sum_{h=1}^{24} x_{d,h}$ over each of the \num{365} preceding days.
+Both constructions were carried through to completion and both are reported, in
+Appendix~\ref{app:config}. The prepared archive is retained in the rebuilt path for its
+normalisation constants and feature names alone, so that scores from the two constructions
+remain directly comparable.
+
+\subsection{Cross-validation design}
+
+Gauges are partitioned into five folds, and each fold serves once as the held-out set while
+the remaining four fifths supply training. Every gauge therefore takes exactly one turn as a
+held-out gauge, and the target-domain metrics reported here cover the entire network rather
+than a single fifth of it. No result depends on which fifth happened to be drawn.
+
+Two partitioning schemes are compared. The first assigns gauges to folds at random, which
+leaves each held-out gauge a trainable neighbour at a median distance of \SI{10.4}{\km}. The
+second first clusters gauge coordinates into \num{120} groups by $k$-means on the unit sphere
+and then assigns whole clusters to folds, raising the median distance to the nearest
+trainable neighbour to \SI{94.9}{\km}. All other settings are identical between the two. The
+difference between them isolates how much apparent zero-shot skill derives from spatial
+proximity to training data rather than from generalisation across catchment characteristics.
+
+\subsection{The African evaluation set}
+
+\num{294} African catchments constitute the external evaluation set. They are drawn from
+three archives: GRDC-Caravan (\num{126} catchments), the Global Runoff Data Centre
+(\num{119}), and the restricted African Database of Hydrometric Indices (\num{49}).
+\num{282} of them satisfy a minimum of \num{100} valid days within the evaluation period and
+are scored, with a median of \num{1090} validation days each. They are small to medium
+catchments, with a median area of \SI{781}{\km\squared} and a range from \num{19} to
+\num{9835}.
+
+The size of this set reflects data availability rather than selection. The daily discharge
+database contains \num{302} African records with a time series; the \num{294} used here are
+\SI{97}{\percent} of that total. A further \num{1283} African entries carry station metadata
+without any accompanying series and cannot be evaluated by any method. Africa is genuinely
+sparse in gauge coverage, and that sparsity is the condition the external test is designed to
+confront rather than an artefact of how the set was assembled.
+
+The particular \num{294} are the evaluation set of a published continent-holdout experiment,
+adopted without modification so that results reported here rest against that study's baseline
+on identical catchments. Whatever selection criteria that study applied are inherited, which
+is a limitation of the comparison and is noted as such. No African catchment appears anywhere
+in pretraining, and none carries hourly discharge observations.
+
+Meteorological forcing over these catchments is ERA5-Land at \SI{0.1}{\degree} hourly
+resolution, aggregated to catchment means by weighting each grid cell by its fractional area
+of overlap with the catchment polygon. It runs from 01:00 UTC on 1 January 1980 to 23:00 UTC
+on 31 December 1995, \num{140255} hourly steps. The African evaluation period is bounded by
+this forcing rather than by the discharge records, several of which extend later. ERA5-Land total runoff over
+the same catchments is retained separately as a process-based baseline. Because that variable
+accumulates from 00 UTC and resets daily, hourly values are recovered by differencing within
+each accumulation day, and the resulting hour-ending stamps are shifted to hour-beginning so
+that they align with the model's output convention.
 
 \section{Model and configuration}\label{sec:model}
 The model is a shared multi-timescale LSTM with two branches. The daily branch reads 365 days and hands its hidden and cell state to the hourly branch at a transfer point set by the hourly look-back. The hourly branch reads forward from there and emits one value per hour. Training minimises a loss on the hourly targets where they are available, and on the 24-hour aggregate where they are not.

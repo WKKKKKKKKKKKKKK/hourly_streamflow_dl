@@ -1489,6 +1489,7 @@ python -m scripts.component_deficits   # KGE component deficits, both domains
 python -m scripts.build_report --out reports/PhaseI_report.docx
 python -m scripts.step3_source         # STEP 3: what the adaptation costs the source domain
 python -m scripts.ablation_v1_v2       # separates the two changes v1 -> v2 made at once
+python -m scripts.check_data_section   # the hand-written data section against the files
 python -m scripts.build_latex          # the same report as LaTeX, Experiments + Results
 module load texlive/2022 && cd reports/latex && pdflatex PhaseI_report.tex  # x2 for the ToC
 python -m scripts.bundle_latex        # .tex + the 11 figures, flat, for Overleaf
