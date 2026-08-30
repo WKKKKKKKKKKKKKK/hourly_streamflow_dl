@@ -60,6 +60,8 @@ PATTERNS = (
     ("KGE component deficits log", "v2_component_deficits/component_deficits.log"),
     ("STEP 3, source domain after transfer", "v2_step3_source/step3_by_fold.csv"),
     ("STEP 3 summary", "v2_step3_source/step3_summary.json"),
+    ("v1 to v2 single-variable ablation", "v2_ablation/ablation_v1_v2.csv"),
+    ("v1 to v2 ablation summary", "v2_ablation/ablation_summary.json"),
 )
 
 MAX_BYTES = 512 * 1024  # anything larger is a per-gauge table, not a summary

@@ -114,6 +114,7 @@ def gather() -> dict:
     d["conv"] = load("outputs/convergence_check/summary.json")
     d["lat"] = load("outputs/v2_stratify/maps/by_latitude_target.csv")
     d["step3"] = load("outputs/v2_step3_source/step3_summary.json")
+    d["ablation"] = load("outputs/v2_ablation/ablation_summary.json")
     pub = load("outputs/africa_runB/per_basin_pub_baseline.csv")
     d["pub"] = pub
     comp = load("outputs/v2_runB/diagnostics_allhours/kge_components_target.csv")
@@ -378,6 +379,31 @@ def part_results(d: dict) -> str:
         r"v3's longer budget changes almost nothing (\num{0.624} blocked, \num{0.627} true "
         r"daily), which is the first evidence that v2 was not simply stopped early. "
         r"v2 is the primary configuration throughout (Figure~\ref{fig:config})." )
+    abl = d.get("ablation")
+    if abl:
+        s.append("")
+        eff = abl["effects"]
+        parts = [f"{name} contributes \\num{{{v['delta_M1']:+.4f}}}" for name, v in eff.items()]
+        below = [n for n, v in eff.items() if not v["above_fold_noise"]]
+        s.append(
+            "That step changes two things at once, so it cannot say which one acts. Two "
+            "strictly single-variable pairs in the hyperparameter search can: configurations "
+            "differing in exactly one key and nothing else, checked key by key rather than "
+            "assumed from their names. On M1, " + " and ".join(parts) + " -- the look-back is "
+            "the larger by roughly fivefold.")
+        s.append("")
+        s.append(
+            f"Read those with the caveat they carry. Each search configuration ran "
+            f"\\num{{{abl['n_folds_per_configuration']}}} fold, so they are point estimates "
+            f"with no between-fold spread, against a fold-level noise floor of "
+            f"\\num{{{abl['fold_noise_floor']}}} measured elsewhere in this work. "
+            + (f"The {' and '.join(below)} effect sits below that floor and is not "
+               f"distinguishable from zero here. " if below else
+               "Both exceed it, the forget gate only narrowly. ")
+            + "Splitting the credit properly needs the five-fold ablation, which has not "
+              "been run. The forget gate is kept either way: it is part of the published "
+              "method this model follows, and its absence from v1 was an oversight rather "
+              "than a choice.")
     s.append("")
     s.append(fig("fig03_configurations.png",
                  "Every configuration, as an M0 (open) to M1 (filled) movement in median "

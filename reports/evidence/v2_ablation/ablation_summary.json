@@ -1,0 +1,17 @@
+{
+  "fold_noise_floor": 0.0078,
+  "n_folds_per_configuration": 1,
+  "effects": {
+    "forget gate 0 -> 3": {
+      "delta_M1": 0.009384573912780803,
+      "delta_M0": -0.004865827019022606,
+      "above_fold_noise": true
+    },
+    "hourly look-back 72 -> 336": {
+      "delta_M1": 0.04665653126884084,
+      "delta_M0": -0.013414145811098455,
+      "above_fold_noise": true
+    }
+  },
+  "caveat": "One fold per configuration, so these are point estimates with no between-fold spread. An effect below the fold noise floor is not distinguishable from zero here."
+}

@@ -21,7 +21,7 @@
 \title{Global hourly streamflow under daily-only supervision\\[0.3em]
   \large Phase~I: experiments and results}
 \author{Weikang Kong}
-\date{2026-08-29}
+\date{2026-08-30}
 
 \begin{document}
 \maketitle
@@ -123,6 +123,10 @@ No African catchment has hourly discharge, so the hourly output there can be com
 Run~A moves \emph{backwards} under both configurations: its median target-domain hourly KGE falls from \num{0.427} to \num{0.397} under v1 and from \num{0.424} to \num{0.397} under v2. A power-law subsample of the hourly record is not a daily branch, and no amount of fine-tuning repairs that. Every run~B variant gains.
 
 Within run~B the forget gate is what separates a modest result from a clear one. Under v1 the blocked split reaches \num{0.475}; under v2 it reaches \num{0.621}. v3's longer budget changes almost nothing (\num{0.624} blocked, \num{0.627} true daily), which is the first evidence that v2 was not simply stopped early. v2 is the primary configuration throughout (Figure~\ref{fig:config}).
+
+That step changes two things at once, so it cannot say which one acts. Two strictly single-variable pairs in the hyperparameter search can: configurations differing in exactly one key and nothing else, checked key by key rather than assumed from their names. On M1, forget gate 0 -> 3 contributes \num{+0.0094} and hourly look-back 72 -> 336 contributes \num{+0.0467} -- the look-back is the larger by roughly fivefold.
+
+Read those with the caveat they carry. Each search configuration ran \num{1} fold, so they are point estimates with no between-fold spread, against a fold-level noise floor of \num{0.0078} measured elsewhere in this work. Both exceed it, the forget gate only narrowly. Splitting the credit properly needs the five-fold ablation, which has not been run. The forget gate is kept either way: it is part of the published method this model follows, and its absence from v1 was an oversight rather than a choice.
 
 \begin{figure}[htbp]
   \centering

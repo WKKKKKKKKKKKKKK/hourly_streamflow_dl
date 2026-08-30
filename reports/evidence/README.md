@@ -41,8 +41,10 @@ Regenerate with `python -m scripts.collect_evidence`.
 | KGE component deficits log | `v2_component_deficits/component_deficits.log` | 1 |
 | STEP 3, source domain after transfer | `v2_step3_source/step3_by_fold.csv` | 1 |
 | STEP 3 summary | `v2_step3_source/step3_summary.json` | 1 |
+| v1 to v2 single-variable ablation | `v2_ablation/ablation_v1_v2.csv` | 1 |
+| v1 to v2 ablation summary | `v2_ablation/ablation_summary.json` | 1 |
 
-Total 1024 KB.
+Total 1025 KB.
 
 Mostly summary-level. The exceptions, kept because they are the direct evidence for a
 headline claim rather than a rollup of it:

@@ -1,0 +1,3 @@
+change,key,config_before,config_after,n_folds_before,n_folds_after,M0_before,M0_after,delta_M0,M1_before,M1_after,delta_M1,above_fold_noise
+forget gate 0 -> 3,model.initial_forget_bias,r06_bs256_do4_hs64_H336,g01_gauch_hs64_H336,1,1,0.5050414382556624,0.5001756112366398,-0.004865827019022606,0.5884051444004386,0.5977897183132194,0.009384573912780803,True
+hourly look-back 72 -> 336,data.lookback_hourly,g03_forgetbias_H72,g02_gauch_hs128_H336,1,1,0.5364217468254441,0.5230076010143456,-0.013414145811098455,0.5852954950537804,0.6319520263226213,0.04665653126884084,True
