@@ -126,7 +126,9 @@ Within run~B the forget gate is what separates a modest result from a clear one.
 
 That step changes two things at once, so it cannot say which one acts. Two strictly single-variable pairs in the hyperparameter search can: configurations differing in exactly one key and nothing else, checked key by key rather than assumed from their names. On M1, forget gate 0 -> 3 contributes \num{+0.0094} and hourly look-back 72 -> 336 contributes \num{+0.0467} -- the look-back is the larger by roughly fivefold.
 
-Read those with the caveat they carry. Each search configuration ran \num{1} fold, so they are point estimates with no between-fold spread, against a fold-level noise floor of \num{0.0078} measured elsewhere in this work. Both exceed it, the forget gate only narrowly. Splitting the credit properly needs the five-fold ablation, which has not been run. The forget gate is kept either way: it is part of the published method this model follows, and its absence from v1 was an oversight rather than a choice.
+Read those with the caveat they carry. Each search configuration ran \num{1} fold, so they are point estimates with no between-fold spread, against a fold-level noise floor of \num{0.0078} measured elsewhere in this work. Both exceed it, the forget gate only narrowly. Splitting the credit properly needs the five-fold ablation, which has not been run.
+
+The forget gate is kept either way: it is part of the published method this model follows, and its absence from v1 was an oversight rather than a choice.
 
 \begin{figure}[htbp]
   \centering

@@ -392,18 +392,35 @@ def part_results(d: dict) -> str:
             "assumed from their names. On M1, " + " and ".join(parts) + " -- the look-back is "
             "the larger by roughly fivefold.")
         s.append("")
+        n_folds = abl["n_folds_per_configuration"]
+        if n_folds < 2:
+            s.append(
+                f"Read those with the caveat they carry. Each search configuration ran "
+                f"\\num{{{n_folds}}} fold, so they are point estimates with no between-fold "
+                f"spread, against a fold-level noise floor of "
+                f"\\num{{{abl['fold_noise_floor']}}} measured elsewhere in this work. "
+                + (f"The {' and '.join(below)} effect sits below that floor and is not "
+                   f"distinguishable from zero here. " if below else
+                   "Both exceed it, the forget gate only narrowly. ")
+                + "Splitting the credit properly needs the five-fold ablation, which has not "
+                  "been run.")
+        else:
+            # With paired folds the effect carries its own spread, so it no longer has to
+            # be judged against a noise floor borrowed from a different experiment.
+            detail = "; ".join(
+                f"{name} {v['delta_M1']:+.4f}"
+                + (f" $\\pm$ \\num{{{v['delta_M1_sd']:.4f}}}" if v.get("delta_M1_sd") else "")
+                + (", same sign in every fold" if v.get("all_folds_same_sign")
+                   else ", sign varies between folds")
+                for name, v in eff.items())
+            s.append(
+                f"Both are paired fold by fold over \\num{{{n_folds}}} folds, so each effect "
+                f"carries its own between-fold spread rather than being judged against a noise "
+                f"floor borrowed from another experiment: {detail}.")
+        s.append("")
         s.append(
-            f"Read those with the caveat they carry. Each search configuration ran "
-            f"\\num{{{abl['n_folds_per_configuration']}}} fold, so they are point estimates "
-            f"with no between-fold spread, against a fold-level noise floor of "
-            f"\\num{{{abl['fold_noise_floor']}}} measured elsewhere in this work. "
-            + (f"The {' and '.join(below)} effect sits below that floor and is not "
-               f"distinguishable from zero here. " if below else
-               "Both exceed it, the forget gate only narrowly. ")
-            + "Splitting the credit properly needs the five-fold ablation, which has not "
-              "been run. The forget gate is kept either way: it is part of the published "
-              "method this model follows, and its absence from v1 was an oversight rather "
-              "than a choice.")
+            "The forget gate is kept either way: it is part of the published method this "
+            "model follows, and its absence from v1 was an oversight rather than a choice.")
     s.append("")
     s.append(fig("fig03_configurations.png",
                  "Every configuration, as an M0 (open) to M1 (filled) movement in median "
