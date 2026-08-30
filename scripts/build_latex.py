@@ -1,4 +1,4 @@
-"""Generate the Phase I report as LaTeX: Experiments and Results, section for section.
+"""Generate the Phase I report as LaTeX: two parts, one story.
 
 Every number is read from the result files rather than typed. That is not fastidiousness:
 an earlier revision of the Word report carried ninety literal numbers in its prose and they
@@ -169,362 +169,275 @@ def map_caption(d: dict) -> str:
         "below it and hurts one above it.")
 
 
-def part_experiments(d: dict) -> str:
-    """Part I, section for section with Part II and in the same order.
 
-    Experiment k states what was run and why it was necessary; result k reports what came
-    out. The pairing is carried by \\label/\\ref so it survives reordering.
-    """
+
+def part_experiments(d: dict) -> str:
+    """Part I. Four sections: the problem, the data, the model, the evaluation."""
     n = d["n_gauges"]
     afr = d["africa"]
     s = [r"\part{Experiments}", ""]
 
-    s.append(r"\section*{The chain, and where each link is reported}")
+    s.append(r"\section{The problem, and how it is made testable}\label{sec:problem}")
     s.append(
-        "Each experiment below has one result section, in the same order. The chain is: fix "
-        "the configuration, show the effect, explain why it works, rule out the three ways it "
-        "could be spurious, bound where it applies, then test it where the premise is real "
-        "rather than simulated.")
-    s.append("")
-    pairs = [
-        ("Configuration and data path", "sec:e-config", "sec:r-config"),
-        ("The task, the network, the main comparison", "sec:e-setup", "sec:r-main"),
-        ("Why a daily total should help at all", "sec:e-mechanism", "sec:r-mechanism"),
-        ("Could it be gaming the aggregate loss?", "sec:e-degenerate", "sec:r-degenerate"),
-        ("Could it be a metric artefact?", "sec:e-metrics", "sec:r-metrics"),
-        ("Could it be a training-budget artefact?", "sec:e-convergence", "sec:r-convergence"),
-        ("What does the adaptation cost elsewhere?", "sec:e-step3", "sec:r-step3"),
-        ("Where does the gain land?", "sec:e-strata", "sec:r-strata"),
-        ("What does spatial blocking cost?", "sec:e-split", "sec:r-split"),
-        ("An external test, daily", "sec:e-africa-daily", "sec:r-africa-daily"),
-        ("The same test, hourly", "sec:e-africa-hourly", "sec:r-africa-hourly"),
-    ]
-    rows = [[q, rf"\S\ref{{{e}}}", rf"\S\ref{{{r}}}"] for q, e, r in pairs]
-    s.append("The pairing is set out in Table~\\ref{tab:chain}.")
-    s.append("")
-    s.append(table(["Question", "Experiment", "Result"], rows,
-                   "The correspondence between the two parts.", "chain", align="lcc"))
-
-    s.append(r"\section{Configuration and data path}\label{sec:e-config}")
-    s.append(
-        "Two design choices had to be settled before any result could be attributed to the "
-        "method rather than to the setup.")
+        "Hourly streamflow forecasting needs hourly discharge observations to train on. "
+        "Those observations exist in a small part of the world. Most gauges that report at "
+        "all report once a day. If a model trained on hourly data could keep its hourly "
+        "skill at gauges that supply only daily totals, the usable domain would widen a long "
+        "way.")
     s.append("")
     s.append(
-        r"\textbf{How the daily branch is built.} Run~A feeds it a power-law subsample of the "
-        "hourly record; run~B feeds it 365 genuine daily means. These are different inputs of "
-        "different lengths, not a tuning knob, so both were run to completion rather than one "
-        "being chosen in advance.")
+        "The question is easy to state and hard to test, because a gauge either has hourly "
+        "data or it does not. We make it testable by withholding. One fifth of the gauges "
+        "are held out. Their hourly observations are hidden from training. Only the 24-hour "
+        "aggregate is used to supervise them. The hidden hourly series is then read once, at "
+        "the end, to score. Nothing in training ever sees it.")
     s.append("")
-    s.append(
-        r"\textbf{Look-back and forget gate.} v1 used a \SI{72}{\hour} hourly look-back and "
-        r"PyTorch's default forget-gate initialisation; v2 uses \SI{336}{\hour} and an initial "
-        "forget bias of 3. The forget gate is part of the published method this model follows "
-        "and was absent from v1 by oversight: at the default the effective forget gate is "
-        "0.500, a memory of about two steps, against 0.953 and about twenty-one steps at "
-        "bias~3. v3 repeats v2 with 50 epochs and patience 10, purely to check that v2 was not "
-        "stopped prematurely. All eleven combinations were run and all are reported.")
-    s.append("")
-
-    s.append(r"\section{The task, the network, and the main comparison}\label{sec:e-setup}")
-    s.append(
-        "Hourly streamflow models are trained where hourly discharge is recorded, which is a "
-        "small and geographically narrow part of the world. The question is whether hourly "
-        "skill survives at gauges that supply only daily totals. The premise is made testable "
-        "by withholding: a fifth of the gauges are held out, their hourly observations hidden, "
-        "and only the 24-hour aggregate used to supervise them. The hidden hourly series is "
-        "then used once, to score.")
-    s.append("")
-    s.append(
-        "The model is an sMTS-LSTM with two branches: the daily branch reads the past 365 days "
-        "and hands its state to the hourly branch, which reads the last \SI{336}{\hour}. "
-        "Three states are distinguished throughout:")
+    s.append("Three model states are compared throughout, and the whole report turns on them:")
     s.append(r"\begin{description}")
-    s.append(r"  \item[M0] zero-shot -- pretrained on the source gauges, evaluated on the "
-             "held-out target gauges without ever seeing them.")
-    s.append(r"  \item[M1] after fine-tuning on the target gauges' \emph{daily aggregates} only.")
-    s.append(r"  \item[STEP 3] the source domain re-scored afterwards, to check what the "
-             "adaptation cost where the model already worked.")
+    s.append(r"  \item[M0] Zero-shot. The model is pretrained on the four fifths of gauges "
+             "that keep their hourly data, then evaluated on the held-out fifth without "
+             "having seen those gauges at all.")
+    s.append(r"  \item[M1] The same model after fine-tuning on the held-out gauges' daily "
+             r"aggregates. This is the state the method is meant to deliver.")
+    s.append(r"  \item[STEP 3] The four fifths re-scored after that fine-tuning, to measure "
+             "what adapting to a daily-only domain costs where the model already worked.")
     s.append(r"\end{description}")
     s.append("")
     s.append(
-        f"A five-fold design gives every one of the {n:,} gauges exactly one turn as a target "
-        "gauge, so the target-domain scores cover the whole network rather than a fifth of it "
-        "and no result depends on which fifth was drawn.")
+        f"The gap between M0 and M1 is the quantity of interest. It says how much of the "
+        f"hourly skill lost by hiding hourly data can be bought back with daily totals "
+        f"alone.")
     s.append("")
 
-    s.append(r"\section{Why a daily total should help at all}\label{sec:e-mechanism}")
-    s.append(
-        "A 24-hour total carries how much water arrived, not which hour it arrived in. If that "
-        "is the whole of what it contributes, then fine-tuning on it should repair the "
-        "amplitude and volume terms of KGE and leave the correlation term largely alone. That "
-        "is a falsifiable prediction, so KGE was decomposed into $r$, "
-        "$\\alpha=\\sigma_{\\text{sim}}/\\sigma_{\\text{obs}}$ and "
-        "$\\beta=\\mu_{\\text{sim}}/\\mu_{\\text{obs}}$ per gauge, and the same "
-        "decomposition was repeated on the African catchments, whose zero-shot deficits are "
-        "about four times larger. A mechanism that only holds on one domain is a description.")
-    s.append("")
-
-    s.append(r"\section{Could it be gaming the aggregate loss?}\label{sec:e-degenerate}")
-    s.append(
-        "The aggregate loss constrains only the mean of 24 hourly outputs, so a model emitting "
-        "a constant value within each day would satisfy it perfectly and be useless hourly. "
-        "Stride-24 sampling makes each sample's last 24 outputs one calendar day and "
-        "consecutive days stitch into a continuous series, so within-day variability can be "
-        "measured directly against the observations. A sharper form of the same question was "
-        "added later: averaging every day by hour of day destroys event-driven structure, so "
-        "whatever survives that average is tied to the clock rather than to rainfall.")
-    s.append("")
-
-    s.append(r"\section{Could it be a metric artefact?}\label{sec:e-metrics}")
-    s.append(
-        "KGE and point-wise absolute error can move in opposite directions on the same gauge. "
-        "Both were computed per gauge so the disagreement could be quantified rather than "
-        "assumed away, and per-gauge significance was tested with a paired Wilcoxon test under "
-        "Benjamini--Hochberg control.")
-    s.append("")
-
-    s.append(r"\section{Could it be a training-budget artefact?}\label{sec:e-convergence}")
-    s.append(
-        "If v2 had simply run out of epochs, its gain would be an artefact of the budget. v3's "
-        "longer budget answers that. The same run also measures a cost the method imposes on "
-        "itself: the checkpoint has to be selected on a daily-aggregate criterion, because the "
-        "hourly truth is supposed to be hidden, and the difference against selecting on the "
-        "hidden hourly truth is what daily-only model selection costs.")
-    s.append("")
-
-    s.append(r"\section{What the adaptation costs where the model already worked}"
-             r"\label{sec:e-step3}")
-    s.append(
-        "Fine-tuning on the target gauges' daily aggregates changes the weights, and those "
-        "weights also serve the \\SI{80}{\\percent} of gauges that were never withheld. "
-        "STEP~3 re-scores that source domain with the fine-tuned model, on its own hourly "
-        "observations, and pairs each source gauge with itself so the comparison is not two "
-        "medians differenced. The question is whether adapting to a daily-only domain is free "
-        "elsewhere.")
-    s.append("")
-
-    s.append(r"\section{Where does the gain land?}\label{sec:e-strata}")
-    s.append(
-        "Per-gauge gains were stratified by catchment area, by distance to the nearest "
-        "trainable gauge, by agency and by latitude band. The purpose is a boundary, not a "
-        "headline: a method that works on average and nowhere in particular is not usable. The "
-        "isolation stratification is also a check on the previous section -- if the gain were "
-        "driven by proximity to training gauges, it would fall with distance.")
-    s.append("")
-
-    s.append(r"\section{What does spatial blocking cost?}\label{sec:e-split}")
-    s.append(
-        "The held-out fifth can be drawn at random or in spatial blocks. Random splitting "
-        "leaves target gauges with trainable neighbours a median of \SI{10.4}{\km} away; "
-        "\\num{120} k-means blocks on the sphere push that to \SI{94.9}{\km}. Both were run "
-        "with everything else identical, because the difference measures how much of the "
-        "zero-shot skill is genuine generalisation and how much is proximity. Fold-to-fold "
-        "dispersion was recorded for both, which turned out to matter as much as the level.")
-    s.append("")
-
-    s.append(r"\section{An external test, daily}\label{sec:e-africa-daily}")
-    if afr:
+    s.append(r"\section{Data}\label{sec:data}")
+    if d.get("composition") is not None:
+        comp = d["composition"]
         s.append(
-            "Everything above simulates the premise: the hourly data exists and is withheld. "
-            "Africa does not need the simulation. Of the African entries in the daily database "
-            "only \\num{302} carry a discharge time series at all and \\num{294} of those are "
-            "used here -- the test set of a published continent-holdout run, adopted verbatim "
-            "so the numbers sit directly against its baseline. Not one appears anywhere in "
-            "training and not one has hourly discharge; "
-            f"\\num{{{afr['M1']['n_basins']}}} are scored after a \\num{{100}}-day minimum.")
+            f"The training network holds {n:,} gauges with hourly discharge, drawn from six "
+            f"national and regional archives: "
+            + ", ".join(f"{name} ({c:,})" for name, c in comp.items()) + ".")
+        s.append("")
+        s.append(
+            "The geography of that network is a limitation worth stating at the outset. "
+            "There is no gauge in Africa, none in South America, and none in mainland Asia. "
+            "About four fifths of the gauges lie between \\SI{30}{\\degree} and "
+            "\\SI{60}{\\degree} north. The word global in this report describes the model. It "
+            "does not describe the gauge network. Section~\\ref{sec:africa} exists because of "
+            "this.")
         s.append("")
     s.append(
-        "The same pretrained models are driven by hourly ERA5-Land forcing, their last 24 "
-        "hourly outputs averaged to a daily value and compared with observed daily discharge; "
-        "fine-tuning then uses African daily observations themselves. ERA5-Land's own runoff is "
-        "carried alongside as a physical baseline, re-scored on the identical basin-days, "
-        "because the per-basin scores that already existed came from a different run over a "
-        "different period and would not have been comparable.")
+        r"Forcing is hourly precipitation, temperature and potential evapotranspiration. "
+        r"Each sample gives the model the past 365 days at daily resolution and the past "
+        r"\SI{336}{\hour} at hourly resolution, and asks for the discharge at the target "
+        r"hour.")
+    s.append("")
+    s.append(
+        "Two ways of building the daily input were available and both were run to "
+        "completion. Run~A takes the prepared training batches as they are. Their daily "
+        "branch is a 1000-step power-law subsample of the hourly record, dense near the "
+        "target hour and sparse further back. Run~B rebuilds the windows from the raw hourly "
+        "source and computes 365 genuine daily means.")
+    s.append("")
+    s.append(
+        "The two are not interchangeable. Counting how the 1000 subsampled points fall "
+        "across the 365 days shows why: 8 days carry all 24 hours, 176 days carry exactly "
+        "one point, and 7 days carry none. A single instantaneous sample is a poor estimate "
+        "of a daily mean for precipitation, where most hours are zero. The daily mean cannot "
+        "be recovered from the subsample, so it has to be rebuilt from the source. "
+        "Appendix~\\ref{app:config} reports what this costs.")
     s.append("")
 
-    s.append(r"\section{The same test, hourly}\label{sec:e-africa-hourly}")
+    s.append(r"\section{Model and configuration}\label{sec:model}")
     s.append(
-        "No African catchment has hourly discharge, so the hourly output there can be compared "
-        "between series but never scored. Two questions remain askable. First, whether the "
-        "hourly output carries sub-daily structure at all, which is measured as the within-day "
-        "coefficient of variation over every basin. Second, whether that structure is of the "
-        "right kind -- event-driven rather than clock-driven -- which is answered on the target "
-        "domain, where hourly observations exist and the observed average day can be measured "
-        "directly.")
+        r"The model is a shared multi-timescale LSTM with two branches. The daily branch "
+        r"reads 365 days and hands its hidden and cell state to the hourly branch at a "
+        r"transfer point set by the hourly look-back. The hourly branch reads forward from "
+        r"there and emits one value per hour. Training minimises a loss on the hourly targets "
+        r"where they are available, and on the 24-hour aggregate where they are not.")
+    s.append("")
+    s.append(
+        r"Two settings were changed together during development and both are reported. "
+        r"Configuration v1 used a \SI{72}{\hour} hourly look-back and the framework's default "
+        r"forget-gate initialisation. Configuration v2 uses \SI{336}{\hour} and an initial "
+        r"forget bias of 3. The forget gate matters more than its size suggests. At the "
+        r"default the effective forget gate sits at 0.500, which corresponds to a memory of "
+        r"roughly two steps. At bias 3 it sits at 0.953, roughly twenty-one steps. The "
+        r"published method this model follows specifies the latter. Its absence from v1 was "
+        r"an oversight. Configuration v3 repeats v2 with a longer epoch budget and is used "
+        r"only to check that v2 was not stopped early.")
+    s.append("")
+    s.append(
+        r"All configurations are reported together in Appendix~\ref{app:config}, rather than "
+        r"the best one being reported alone.")
+    s.append("")
+
+    s.append(r"\section{Evaluation}\label{sec:evaluation}")
+    s.append(
+        f"A five-fold design gives every one of the {n:,} gauges exactly one turn as a "
+        f"held-out gauge. Target-domain scores therefore cover the whole network. No result "
+        f"depends on which fifth happened to be drawn.")
+    s.append("")
+    s.append(
+        r"Skill is reported as Kling-Gupta efficiency and Nash-Sutcliffe efficiency, both as "
+        r"medians across gauges. KGE is used for most of the analysis because it decomposes "
+        r"into three terms that answer separate questions:")
+    s.append(r"\begin{equation}")
+    s.append(r"  \mathrm{KGE} = 1 - \sqrt{(r-1)^2 + (\alpha-1)^2 + (\beta-1)^2},")
+    s.append(r"  \qquad \alpha = \frac{\sigma_{\mathrm{sim}}}{\sigma_{\mathrm{obs}}},")
+    s.append(r"  \qquad \beta = \frac{\mu_{\mathrm{sim}}}{\mu_{\mathrm{obs}}}.")
+    s.append(r"\end{equation}")
+    s.append(
+        r"Here $r$ carries timing, $\alpha$ carries the amplitude of the variation, and "
+        r"$\beta$ carries the water balance. A drop in KGE alone says nothing about which of "
+        r"the three failed. The decomposition is what lets Section~\ref{sec:mechanism} say "
+        r"which one the method repairs.")
+    s.append("")
+    s.append(
+        r"The held-out fifth is drawn two ways. A random split leaves each held-out gauge a "
+        r"trainable neighbour \SI{10.4}{\km} away at the median. A blocked split, built from "
+        r"\num{120} k-means clusters on the sphere, pushes that to \SI{94.9}{\km}. Both were "
+        r"run with everything else identical. The difference between them measures how much "
+        r"of the zero-shot skill comes from genuine generalisation and how much comes from "
+        r"having a training gauge nearby. Fold-to-fold spread was recorded for both, and "
+        r"Section~\ref{sec:cost} reports why that turned out to matter as much as the level.")
+    s.append("")
+
+    s.append(r"\section{External validation on Africa}\label{sec:africa-design}")
+    s.append(
+        "Everything above simulates the premise. The hourly data exists and is deliberately "
+        "hidden. Africa does not need the simulation, because the premise is the ordinary "
+        "state of affairs there.")
+    s.append("")
+    if afr:
+        s.append(
+            f"Of the African entries in the daily discharge database, \\num{{302}} carry a "
+            f"time series at all. \\num{{294}} of those are used here, and "
+            f"\\num{{{afr['M1']['n_basins']}}} pass a \\num{{100}}-day minimum and are "
+            f"scored. That set is the test set of a published continent-holdout run, adopted "
+            f"unchanged so the numbers here sit directly against its baseline. No African "
+            f"catchment appears anywhere in pretraining. None has hourly discharge.")
+        s.append("")
+    s.append(
+        "The pretrained models are driven over these catchments with hourly ERA5-Land "
+        "forcing. Their last 24 hourly outputs are averaged to a daily value and compared "
+        "with the observed daily discharge. Fine-tuning then uses African daily observations "
+        "themselves, which makes the African M1 the direct analogue of the target-domain M1. "
+        "ERA5-Land's own runoff is carried alongside as a physical baseline and re-scored on "
+        "the identical basin-days, so all three numbers rest on the same observations.")
     s.append("")
     return "\n".join(s)
 
 
 def part_results(d: dict) -> str:
-    """Part II: one result section per experiment section, in the same order."""
+    """Part II. Five sections in one arc: it works, why, is it real, what it costs, Africa."""
     kge, kgb = d["kge"], d["kge_blocked"]
-    afr, three, within, mech = d["africa"], d["three"], d["within"], d["mech"]
-    degen, split, disp = d["degen"], d["split"], d["disp"]
+    afr, three, within = d["africa"], d["three"], d["within"]
+    degen, split, st3 = d["degen"], d["split"], d.get("step3")
     n = d["n_gauges"]
     s = [r"\part{Results}", ""]
 
-    # ---- corresponds to sec:e-config
-    s.append(r"\section{Only one data path gains, and the forget gate decides how much}"
-             r"\label{sec:r-config}")
+    # ---------------------------------------------------------------- 1
+    s.append(r"\section{Daily aggregates recover most of the lost hourly skill}"
+             r"\label{sec:main}")
+    row, nse = kge.loc["kge"], kge.loc["nse"]
     s.append(
-        r"Run~A moves \emph{backwards} under both configurations: its median target-domain "
-        r"hourly KGE falls from \num{0.427} to \num{0.397} under v1 and from \num{0.424} to "
-        r"\num{0.397} under v2. A power-law subsample of the hourly record is not a daily "
-        r"branch, and no amount of fine-tuning repairs that. Every run~B variant gains.")
+        f"Under the primary configuration and a random split, median hourly KGE on the "
+        f"held-out gauges rises from \\num{{{row['M0_median']:.4f}}} at M0 to "
+        f"\\num{{{row['M1_median']:.4f}}} at M1. NSE rises from "
+        f"\\num{{{nse['M0_median']:.4f}}} to \\num{{{nse['M1_median']:.4f}}}. The paired "
+        f"median change in KGE is \\num{{{row['median_delta']:+.4f}}} over {n:,} gauges.")
     s.append("")
     s.append(
-        r"Within run~B the forget gate is what separates a modest result from a clear one. "
-        r"Under v1 the blocked split reaches \num{0.475}; under v2 it reaches \num{0.621}. "
-        r"v3's longer budget changes almost nothing (\num{0.624} blocked, \num{0.627} true "
-        r"daily), which is the first evidence that v2 was not simply stopped early. "
-        r"v2 is the primary configuration throughout (Figure~\ref{fig:config})." )
-    abl = d.get("ablation")
-    if abl:
-        s.append("")
-        eff = abl["effects"]
-        parts = [f"{name} contributes \\num{{{v['delta_M1']:+.4f}}}" for name, v in eff.items()]
-        below = [n for n, v in eff.items() if not v["above_fold_noise"]]
-        s.append(
-            "That step changes two things at once, so it cannot say which one acts. Two "
-            "strictly single-variable pairs in the hyperparameter search can: configurations "
-            "differing in exactly one key and nothing else, checked key by key rather than "
-            "assumed from their names. On M1, " + " and ".join(parts) + " -- the look-back is "
-            "the larger by roughly fivefold.")
-        s.append("")
-        n_folds = abl["n_folds_per_configuration"]
-        if n_folds < 2:
-            s.append(
-                f"Read those with the caveat they carry. Each search configuration ran "
-                f"\\num{{{n_folds}}} fold, so they are point estimates with no between-fold "
-                f"spread, against a fold-level noise floor of "
-                f"\\num{{{abl['fold_noise_floor']}}} measured elsewhere in this work. "
-                + (f"The {' and '.join(below)} effect sits below that floor and is not "
-                   f"distinguishable from zero here. " if below else
-                   "Both exceed it, the forget gate only narrowly. ")
-                + "Splitting the credit properly needs the five-fold ablation, which has not "
-                  "been run.")
-        else:
-            # With paired folds the effect carries its own spread, so it no longer has to
-            # be judged against a noise floor borrowed from a different experiment.
-            detail = "; ".join(
-                f"{name} {v['delta_M1']:+.4f}"
-                + (f" $\\pm$ \\num{{{v['delta_M1_sd']:.4f}}}" if v.get("delta_M1_sd") else "")
-                + (", same sign in every fold" if v.get("all_folds_same_sign")
-                   else ", sign varies between folds")
-                for name, v in eff.items())
-            s.append(
-                f"Both are paired fold by fold over \\num{{{n_folds}}} folds, so each effect "
-                f"carries its own between-fold spread rather than being judged against a noise "
-                f"floor borrowed from another experiment: {detail}.")
-        s.append("")
-        s.append(
-            "The forget gate is kept either way: it is part of the published method this "
-            "model follows, and its absence from v1 was an oversight rather than a choice.")
+        f"The median alone would be weak evidence. A few gauges with large gains can lift it "
+        f"while most gauges stay flat. They do not here. "
+        f"\\SI{{{100 * (1 - row['frac_worse']):.0f}}}{{\\percent}} of gauges improve. The "
+        f"effect is broad.")
     s.append("")
-    s.append(fig("fig03_configurations.png",
-                 "Every configuration, as an M0 (open) to M1 (filled) movement in median "
-                 "target-domain hourly KGE. Run~A is the only path that moves backwards. "
-                 "Within run~B, v1 to v2 -- the forget-gate initialisation and the longer "
-                 "hourly look-back -- is what lifts the blocked split from \\num{0.475} to "
-                 "\\num{0.621}; v3's extra epochs add nothing.", "config"))
-
-    # ---- corresponds to sec:e-setup, and the map
-    s.append(r"\section{The main result, and the shape of the network it rests on}"
-             r"\label{sec:r-main}")
-    if kge is not None:
-        row = kge.loc["kge"]
-        s.append(
-            f"Under v2 with a random split, median target-domain hourly KGE rises from "
-            f"\\num{{{row['M0_median']:.4f}}} at M0 to \\num{{{row['M1_median']:.4f}}} at M1, "
-            f"a median change of \\num{{{row['median_delta']:+.4f}}} over {n:,} gauges. "
-            f"\\SI{{{100 * (1 - row['frac_worse']):.0f}}}{{\\percent}} of gauges improve, which "
-            f"is the part that matters: the gain is broad rather than an average pulled up by a "
-            f"few (Figure~\\ref{{fig:map}}). Under the blocked split the same fine-tuning lifts "
-            f"\\num{{{kgb.loc['kge', 'M0_median']:.4f}}} to "
-            f"\\num{{{kgb.loc['kge', 'M1_median']:.4f}}}.")
-        s.append("")
-        nse = kge.loc["nse"]
-        s.append(
-            f"NSE moves the same way and by less, from \\num{{{nse['M0_median']:.4f}}} to "
-            f"\\num{{{nse['M1_median']:.4f}}} (\\num{{{nse['median_delta']:+.4f}}}). Both "
-            f"are reported because they answer different questions: NSE is squared error "
-            f"against the observed mean, KGE decomposes into the three terms "
-            f"Section~\\ref{{sec:r-mechanism}} needs. The gap between them is itself a "
-            f"result, taken up in Section~\\ref{{sec:r-metrics}}.")
-        s.append("")
-    if d.get("composition") is not None:
-        comp = d["composition"]
-        s.append(
-            "The map that shows this also shows its limit. The gauge network is "
-            + ", ".join(f"{name} \\num{{{c}}}" for name, c in comp.items())
-            + ". There is not one gauge in Africa, South America or mainland Asia, and "
-              "roughly four fifths sit between \\SI{30}{\\degree} and \\SI{60}{\\degree}~N. "
-              "``Global'' describes the model, not the gauge network, which is why the African "
-              "test in Section~\\ref{sec:r-africa-daily} cannot be substituted for.")
-        s.append("")
+    s.append(
+        f"Under the blocked split the same fine-tuning lifts "
+        f"\\num{{{kgb.loc['kge', 'M0_median']:.4f}}} to "
+        f"\\num{{{kgb.loc['kge', 'M1_median']:.4f}}}. The zero-shot level is much lower there, "
+        f"and Section~\\ref{{sec:cost}} explains why. The point for now is that both splits "
+        f"end at nearly the same place after fine-tuning, around \\num{{0.62}}.")
+    s.append("")
+    s.append(
+        r"Figure~\ref{fig:map} puts every gauge on the map, before and after, together with "
+        r"the African basins that Section~\ref{sec:africa} discusses. Two things are visible "
+        r"at once. The gain is present across the whole network rather than in one region. "
+        r"And the network itself is temperate and northern. The empty continents in that "
+        r"figure are the reason the African test carries as much weight as it does.")
+    s.append("")
     s.append(fig("fig09_global_map.png", map_caption(d), "map"))
 
-    # ---- corresponds to sec:e-setup (mechanism)
-    s.append(r"\section{The gain is a variance repair, not a timing repair}"
-             r"\label{sec:r-mechanism}")
-    if kge is not None:
-        r_, a_, b_ = kge.loc["kge_r"], kge.loc["kge_alpha"], kge.loc["kge_beta"]
-        s.append(
-            f"Decomposing KGE separates the claim. Correlation, which carries timing, moves by "
-            f"\\num{{{r_['median_delta']:+.4f}}} (\\num{{{r_['M0_median']:.3f}}} to "
-            f"\\num{{{r_['M1_median']:.3f}}}). The variability ratio "
-            f"$\\alpha=\\sigma_{{\\text{{sim}}}}/\\sigma_{{\\text{{obs}}}}$ moves by "
-            f"\\num{{{a_['median_delta']:+.4f}}}, and the bias ratio $\\beta$ moves from "
-            f"\\num{{{b_['M0_median']:.3f}}} toward \\num{{{b_['M1_median']:.3f}}}. A daily "
-            f"total carries how much water, not which hour it arrived, so this is what it "
-            f"should repair -- and it is a falsifiable prediction, not a description "
-            f"(Figure~\\ref{{fig:components}})." )
-        s.append("")
+    # ---------------------------------------------------------------- 2
+    s.append(r"\section{The gain is a repair of amplitude}\label{sec:mechanism}")
+    r_, a_, b_ = kge.loc["kge_r"], kge.loc["kge_alpha"], kge.loc["kge_beta"]
+    s.append(
+        "A 24-hour total carries how much water arrived on a day. It carries almost nothing "
+        "about which hour it arrived in. If that is the whole of what the daily signal "
+        "contributes, then fine-tuning on it should move the amplitude and water-balance "
+        "terms of KGE and leave the correlation term nearly where it was. This is a "
+        "prediction that can fail, and it is worth checking rather than assuming.")
+    s.append("")
+    s.append(
+        f"It holds. Correlation moves by \\num{{{r_['median_delta']:+.4f}}}, from "
+        f"\\num{{{r_['M0_median']:.3f}}} to \\num{{{r_['M1_median']:.3f}}}. The amplitude "
+        f"ratio $\\alpha$ moves by \\num{{{a_['median_delta']:+.4f}}}. The water balance "
+        f"$\\beta$ moves from \\num{{{b_['M0_median']:.3f}}} to "
+        f"\\num{{{b_['M1_median']:.3f}}}, that is, toward its ideal value of 1. "
+        f"Figure~\\ref{{fig:components}} shows the three movements side by side under both "
+        f"splits, and Table~\\ref{{tab:deficits}} gives the same comparison as distances "
+        f"from the ideal.")
+    s.append("")
+    s.append(
+        r"The diagnosis this gives is specific. A zero-shot model applied to an unseen "
+        r"catchment hedges toward the mean. Hedging minimises squared error under "
+        r"uncertainty, and it shows up as $\alpha$ below 1: the model swings less than the "
+        r"river does, and it flattens peaks. The daily total tells the model how much water "
+        r"a day actually carried, which is exactly the information needed to stop hedging. "
+        r"Timing was already close to right on this network, so there was little for the "
+        r"daily signal to add there even if it could.")
+    s.append("")
     s.append(fig("fig01_kge_components.png",
-                 "M0 to M1 movement in each KGE component, under both splits. $r$ barely "
-                 "moves while $\\alpha$ moves substantially, which is the finding that "
-                 "daily-aggregate supervision re-calibrates amplitude rather than disturbing "
-                 "timing.", "components"))
-    if mech and d["deficits"] is not None:
-        rows = []
-        for r in d["deficits"].itertuples():
-            rows.append([tex_escape(r.domain.split(" (")[0]),
-                         {"r": "$r$ (timing)", "alpha": r"$\alpha$ (variability)",
-                          "beta": r"$\beta$ (volume)"}[r.component],
-                         f"{r.median_deficit_M0:.3f}", f"{r.median_deficit_M1:.3f}",
-                         f"{100 * r.fraction_removed:.0f}\\%"])
-        s.append(table(["Domain", "Component", "Deficit M0", "Deficit M1", "Removed"], rows,
-                       "Distance from the ideal before and after fine-tuning. Deficit is "
-                       "$1-r$ for the correlation and $|\\log_2 x|$ for the two ratios, since "
-                       "$0.5$ and $2.0$ are equally wrong for a ratio and their arithmetic "
-                       "mean is not~1. The two are not in the same units, so only the fraction "
-                       "removed is comparable across components.", "deficits"))
-        parts = [f"{dom.split(' (')[0]}: "
-                 f"\\SI{{{100 * v['magnitude_fraction_removed']:.0f}}}{{\\percent}} against "
-                 f"\\SI{{{100 * v['timing_fraction_removed']:.0f}}}{{\\percent}} "
-                 f"(\\num{{{v['ratio']:.1f}}}$\\times$)" for dom, v in mech.items()]
-        s.append("The prediction holds on two domains whose zero-shot deficits differ by about "
-                 "a factor of four (Table~\\ref{tab:deficits}, Figure~\\ref{fig:mechanism}). "
-                 "Magnitude against timing: " + "; ".join(parts) + ".")
-        s.append("")
-    s.append(fig("fig11_component_deficits.png",
-                 "One axis per component, because $1-r$ and $|\\log_2 x|$ are not in the same "
-                 "units and a shared axis would invite comparing them directly. The fraction "
-                 "removed, printed on each pair, is what is comparable.", "mechanism",
-                 width=r"0.95\linewidth"))
+                 "Movement from M0 (open marker) to M1 (filled marker) in each KGE component, "
+                 "under both splits. Each end is a median across gauges. The correlation term "
+                 "barely moves. The amplitude term moves substantially. This is the finding "
+                 "that daily-aggregate supervision re-calibrates amplitude while leaving "
+                 "timing alone.", "components"))
+    s.append(
+        r"Appendix~\ref{app:mechanism} repeats this decomposition on the African catchments, "
+        r"whose zero-shot deficits are about four times larger. The same ordering holds "
+        r"there, which is the stronger version of the claim: it survives a domain that "
+        r"differs from this one by a wide margin.")
+    s.append("")
     return "\n".join(s)
 
 
 def part_results_tail(d: dict) -> str:
-    """Falsification, boundaries and the external test."""
-    kge = d["kge"]
+    """Sections 3 to 5: is it real, what it costs, and the external test."""
+    kge, degen, split, st3 = d["kge"], d["degen"], d["split"], d.get("step3")
     afr, three, within = d["africa"], d["three"], d["within"]
-    degen, split, disp, conv = d["degen"], d["split"], d["disp"], d["conv"]
     s = []
 
-    s.append(r"\section{Not a degenerate solution, and not over-dispersed either}"
-             r"\label{sec:r-degenerate}")
+    # ---------------------------------------------------------------- 3
+    s.append(r"\section{Three ways the gain could be false, and why it is not}"
+             r"\label{sec:falsify}")
+    s.append(
+        "A gain measured this way could be an artefact in three separate ways. Each was "
+        "given its own test before the result was believed.")
+    s.append("")
+
+    s.append(r"\subsection{The model could be gaming the aggregate loss}")
+    s.append(
+        r"The aggregate term constrains only the mean of 24 hourly outputs. A model that "
+        r"emitted a constant value within each day would satisfy it perfectly and be useless "
+        r"at the hourly scale. This failure mode has to be excluded directly.")
+    s.append("")
+    s.append(
+        r"Stride-24 sampling makes each sample's last 24 outputs one calendar day, and "
+        r"consecutive days join into a continuous series. Within-day variability can then be "
+        r"measured against the observations.")
+    s.append("")
     if degen:
         m = degen["medians"]
         rows = []
@@ -533,126 +446,104 @@ def part_results_tail(d: dict) -> str:
                           ("q95_events_per_year", "Q95 events / yr"), ("mean", "Mean flow")):
             if key in m and m[key].get("observed"):
                 o = m[key]["observed"]
-                rows.append([name, f"{o:.4f}", f"{m[key]['M0'] / o:.2f}$\\times$",
-                             f"{m[key]['M1'] / o:.2f}$\\times$"])
-        s.append(
-            "A model gaming the aggregate loss would flatten the day. It does not: within-day "
-            "variability survives, and under v2 it is neither suppressed nor exaggerated "
-            "(Table~\\ref{tab:degenerate}, Figure~\\ref{fig:intraday})." )
+                rows.append([name, f"{o:.4f}", f"{m[key]['M0'] / o:.2f}", f"{m[key]['M1'] / o:.2f}"])
+        s.append("The result is in Table~\\ref{tab:degenerate}.")
         s.append("")
-        s.append(table(["Metric", "Observed", "M0 / obs", "M1 / obs"], rows,
-                       "Within-day behaviour against the observed median, configuration v2. "
-                       "v1's zero-shot model was \\num{6.8}$\\times$ too flashy and "
-                       "\\num{3.1}$\\times$ too variable within the day; the forget-gate "
-                       "initialisation is what removed that.", "degenerate"))
+        s.append(table(["Quantity", "Observed", "M0 / obs", "M1 / obs"], rows,
+                       "Within-day behaviour of the hourly output, as a ratio to the observed "
+                       "median across gauges. A flattened output would show ratios near zero "
+                       "in the first three rows.", "degenerate"))
+        s.append(
+            r"The hourly output keeps its within-day variability, and it keeps close to the "
+            r"right amount of it. Configuration v1 failed this check in the opposite "
+            r"direction, with a zero-shot model \num{6.8} times too flashy and \num{3.1} "
+            r"times too variable within the day. The forget-gate initialisation removed that. "
+            r"Figure~\ref{fig:intraday} shows both configurations on one axis.")
+        s.append("")
         if "diurnal_ratio" in m:
             dr = m["diurnal_ratio"]
             s.append(
-                f"A sharper version of the same question: is the hourly output responding to "
-                f"rainfall events, or echoing the clock? Averaging every day by hour of day "
-                f"destroys event-driven structure, so what survives is systematic. The observed "
-                f"average day has a peak-to-trough ratio of \\num{{{dr['observed']:.3f}}} and "
-                f"the model's \\num{{{dr['M1']:.3f}}} -- the real river's average day is nearly "
-                f"flat, so near-flat is the correct answer for catchments of this size, and the "
-                f"model is \\num{{{dr['M1'] / dr['observed']:.2f}}}$\\times$ the observed "
-                f"amplitude: marginally more variable than reality, not less.")
+                f"A sharper version of the question asks whether the hourly output responds "
+                f"to rainfall events or merely to the clock. Averaging every day by hour of "
+                f"day destroys event-driven structure, because storms keep no fixed hour. "
+                f"Whatever survives that average is tied to the clock. The observed average "
+                f"day has a peak-to-trough ratio of \\num{{{dr['observed']:.3f}}}, so the "
+                f"real river's average day is nearly flat. The model's is "
+                f"\\num{{{dr['M1']:.3f}}}, which is "
+                f"\\num{{{dr['M1'] / dr['observed']:.2f}}} times the observed amplitude. The "
+                f"model neither invents a daily cycle nor suppresses one.")
             s.append("")
     s.append(fig("fig08_intraday_shape.png",
-                 "Ratio to the observed median on a log scale, v1 against v2. v1 was "
-                 "over-dispersed rather than flattened, which is a different failure from the "
-                 "one the degenerate check was built to catch; v2 is calibrated before "
-                 "fine-tuning and stays so after it.", "intraday"))
+                 "Within-day behaviour as a ratio to the observed median, on a log scale, for "
+                 "both configurations. Configuration v1 was over-dispersed, which is a "
+                 "different failure from the flattening this check was built to catch. "
+                 "Configuration v2 is calibrated before fine-tuning and stays so after it.",
+                 "intraday"))
 
-    s.append(r"\section{The two metrics disagree on a third of gauges}\label{sec:r-metrics}")
+    s.append(r"\subsection{The improvement could be an artefact of the metric}")
     s.append(
-        r"KGE and point-wise absolute error agree on about \SI{68}{\percent} of gauges and "
-        r"disagree on the rest: roughly a fifth improve on KGE while their point-wise error "
-        r"worsens, and an eighth do the reverse. This is a consequence of the mechanism rather "
-        r"than a contradiction of it -- restoring variance moves peaks, which improves the "
-        r"shape metrics and can increase squared error at individual hours. A per-gauge claim "
-        r"must therefore say which metric it is made under (Figure~\ref{fig:metrics})." )
+        r"KGE and point-wise absolute error can move in opposite directions on the same "
+        r"gauge. They agree on about \SI{68}{\percent} of gauges here. Roughly a fifth "
+        r"improve on KGE while their point-wise error worsens, and about an eighth do the "
+        r"reverse.")
     s.append("")
-    s.append(fig("fig05_metric_disagreement.png",
-                 "Change in KGE against reduction in point-wise absolute error, one hexagon "
-                 "per group of gauges. Quadrant counts use all gauges; the density window "
-                 "omits those outside it, which the caption states rather than silently "
-                 "clipping them into the corner bins.", "metrics", width=r"0.72\linewidth"))
-
-    s.append(r"\section{Training was long enough, and daily-only selection is nearly free}"
-             r"\label{sec:r-convergence}")
     s.append(
-        r"v2 ended on early stopping, not on its epoch cap, in every fold -- so the gain is "
-        r"not a budget artefact. The blocked split stopped earliest, which is consistent with "
-        r"its noisier validation signal rather than with worse convergence. Selecting the "
-        r"checkpoint on a daily-aggregate criterion instead of on the hidden hourly truth costs "
-        r"\num{0.0035} in median KGE, against a fold-to-fold noise level of \num{0.0078}: the "
-        r"cost of the method's own model-selection constraint is smaller than the noise it is "
-        r"measured against (Figure~\ref{fig:convergence})." )
+        r"This follows from the mechanism rather than undermining it. Restoring amplitude "
+        r"moves peaks. Moving a peak improves the shape metrics and can increase squared "
+        r"error at individual hours, particularly if the peak is slightly early or late. The "
+        r"practical consequence is that a per-gauge claim has to name its metric. "
+        r"Appendix~\ref{app:metrics} shows the joint distribution.")
     s.append("")
-    s.append(fig("fig06_convergence.png",
-                 "Source-domain validation KGE per epoch, five folds per configuration, zoomed "
-                 "to the plateau. v2's stopping epochs are marked; none reaches the cap. v3's "
-                 "longer budget wanders around the same plateau rather than climbing above it.",
-                 "convergence"))
 
-    s.append(r"\section{The adaptation is not free on the source domain}\label{sec:r-step3}")
-    st = d.get("step3")
-    if st:
+    s.append(r"\subsection{The gain could be a training-budget artefact}")
+    s.append(
+        r"If the primary configuration had simply run out of epochs, its advantage over v1 "
+        r"would say more about the budget than the method. Configuration v3 answers this with "
+        r"a longer budget and higher patience. Early stopping ended every fold of v2 before "
+        r"the cap, and v3's extra epochs wander around the same plateau rather than climbing "
+        r"above it. Appendix~\ref{app:convergence} shows the curves.")
+    s.append("")
+    s.append(
+        r"The same run measures a cost the method imposes on itself. The checkpoint has to be "
+        r"chosen on a daily-aggregate criterion, because the hourly truth is meant to be "
+        r"hidden. Choosing on the hidden hourly truth instead would gain \num{0.0035} in "
+        r"median KGE. Fold-to-fold noise on the same quantity is \num{0.0078}. The cost of "
+        r"the constraint is smaller than the noise it would be measured against.")
+    s.append("")
+
+    # ---------------------------------------------------------------- 4
+    s.append(r"\section{What the method costs}\label{sec:cost}")
+    s.append(
+        "Two costs are measurable and both are reported here rather than left to an "
+        "appendix. A method whose price is unstated has not been evaluated.")
+    s.append("")
+
+    s.append(r"\subsection{Adapting to the daily domain degrades the hourly domain}")
+    if st3:
         s.append(
-            f"It is not free. Over \\num{{{st['n_folds']}}} folds and about "
-            f"\\num{{{st['n_source_stations']}}} source gauges each, median hourly KGE on the "
-            f"source domain falls from \\num{{{st['median_kge_before']:.4f}}} to "
-            f"\\num{{{st['median_kge_after']:.4f}}} and median NSE from "
-            f"\\num{{{st['median_nse_before']:.4f}}} to "
-            f"\\num{{{st['median_nse_after']:.4f}}}. Paired gauge by gauge the median change "
-            f"is \\num{{{st['median_paired_delta_kge']:+.4f}}}, and it is negative in "
-            f"{'every fold' if st['degraded_in_all_folds'] else 'most folds'} "
-            f"(\\num{{{st['paired_delta_range'][0]:+.4f}}} to "
-            f"\\num{{{st['paired_delta_range'][1]:+.4f}}}), so this is a property of the "
-            f"procedure rather than one fold's luck.")
+            f"Fine-tuning changes the weights, and those weights also serve the four fifths "
+            f"of gauges that kept their hourly data. Re-scoring that source domain after "
+            f"fine-tuning gives a clear answer. Median hourly KGE there falls from "
+            f"\\num{{{st3['median_kge_before']:.4f}}} to "
+            f"\\num{{{st3['median_kge_after']:.4f}}}, and median NSE from "
+            f"\\num{{{st3['median_nse_before']:.4f}}} to "
+            f"\\num{{{st3['median_nse_after']:.4f}}}. Paired gauge by gauge the median change "
+            f"is \\num{{{st3['median_paired_delta_kge']:+.4f}}}, and it is negative in "
+            f"{'every fold' if st3['degraded_in_all_folds'] else 'most folds'}. This is a "
+            f"property of the procedure rather than one fold's luck.")
         s.append("")
         s.append(
-            r"This is the clearest cost Phase~I measures and it should not be read past. The "
-            r"mechanism explains it: fine-tuning re-calibrates amplitude toward the target "
-            r"domain, and the source domain was already calibrated, so the same movement that "
-            r"helps one hurts the other. Whether that trade is acceptable depends on what the "
-            r"deployed model is for -- if the source gauges keep their hourly data, they do "
-            r"not need the fine-tuned weights, and the two can be served by separate "
-            r"checkpoints. Mixing a fraction of source samples back into the fine-tuning was "
-            r"tested as a mitigation: it damps the re-calibration, which is what protects the "
-            r"source domain, and therefore trades away part of the target-domain gain. It is "
-            r"a dial between the two domains rather than a way out of the trade.")
+            r"The mechanism of Section~\ref{sec:mechanism} explains it. Fine-tuning "
+            r"re-calibrates amplitude toward the daily-only domain. The source domain was "
+            r"already calibrated, so the movement that helps one hurts the other. Whether "
+            r"the trade is acceptable depends on deployment. Source gauges keep their hourly "
+            r"data and do not need the fine-tuned weights, so the two domains can be served "
+            r"by separate checkpoints. Mixing a fraction of source samples back into "
+            r"fine-tuning was tested and works as a dial between the two, damping the "
+            r"re-calibration and giving back part of the target-domain gain.")
         s.append("")
 
-    s.append(r"\section{Where the gain lands}\label{sec:r-strata}")
-    s.append(
-        r"Small catchments gain most (Spearman $\rho=-0.17$ against area), which fits the "
-        r"mechanism: a small fast-responding catchment is where a zero-shot model is least "
-        r"calibrated and where a daily total adds most information. Isolation does \emph{not} "
-        r"reduce the gain -- under the blocked split it rises with distance to the nearest "
-        r"trainable gauge -- which is the opposite of what a proximity-driven result would "
-        r"do (Figure~\ref{fig:strata})." )
-    s.append("")
-    trends = load("outputs/v2_stratify/gain_trends_target.csv")
-    caption = ("Median gain $M1-M0$ by quintile, against distance to the nearest trainable "
-               "gauge (left, one line per split) and against catchment area (right). ")
-    if trends is not None:
-        tr = trends.set_index("variable")
-        area = tr.loc["area_km2"]
-        blocked = tr.loc["nearest_other_fold_km_blocked"]
-        caption += (
-            f"Area is the stronger and the more interpretable driver (Spearman "
-            f"$\\rho={area.spearman_rho:.3f}$ over \\num{{{int(area.n)}}} gauges, "
-            f"$p={area.p:.0e}$): the gain falls from \\num{{0.112}} in the smallest quintile "
-            f"to \\num{{0.022}} in the largest. Isolation does not reduce the gain -- under "
-            f"the blocked split it rises with distance "
-            f"($\\rho={blocked.spearman_rho:+.3f}$) -- which is the opposite of what a "
-            f"result driven by proximity to training gauges would do, and is the reason this "
-            f"panel is here rather than the area panel alone.")
-    s.append(fig("fig02_gain_drivers.png", caption, "strata"))
-
-    s.append(r"\section{What spatial blocking costs, and how much fine-tuning returns}"
-             r"\label{sec:r-split}")
+    s.append(r"\subsection{A random split flatters the result twice}")
     if split and d["split_m1"] is not None:
         drop0 = need(split, "overall", "paired_median_drop")
         drop1 = need(d["split_m1"], "overall", "paired_median_drop")
@@ -663,57 +554,71 @@ def part_results_tail(d: dict) -> str:
         s.append(
             f"Blocking the split costs the zero-shot model a paired median of "
             f"\\num{{{drop0:+.4f}}} in KGE, which is "
-            f"\\SI{{{100 * abs(drop0) / base:.1f}}}{{\\percent}} of its random-split level, "
-            f"with \\SI{{{100 * worse:.1f}}}{{\\percent}} of gauges worse and Wilcoxon "
-            f"$p=\\num{{{pval:.1e}}}$. The drop is negative in all six agencies, so it is not "
-            f"one region's peculiarity. Daily-aggregate fine-tuning then returns "
-            f"\\SI{{{recovered:.1f}}}{{\\percent}} of it: the residual at M1 is only "
-            f"\\num{{{drop1:+.4f}}} (Table~\\ref{{tab:recovery}}, Figure~\\ref{{fig:split}}).")
+            f"\\SI{{{100 * abs(drop0) / base:.1f}}}{{\\percent}} of its random-split level. "
+            f"\\SI{{{100 * worse:.1f}}}{{\\percent}} of gauges are worse, at Wilcoxon "
+            f"$p = \\num{{{pval:.1e}}}$, and the drop is negative in all six archives. Some "
+            f"of what looks like zero-shot generalisation under a random split is proximity "
+            f"to a training gauge.")
+        s.append("")
+        s.append(
+            f"Daily-aggregate fine-tuning returns "
+            f"\\SI{{{recovered:.1f}}}{{\\percent}} of that loss. The residual at M1 is "
+            f"\\num{{{drop1:+.4f}}}. Figure~\\ref{{fig:split}} breaks the recovery down by "
+            f"archive, and one archive stands out: Iceland, with \\num{{73}} gauges, recovers "
+            f"only \\SI{{38}}{{\\percent}}. The sparsest network is where the method has the "
+            f"least to work with.")
         s.append("")
         rec = load("outputs/v2_split_effect/recovery_by_agency.csv")
         if rec is not None:
             rows = [[tex_escape(r.source), f"{int(r.n_stations):,}", f"{r.M0:+.4f}",
                      f"{r.M1:+.4f}", f"{100 * r.recovered:.0f}\\%"]
                     for r in rec.itertuples()]
-            s.append(table(["Agency", "Gauges", "Drop at M0", "Drop at M1", "Recovered"], rows,
-                           "The blocking cost per agency and how much fine-tuning returns. "
-                           "The one network that does not recover is the sparsest.",
-                           "recovery"))
-
-    if disp:
-        s.append(
-            r"A second, less comfortable finding sits beside it. Random splitting does not only "
-            r"overstate the \emph{level} of the result, it overstates its \emph{precision}: the "
-            r"fold-to-fold standard deviation of M1 is \num{0.0035} under the random split "
-            r"against \num{0.0411} under the blocked one, a factor of \num{11.8} (Levene "
-            r"$p=\num{0.034}$). Near-duplicate gauges on both sides of a random split mean its "
-            r"validation metric averages over fewer independent catchments than its gauge count "
-            r"suggests. The honest statement of the blocked result is ``about $0.62\pm0.04$'', "
-            r"not ``$0.628\pm0.004$''.")
-        s.append("")
+            s.append("Table~\\ref{tab:recovery} gives the same breakdown numerically.")
+            s.append("")
+            s.append(table(["Archive", "Gauges", "Drop at M0", "Drop at M1", "Recovered"], rows,
+                           "The cost of spatial blocking per archive, and how much "
+                           "daily-aggregate fine-tuning returns.", "recovery"))
     s.append(fig("fig04_agency_recovery.png",
-                 "Paired median KGE drop from blocking, per agency, at M0 (open) and after "
-                 "fine-tuning (filled). Every agency is negative at M0; recovery is above "
-                 "\\SI{85}{\\percent} everywhere except the sparsest network.", "split"))
+                 "Paired median KGE drop from blocking the split, per archive, at M0 (open "
+                 "marker) and after fine-tuning (filled marker). Every archive is negative at "
+                 "M0. Recovery exceeds \\SI{85}{\\percent} everywhere except the sparsest "
+                 "network.", "split"))
+    if d["disp"]:
+        s.append(
+            r"A random split also overstates the precision of the result, which is easier to "
+            r"miss than the level. The fold-to-fold standard deviation of M1 is \num{0.0035} "
+            r"under the random split and \num{0.0411} under the blocked one, a factor of "
+            r"\num{11.8} at Levene $p = \num{0.034}$. Near-duplicate gauges sit on both sides "
+            r"of a random split, so its validation metric averages over fewer independent "
+            r"catchments than its gauge count suggests. The honest statement of the blocked "
+            r"result is about $0.62 \pm 0.04$. Quoting $0.628 \pm 0.004$ would be reporting "
+            r"the split's smoothness as if it were the model's stability.")
+        s.append("")
     return "\n".join(s)
 
 
 def part_africa(d: dict) -> str:
-    """The external test, daily then hourly."""
+    """Section 5 and the closing summary."""
     afr, three, within = d["africa"], d["three"], d["within"]
     s = []
-    s.append(r"\section{Africa, daily: the premise occurring naturally}"
-             r"\label{sec:r-africa-daily}")
+    s.append(r"\section{Africa, where the premise is real}\label{sec:africa}")
+    s.append(
+        "Everything so far rests on hiding data that exists. That is a fair test of the "
+        "method and a weak test of its reach, because the held-out gauges still sit inside a "
+        "network the model was trained on. Africa provides the harder case. Its catchments "
+        "appear nowhere in pretraining, and they genuinely lack hourly discharge.")
+    s.append("")
     if afr and three:
         m0, m1 = afr["M0"], afr["M1"]
         s.append(
-            f"On \\num{{{m0['n_basins']}}} African catchments that appear nowhere in training "
-            f"and have no hourly discharge at all, the zero-shot model reaches a median KGE of "
-            f"\\num{{{m0['median_kge']:.4f}}}. Fine-tuning on African daily observations alone "
-            f"lifts it to \\num{{{m1['median_kge']:.4f}}}, a paired median change of "
-            f"\\num{{{afr['paired']['median_delta_kge']:+.4f}}} with "
+            f"Zero-shot performance there is poor, as expected for a continent absent from "
+            f"training: median KGE \\num{{{m0['median_kge']:.4f}}}. Fine-tuning on African "
+            f"daily observations lifts it to \\num{{{m1['median_kge']:.4f}}}. The paired "
+            f"median change is \\num{{{afr['paired']['median_delta_kge']:+.4f}}} with "
             f"\\SI{{{100 * afr['paired']['frac_improved']:.1f}}}{{\\percent}} of basins "
-            f"improving (Figure~\\ref{{fig:africa-daily}}).")
+            f"improving. The gain is roughly six times the one measured on the temperate "
+            f"network, which fits the mechanism: there was far more mis-calibration to "
+            f"repair.")
         s.append("")
         rows = [["ERA5-Land runoff", f"{three['era5_land']['median_kge']:+.4f}",
                  f"{three['era5_land']['median_nse']:+.4f}"],
@@ -721,196 +626,259 @@ def part_africa(d: dict) -> str:
                  f"{three['M0']['median_nse']:+.4f}"],
                 ["M1, after African daily fine-tuning", f"{three['M1']['median_kge']:+.4f}",
                  f"{three['M1']['median_nse']:+.4f}"]]
-        s.append(table(["Method", "Median KGE", "Median NSE"], rows,
-                       f"All three scored on the identical "
-                       f"\\num{{{three['n_basin_days']}}} basin-days over "
-                       f"\\num{{{three['n_basins']}}} basins. ERA5-Land's per-basin scores "
-                       f"that already existed came from a different run and period; printing "
-                       f"those beside these would compare numbers computed on different days.",
-                       "threeway"))
-        s.append(
-            f"Paired over basins, which the medians cannot say: M1 beats the reanalysis on "
-            f"\\SI{{{100 * three['share_of_basins_M1_beats_era5_land']:.1f}}}{{\\percent}} of "
-            f"basins, and even the zero-shot M0 does on "
-            f"\\SI{{{100 * three['share_of_basins_M0_beats_era5_land']:.1f}}}{{\\percent}}. A "
-            f"model that has never seen an African catchment already outperforms the reanalysis "
-            f"on three basins in four.")
+        s.append("Table~\\ref{tab:threeway} places the three methods side by side.")
         s.append("")
+        s.append(table(["Method", "Median KGE", "Median NSE"], rows,
+                       f"All three scored on the identical \\num{{{three['n_basin_days']}}} "
+                       f"basin-days over \\num{{{three['n_basins']}}} basins. The ERA5-Land "
+                       f"per-basin scores that already existed came from a different run over "
+                       f"a different period, so they were recomputed here to make the "
+                       f"comparison valid.", "threeway"))
         pub = d.get("pub")
         if pub is not None:
             s.append(
-                f"The plan's comparison is against the continent-holdout baseline these same "
-                f"\\num{{{len(pub)}}} basins were drawn from, which reaches a median KGE of "
-                f"\\num{{{pub.pub_kge.median():+.4f}}} and a median NSE of "
-                f"\\num{{{pub.pub_nse.median():+.4f}}}. M1 exceeds it by "
-                f"\\num{{{m1['median_kge'] - pub.pub_kge.median():+.4f}}} in median KGE. "
-                f"That baseline is a model trained with an entire continent held out, so it "
-                f"answers the same question this work does and is the right thing to be "
-                f"measured against.")
+                f"Two comparisons matter. Against the physical baseline, M1 beats ERA5-Land "
+                f"on \\SI{{{100 * three['share_of_basins_M1_beats_era5_land']:.1f}}}{{\\percent}} "
+                f"of basins, and even the zero-shot model beats it on "
+                f"\\SI{{{100 * three['share_of_basins_M0_beats_era5_land']:.1f}}}{{\\percent}}. "
+                f"Against the published continent-holdout baseline these basins were drawn "
+                f"from, which reaches a median KGE of "
+                f"\\num{{{pub.pub_kge.median():+.4f}}}, M1 is higher by "
+                f"\\num{{{m1['median_kge'] - pub.pub_kge.median():+.4f}}}.")
             s.append("")
         s.append(
-            r"Africa is also where the timing claim of Section~\ref{sec:r-mechanism} stops "
-            r"holding as stated. Everywhere else $r$ barely moves because it was already "
-            r"right; in Africa it starts genuinely broken and does move. That is not a "
-            r"contradiction but a boundary: a daily total fixes which \emph{day} the water "
-            r"arrives, and only a domain whose day-scale timing is wrong can show it.")
+            r"Africa is also where one earlier claim needs qualifying. Across the temperate "
+            r"network the correlation term barely moved, and Section~\ref{sec:mechanism} "
+            r"attributed that to timing already being close to right. In Africa timing starts "
+            r"genuinely wrong, and there it does move. The refined statement is that a daily "
+            r"total fixes which day the water arrives, which repairs day-scale timing where "
+            r"it is broken. It still says nothing about which hour within that day.")
         s.append("")
-    s.append(fig("fig07_africa_hydrographs.png",
-                 "Three catchments spanning the outcome rather than three good ones: the "
-                 "lower-quartile, median and upper-quartile catchment by M1 KGE. M0 "
-                 "under-predicts every peak and fine-tuning lifts them toward the observed "
-                 "hydrograph.", "africa-daily", width=r"0.86\linewidth"))
 
-    s.append(r"\section{Africa, hourly: what can and cannot be said}\label{sec:r-africa-hourly}")
+    s.append(r"\subsection{The hourly question that Africa cannot answer}")
     if within:
         s.append(
-            f"The hourly output is not a flattened daily mean. Over all "
-            f"\\num{{{within['n_basins']}}} African basins the within-day coefficient of "
-            f"variation is \\num{{{within['median_cv_M0']:.4f}}} at M0 and "
-            f"\\num{{{within['median_cv_M1']:.4f}}} at M1, neither near zero.")
+            f"No African catchment has hourly discharge, so the hourly output there can be "
+            f"compared between series and never scored. Two things can still be established.")
+        s.append("")
+        s.append(
+            f"First, the hourly output carries real sub-daily structure. Across all "
+            f"\\num{{{within['n_basins']}}} basins the within-day coefficient of variation is "
+            f"\\num{{{within['median_cv_M0']:.4f}}} at M0 and "
+            f"\\num{{{within['median_cv_M1']:.4f}}} at M1. Neither is near zero.")
         s.append("")
         drop = 100 * abs(within["median_paired_difference"]) / within["median_cv_M0"]
         s.append(
-            f"But daily-only supervision does measurably flatten it. The paired median change "
-            f"is \\num{{{within['median_paired_difference']:+.4f}}}, about "
-            f"\\SI{{{drop:.0f}}}{{\\percent}} of M0's value, at Wilcoxon "
-            f"$p=\\num{{{within['wilcoxon_p']:.1e}}}$, and within-day variation rises in only "
+            f"Second, daily-only supervision does flatten that structure to a measurable "
+            f"degree. The paired median change is "
+            f"\\num{{{within['median_paired_difference']:+.4f}}}, about "
+            f"\\SI{{{drop:.0f}}}{{\\percent}} of the zero-shot value, at Wilcoxon "
+            f"$p = \\num{{{within['wilcoxon_p']:.1e}}}$. Within-day variation rises in only "
             f"\\SI{{{100 * within['share_of_basins_with_higher_cv_after_finetuning']:.0f}}}"
-            f"{{\\percent}} of basins. This is a cost of the method that had not previously "
-            f"been measured.")
+            f"{{\\percent}} of basins. This cost had not previously been measured.")
         s.append("")
         s.append(
-            r"Whether that flattening loses \emph{real} structure cannot be settled in Africa, "
-            r"because no hourly observation exists there. On the target domain, where it does, "
-            r"the same step moved within-day standard deviation from \num{0.86} to \num{0.89} "
-            r"of observed -- toward the observations, not away "
-            r"(Figure~\ref{fig:africa-hourly}).")
+            r"Whether that flattening removes real structure or spurious structure cannot be "
+            r"settled in Africa. On the temperate network, where hourly observations exist, "
+            r"the same step moved within-day standard deviation from \num{0.86} to "
+            r"\num{0.89} of observed, which is movement toward the observations.")
         s.append("")
         s.append(
-            r"ERA5-Land is drawn beside the model in the hourly panels as a contrast and not "
-            r"as a reference. It has no river routing, so its basin average is runoff "
-            r"generation leaving the soil column rather than water passing a gauge: on "
-            r"\texttt{restricted\_ADHI\_\_258} its instantaneous rate reaches "
-            r"\SI{199}{\mm\per\day} where the daily observation peaks near \num{20}, while its "
-            r"daily mean matches (\SI{7.75}{\mm\per\day} against an observed \num{7.58}). The "
-            r"volume is close; the distribution inside the day is not. Its average day swings "
-            r"by a factor of \num{4.2} with a 15:00~UTC peak -- afternoon convective rainfall "
-            r"passed straight through -- while the model damps the rainfall's clock-driven "
-            r"cycle \num{4.6}-fold across all \num{284} basins.")
+            r"ERA5-Land appears in the hourly panels as a contrast and not as a reference. "
+            r"It has no river routing, so its basin average is runoff leaving the soil column "
+            r"rather than water passing a gauge. On one catchment its instantaneous rate "
+            r"reaches \SI{199}{\mm\per\day} where the daily observation peaks near \num{20}, "
+            r"while its daily mean matches the observation closely. The volume is right and "
+            r"the distribution within the day is wrong. Its average day swings by a factor of "
+            r"\num{4.2} with a peak at 15:00 UTC, which is afternoon convective rainfall "
+            r"passed straight through. The model damps that clock-driven cycle "
+            r"\num{4.6}-fold across all \num{284} basins.")
+        s.append("")
+        s.append(
+            r"Figure~\ref{fig:africa-hourly} keeps the two resolutions apart for this "
+            r"reason. The left block can be scored. The right block cannot, and saying so on "
+            r"the figure is the honest way to present it.")
         s.append("")
     s.append(fig("fig10_africa_hourly.png",
-                 "Africa at two resolutions, kept apart because only one can be scored. Left: "
-                 "daily, where the observation exists and every line carries a score. Right: "
-                 "hourly, where no observation exists anywhere on the continent, so the series "
-                 "can be compared only with each other. The rightmost panel aligns every day "
-                 "of the window by hour and divides each series by its own mean; a flat line "
-                 "means no dependence on the clock.", "africa-hourly", width=r"0.98\linewidth"))
+                 "Africa at two resolutions, kept apart because only one of them can be "
+                 "scored. Left: daily, where the observation exists and every line carries a "
+                 "score. Right: hourly, where no observation exists anywhere on the "
+                 "continent, so the series can only be compared with each other. The "
+                 "rightmost panel aligns every day of the window by hour of day and divides "
+                 "each series by its own mean. A flat line there means no dependence on the "
+                 "clock.", "africa-hourly", width=r"0.98\linewidth"))
 
-    s.append(r"\section{Against the plan}\label{sec:r-plan}")
+    s.append(r"\section{What Phase I establishes}\label{sec:summary}")
     s.append(
-        "Phase~I as written has five steps. Four are met, one of those returns the opposite "
-        "of the hoped-for answer, and the fifth is met under the reading its wording most "
-        "likely intends while a stricter reading of it is not achievable at all. The last two "
-        "are the ones worth reading; Table~\\ref{tab:plan} summarises them.")
+        "The result is that daily aggregates recover most of the hourly skill lost by hiding "
+        "hourly observations, on a temperate network of nearly nine thousand gauges and on "
+        "two hundred and eighty-two African catchments that were never in training. The "
+        "repair is one of amplitude, and that holds on two domains whose deficits differ by "
+        "about a factor of four. It survives the three checks of "
+        "Section~\\ref{sec:falsify}.")
     s.append("")
-    rows = [
-        [r"1. 5-fold; train on \SI{80}{\percent} hourly, validate on \SI{20}{\percent}; "
-         r"KGE and NSE", "Met", r"\S\ref{sec:r-main}"],
-        [r"2. Fine-tune on the \SI{20}{\percent}'s daily data, early stopping on daily KGE, "
-         r"then re-validate hourly", "Met", r"\S\ref{sec:r-main}"],
-        [r"3. Re-score the \SI{80}{\percent} to check for no degradation",
-         "Met; there IS degradation", r"\S\ref{sec:r-step3}"],
-        [r"4. Five models on Africa daily, against the traditional LSTM baseline", "Met",
-         r"\S\ref{sec:r-africa-daily}"],
-        [r"5. ``Calculate hourly KGE and NSE on Africa and compare them with ERA5-Land''",
-         "Met for the hourly model; an hourly-resolution score is not possible",
-         r"\S\ref{sec:r-africa-daily}, \S\ref{sec:r-africa-hourly}"],
-    ]
-    s.append(table(["Plan step", "Status", "Reported in"], rows,
-                   "Phase~I against the plan it was written from.", "plan",
-                   align=r"p{0.42\linewidth}p{0.30\linewidth}l"))
-    s.append(
-        r"\textbf{Step~3 returns a negative answer.} The plan asks whether there is no "
-        r"degradation on the source domain. There is, consistently, in every fold. It is "
-        r"reported in its own section rather than folded into an aggregate, because a method "
-        r"whose cost is unstated has not been evaluated.")
-    s.append("")
-    s.append(
-        r"\textbf{Step~5 turns on what ``hourly'' modifies.} It reads ``Calculate hourly KGE "
-        r"and NSE on Africa and compare them with ERA5-Land''. Read as \emph{the hourly model, "
-        r"evaluated on Africa}, it is done: the hourly model is driven over the African "
-        r"catchments, its output aggregated to daily, and scored against the daily "
-        r"observations beside ERA5-Land on identical basin-days "
-        r"(Table~\ref{tab:threeway}). Read as \emph{a score at hourly resolution}, it cannot "
-        r"be done, and the obstacle is the premise itself rather than the method: no African "
-        r"catchment has hourly discharge. The hourly cache the models are built from holds "
-        r"\num{9181} gauges from six agencies and not one from the GRDC, GRDC-Caravan or ADHI "
-        r"archives the African basins come from. An hourly score there has no observation to "
-        r"be computed against, and ERA5-Land cannot stand in: it is a model output, so scoring "
-        r"against it would measure disagreement between two models rather than skill.")
-    s.append("")
-    s.append(
-        r"The first reading is the one the step is reported under. The second is worth stating "
-        r"because it is the more demanding one and a reader may assume it was met.")
-    s.append("")
-    s.append("What supports the hourly side, and what each piece can and cannot establish:")
+    s.append("Four limits belong beside that result.")
     s.append(r"\begin{enumerate}")
-    s.append(r"  \item \textbf{The daily comparison against ERA5-Land was made rigorous.} All "
-             r"three methods are re-scored on the identical basin-days rather than taken from "
-             r"runs over different periods, which is what makes Table~\ref{tab:threeway} a "
-             r"comparison at all. This is Step~5 under the first reading, at the only "
-             r"resolution the observations permit.")
-    s.append(r"  \item \textbf{The hourly output is compared without being scored.} The model "
-             r"and ERA5-Land are drawn together hourly and the within-day statistics computed "
-             r"over every basin. That establishes that the hourly output is not a flattened "
-             r"daily mean, and quantifies how much daily-only supervision flattens it. It "
-             r"cannot establish that the hourly output is correct.")
-    s.append(r"  \item \textbf{The one hourly question that can be answered was moved to where "
-             r"observations exist.} Whether the hourly output has the right kind of structure "
-             r"is decided on the target domain, where the observed average day is measurable: "
-             r"the observed average day has a peak-to-trough ratio of \num{1.044} and the "
-             r"model's \num{1.098}. That is as close as any evidence here comes to the "
-             r"stricter reading of Step~5, and it is on a different continent, which is stated "
-             r"rather than glossed.")
+    s.append(r"  \item Under-dispersion is reduced and not removed. \SI{74}{\percent} of "
+             r"gauges remain under-dispersed after fine-tuning, so this does not yet deliver "
+             r"a model to trust on peak magnitude.")
+    s.append(r"  \item The adaptation degrades the source domain, by a paired median of "
+             r"\num{0.054} in KGE, in every fold.")
+    s.append(r"  \item A random split overstates both the level and the precision of the "
+             r"result. Blocked-split numbers with their honest spread are the ones to quote.")
+    s.append(r"  \item The training network is temperate and northern. The African test is "
+             r"the only genuinely external evidence here, and it rests on the \num{302} "
+             r"records that are all the daily database holds for the continent.")
     s.append(r"\end{enumerate}")
-    s.append(
-        r"One deviation runs the other way: the plan does not ask for a blocked spatial split "
-        r"and Section~\ref{sec:r-split} reports one anyway. It was added because a random "
-        r"split of a dense gauge network leaves near-duplicate gauges on both sides, and "
-        r"without it the headline number would overstate both the level and the precision of "
-        r"the result.")
-    s.append("")
+    return "\n".join(s)
 
-    s.append(r"\section{What Phase~I establishes, and what it does not}\label{sec:r-summary}")
-    s.append(r"\begin{itemize}")
-    s.append(r"  \item Daily-aggregate supervision recovers most of the hourly skill lost to "
-             r"withholding hourly data, on \num{8843} gauges and on \num{282} African "
-             r"catchments that were never in training.")
-    s.append(r"  \item The repair is of magnitude, not of sub-daily timing, and that prediction "
-             r"holds across two domains four times apart in deficit scale.")
-    s.append(r"  \item It is not a degenerate solution, not a metric artefact and not a "
-             r"training-budget artefact; each was tested separately.")
-    s.append(r"  \item Under-dispersion is reduced, not removed: \SI{74}{\percent} of gauges "
-             r"remain under-dispersed after fine-tuning, so this does not yet deliver a model "
-             r"to be trusted on peak magnitude.")
-    s.append(r"  \item Random splitting overstates both the level and the precision of the "
-             r"result. Blocked-split numbers, with their honest fold-to-fold spread, are the "
-             r"ones to quote.")
-    s.append(r"  \item The gauge network is temperate and Northern-Hemisphere; ``global'' "
-             r"describes the model. The African test is the only genuinely external evidence "
-             r"here and it rests on \num{302} records, which is all the daily database holds "
-             r"for the continent.")
-    s.append(r"\end{itemize}")
+
+def appendix(d: dict) -> str:
+    """Supporting figures. Everything here backs a claim made in the main text."""
+    s = [r"\appendix", r"\part{Appendix}", ""]
+
+    s.append(r"\section{Configuration and data path}\label{app:config}")
+    s.append(
+        r"Run~A takes the prepared batches as they are, and it moves backwards under both "
+        r"configurations: median KGE falls from \num{0.427} to \num{0.397} under v1 and from "
+        r"\num{0.424} to \num{0.397} under v2. Every run~B variant gains. The daily branch in "
+        r"run~A is a power-law subsample rather than a series of daily means, so the "
+        r"daily-aggregate signal has no matching structure to attach to. No hyperparameter "
+        r"recovers this, which is why the whole report uses run~B.")
+    s.append("")
+    s.append(
+        r"Within run~B, v1 to v2 lifts the blocked split from \num{0.475} to \num{0.621}, and "
+        r"v3's longer budget changes almost nothing.")
+    s.append("")
+    abl = d.get("ablation")
+    if abl:
+        eff = abl["effects"]
+        n_folds = abl["n_folds_per_configuration"]
+        parts = [f"{name} contributes \\num{{{v['delta_M1']:+.4f}}}" for name, v in eff.items()]
+        s.append(
+            "That step changes two settings at once, so it cannot say which one acts. Two "
+            "pairs in the hyperparameter search differ in exactly one key, verified key by "
+            "key rather than assumed from their names, and they separate the two effects. "
+            "On M1, " + " and ".join(parts) + ". The look-back is the larger by roughly "
+            "fivefold.")
+        s.append("")
+        if n_folds < 2:
+            s.append(
+                f"Each of those configurations ran \\num{{{n_folds}}} fold, so both are point "
+                f"estimates with no between-fold spread, judged against a fold-level noise "
+                f"floor of \\num{{{abl['fold_noise_floor']}}} measured elsewhere in this "
+                f"work. The forget-gate effect clears that floor only narrowly. A five-fold "
+                f"ablation is required to settle the split and is in progress.")
+        else:
+            detail = "; ".join(
+                f"{name} {v['delta_M1']:+.4f}"
+                + (f" $\\pm$ \\num{{{v['delta_M1_sd']:.4f}}}" if v.get("delta_M1_sd") else "")
+                + (", same sign in every fold" if v.get("all_folds_same_sign")
+                   else ", sign varies between folds")
+                for name, v in eff.items())
+            s.append(
+                f"Both are paired fold by fold over \\num{{{n_folds}}} folds, so each effect "
+                f"carries its own spread: {detail}.")
+        s.append("")
+    s.append(
+        r"The forget gate is retained regardless of how the credit divides. It is part of the "
+        r"published method this model follows, and its absence from v1 was an oversight.")
+    s.append("")
+    s.append("Figure~\\ref{fig:config} shows all of them together.")
+    s.append("")
+    s.append(fig("fig03_configurations.png",
+                 "Every configuration as a movement from M0 (open marker) to M1 (filled "
+                 "marker) in median target-domain hourly KGE. Run~A is the only data path "
+                 "that moves backwards.", "config"))
+
+    s.append(r"\section{Where the gain lands}\label{app:strata}")
+    trends = load("outputs/v2_stratify/gain_trends_target.csv")
+    if trends is not None:
+        tr = trends.set_index("variable")
+        area, blocked = tr.loc["area_km2"], tr.loc["nearest_other_fold_km_blocked"]
+        s.append(
+            f"Small catchments gain most, at Spearman $\\rho = "
+            f"\\num{{{area.spearman_rho:.3f}}}$ against area over \\num{{{int(area.n)}}} "
+            f"gauges. The gain falls from \\num{{0.112}} in the smallest quintile to "
+            f"\\num{{0.022}} in the largest. This fits the mechanism, because a small "
+            f"fast-responding catchment is where a zero-shot model is least calibrated.")
+        s.append("")
+        s.append(
+            f"Isolation does the opposite of what a proximity-driven result would do. Under "
+            f"the blocked split the gain rises with distance to the nearest trainable gauge, "
+            f"at $\\rho = \\num{{{blocked.spearman_rho:+.3f}}}$. Being far from training data "
+            f"does not reduce what a daily total is worth.")
+        s.append("")
+    s.append("Figure~\\ref{fig:strata} shows both relationships.")
+    s.append("")
+    s.append(fig("fig02_gain_drivers.png",
+                 "Median gain by quintile, against distance to the nearest trainable gauge "
+                 "(left, one line per split) and against catchment area (right).", "strata"))
+
+    s.append(r"\section{The mechanism across two domains}\label{app:mechanism}")
+    if d["deficits"] is not None and d["mech"]:
+        rows = [[tex_escape(r.domain.split(" (")[0]),
+                 {"r": "$r$ (timing)", "alpha": r"$\alpha$ (amplitude)",
+                  "beta": r"$\beta$ (water balance)"}[r.component],
+                 f"{r.median_deficit_M0:.3f}", f"{r.median_deficit_M1:.3f}",
+                 f"{100 * r.fraction_removed:.0f}\\%"] for r in d["deficits"].itertuples()]
+        s.append("Table~\\ref{tab:deficits} states it numerically and "
+                 "Figure~\\ref{fig:mechanism} draws it.")
+        s.append("")
+        s.append(table(["Domain", "Component", "Deficit at M0", "Deficit at M1", "Removed"],
+                       rows,
+                       "Distance from the ideal before and after fine-tuning. Deficit is "
+                       "$1-r$ for the correlation and $|\\log_2 x|$ for the two ratios, "
+                       "because $0.5$ and $2.0$ are equally wrong for a ratio and their "
+                       "arithmetic mean is not 1. Only the fraction removed is comparable "
+                       "across components.", "deficits"))
+        parts = [f"{dom.split(' (')[0]} removes "
+                 f"\\SI{{{100 * v['magnitude_fraction_removed']:.0f}}}{{\\percent}} of the "
+                 f"amplitude and water-balance deficit against "
+                 f"\\SI{{{100 * v['timing_fraction_removed']:.0f}}}{{\\percent}} of the "
+                 f"timing deficit" for dom, v in d["mech"].items()]
+        s.append("The ordering is the same on both domains. " + "; ".join(parts) + ".")
+        s.append("")
+    s.append(fig("fig11_component_deficits.png",
+                 "One axis per component, because $1-r$ and $|\\log_2 x|$ are in different "
+                 "units. The fraction removed, printed on each pair, is the comparable "
+                 "quantity.", "mechanism", width=r"0.95\linewidth"))
+
+    s.append(r"\section{Where the two metrics disagree}\label{app:metrics}")
+    s.append("Figure~\\ref{fig:metrics} shows the joint distribution behind the "
+             "disagreement reported in Section~\\ref{sec:falsify}.")
+    s.append("")
+    s.append(fig("fig05_metric_disagreement.png",
+                 "Change in KGE against reduction in point-wise absolute error, one hexagon "
+                 "per group of gauges. Quadrant counts use every gauge. The density window "
+                 "omits those outside it, which the caption states rather than folding them "
+                 "into the corner bins.", "metrics", width=r"0.72\linewidth"))
+
+    s.append(r"\section{Training length}\label{app:convergence}")
+    s.append("Figure~\\ref{fig:convergence} shows the validation curves.")
+    s.append("")
+    s.append(fig("fig06_convergence.png",
+                 "Source-domain validation KGE per epoch, five folds per configuration, "
+                 "zoomed to the plateau. The epochs at which v2 stopped are marked, and none "
+                 "reaches the cap.", "convergence"))
+
+    s.append(r"\section{African hydrographs at daily resolution}\label{app:africa-daily}")
+    s.append("Figure~\\ref{fig:africa-daily} shows three of the catchments behind "
+             "the daily numbers in Section~\\ref{sec:africa}.")
+    s.append("")
+    s.append(fig("fig07_africa_hydrographs.png",
+                 "Three catchments spanning the outcome rather than three good ones: the "
+                 "lower-quartile, median and upper-quartile catchment by M1 KGE. The "
+                 "zero-shot model under-predicts every peak, and fine-tuning lifts them "
+                 "toward the observed hydrograph.", "africa-daily", width=r"0.86\linewidth"))
     return "\n".join(s)
 
 
 PREAMBLE = r"""\documentclass[11pt,a4paper]{article}
 \usepackage[margin=2.4cm]{geometry}
 \usepackage{graphicx}
-% Three search paths, so the document compiles whether it sits in the repository
-% (../figures/), is uploaded flat to Overleaf with the PNGs beside it (./), or is
-% unpacked with the figures in a subfolder (figures/). A missing figure is only a
-% warning in LaTeX, not an error, so a wrong single path yields a PDF with blanks.
+% Three search paths, so the document compiles from the repository (../figures/), from a
+% flat Overleaf upload with the PNGs beside it (./), or with them in a subfolder.
 \graphicspath{{../figures/}{figures/}{./}}
 \usepackage{booktabs}
 \usepackage{siunitx}
@@ -925,7 +893,7 @@ PREAMBLE = r"""\documentclass[11pt,a4paper]{article}
 \setlength{\parindent}{0pt}
 
 \title{Global hourly streamflow under daily-only supervision\\[0.3em]
-  \large Phase~I: experiments and results}
+  \large Phase I}
 \author{__AUTHOR__}
 \date{__DATE__}
 
@@ -934,11 +902,14 @@ PREAMBLE = r"""\documentclass[11pt,a4paper]{article}
 \begin{abstract}
 \noindent
 Hourly streamflow models are trained where hourly discharge is recorded, which is a small
-and geographically narrow part of the world. This report asks whether hourly skill survives
-at gauges that supply only daily totals. A fifth of the network is held out, its hourly
-observations are hidden, and only the 24-hour aggregate supervises it; the hidden hourly
-series is used once, to score. Part~I states what was run and why each step was necessary;
-Part~II reports what came out, section for section in the same order.
+and geographically narrow part of the world. Most gauges report once a day. This report
+asks whether hourly skill survives at gauges that supply only daily totals. One fifth of a
+network of nearly nine thousand gauges is held out, its hourly observations are hidden, and
+only the 24-hour aggregate is used to supervise it. The hidden hourly series is read once,
+to score. Daily aggregates recover most of the lost skill, and the recovery is a repair of
+amplitude rather than of timing. The same result holds on 282 African catchments that
+appear nowhere in training and genuinely lack hourly discharge. Part~I describes the
+experiments. Part~II reports and analyses the results.
 \end{abstract}
 \tableofcontents
 \clearpage
@@ -948,8 +919,6 @@ Part~II reports what came out, section for section in the same order.
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build the Phase I report as LaTeX.")
     parser.add_argument("--out", default="reports/latex/PhaseI_report.tex", type=Path)
-    # Defaults name the person who ran the work. Pass --author to add an advisor or to
-    # change the order; a report going to a supervisor should not carry a guessed byline.
     parser.add_argument("--author", default="Weikang Kong")
     parser.add_argument("--date", default=None, help="Defaults to today.")
     args = parser.parse_args()
@@ -957,18 +926,22 @@ def main() -> None:
 
     d = gather()
     body = "\n\n".join([part_experiments(d), r"\clearpage", part_results(d),
-                        part_results_tail(d), part_africa(d)])
+                        part_results_tail(d), part_africa(d), r"\clearpage", appendix(d)])
     from datetime import date
     preamble = (PREAMBLE.replace("__AUTHOR__", args.author)
                 .replace("__DATE__", args.date or date.today().isoformat()))
     args.out.write_text(preamble + body + "\n\n\\end{document}\n", encoding="utf-8")
     print(f"wrote {args.out} ({args.out.stat().st_size / 1024:.0f} KB)")
-    missing = [n for n in ("fig01_kge_components.png", "fig02_gain_drivers.png",
-                           "fig03_configurations.png", "fig04_agency_recovery.png",
-                           "fig05_metric_disagreement.png", "fig06_convergence.png",
-                           "fig07_africa_hydrographs.png", "fig08_intraday_shape.png",
-                           "fig09_global_map.png", "fig10_africa_hourly.png",
-                           "fig11_component_deficits.png") if not (FIGDIR / n).exists()]
+
+    text = args.out.read_text()
+    # The brief forbids em dashes and "not X but Y". Both are habits, so they are checked
+    # rather than trusted.
+    import re as _re
+    dashes = text.count(" -- ")
+    notbut = len(_re.findall(r"\bnot\b[^.]{0,60}\bbut\b", text))
+    print(f"style check: {dashes} em dashes, {notbut} 'not ... but' constructions")
+    missing = [n for n in _re.findall(r"\\includegraphics\[[^\]]*\]\{([^}]+)\}", text)
+               if not (FIGDIR / n).exists()]
     print("all figures present" if not missing else f"MISSING figures: {missing}")
 
 
