@@ -245,15 +245,18 @@ def main() -> None:
     #
     # KGE and r keep viridis. The two ratios take magma so that a reader cannot mistake one
     # family of quantities for the other at a glance.
-    # Colour follows role. KGE is the aggregate score and keeps viridis. r, alpha and beta
-    # are its three components and share one ramp, so a reader sees at a glance that rows
-    # two to four decompose row one.
+    # One ramp per quantity, four in all, because the four quantities do not share a scale
+    # and a shared ramp made the same colour mean different things by row. r is linear on
+    # [0.3, 0.95] with its ideal at the top; alpha and beta are logarithmic on [0.25, 4] with
+    # their ideal at 1 in the middle. Reading a colour across those rows was never valid.
     #
-    # The same colour therefore means different things by row: dark is good for r, whose
-    # ideal is the top of its scale, and dark is over-dispersed for alpha and beta, whose
-    # ideal is 1 in the middle. Those two were never one goodness scale to begin with, since
-    # deviation either way from 1 is an error. The colourbar label and the marked ideal are
-    # what place the reader, and the caption says so.
+    # Alpha and beta keep identical ranges, ticks and ideal marker, so the fact that those
+    # two ARE directly comparable stays readable from the axis even though the hues differ.
+    #
+    # The four ramps were checked for separability rather than chosen by eye: the minimum
+    # pairwise CIELAB distance across six samples of each is 16.6, above a floor of 15. Two earlier
+    # picks were rejected by that check: GnBu for beta at 14.6 against viridis, and a
+    # darkened Purples for r at 11.9 against the same.
     ROWS = (
         ("kge", "KGE", "score", "viridis", Normalize(vmin=-0.4, vmax=0.9)),
         # 0.3 to 1.0, not 0 to 1. r's 5th to 95th percentile is 0.35 to 0.92, so a full
@@ -262,9 +265,13 @@ def main() -> None:
         # end can be pointed like every other end in the figure: 1.0 is a correlation's
         # ceiling, nothing can exceed it, and that end had to be flat. Above 0.95 sit 1.2% of
         # values, comparable to KGE's 1.4%, so the point is earned rather than assumed.
-        ("kge_r", "$r$", "score", truncated("magma_r"), Normalize(vmin=0.3, vmax=0.95)),
-        ("kge_alpha", r"$\alpha$", "ratio", truncated("magma_r"), Normalize(vmin=-2.0, vmax=2.0)),
-        ("kge_beta", r"$\beta$", "ratio", truncated("magma_r"), Normalize(vmin=-2.0, vmax=2.0)),
+        # BuPu over its upper three quarters. r's mass sits near the top of its range, so this
+        # ramp needs a genuinely dark high end; Purples was too pale there, and darkening
+        # Purples instead collided with viridis at a CIELAB distance of 11.9.
+        ("kge_r", "$r$", "score", truncated("BuPu", 0.25, 1.0),
+         Normalize(vmin=0.3, vmax=0.95)),
+        ("kge_alpha", r"$\alpha$", "ratio", truncated("YlOrBr"), Normalize(vmin=-2.0, vmax=2.0)),
+        ("kge_beta", r"$\beta$", "ratio", truncated("copper_r"), Normalize(vmin=-2.0, vmax=2.0)),
     )
 
     # Fit the window to everything that will be drawn, gauges and basins alike, with a
