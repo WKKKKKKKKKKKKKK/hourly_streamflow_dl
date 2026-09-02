@@ -38,6 +38,19 @@ from matplotlib.colors import LinearSegmentedColormap, Normalize, TwoSlopeNorm
 from common.config import resolve
 
 
+def deficit_of(values, ratio: bool):
+    """Distance from the ideal: 1 - x for a score, |log2 x| for a ratio.
+
+    A ratio's 0.5 and 2.0 are equally wrong and their arithmetic mean is not 1, so the two
+    kinds of component cannot share one definition of how far off a value is.
+    """
+    values = np.asarray(values, dtype=float)
+    if not ratio:
+        return 1.0 - values
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return np.abs(np.log2(np.where(values > 0, values, np.nan)))
+
+
 def truncated(name: str, lo: float = 0.10, hi: float = 0.92):
     """A sequential colormap with its palest extreme removed.
 
@@ -314,25 +327,55 @@ def main() -> None:
         print(f"colourbar {bar_label}: range [{lo:g}, {hi:g}] extend={extend}")
         pair_bars.append((handle, [axes[row, 0], axes[row, 1]], ratio, bar_label, extend))
 
-        # Third column: the plain difference M1 - M0, in the quantity's own units. For KGE
-        # and r that is unambiguous -- higher is better, so red is better. For alpha and
-        # beta it is NOT: their ideal is 1, so an increase helps a gauge below 1 and hurts
-        # one above it. The title says so, and carries the fraction of the DEFICIT removed
-        # beside it, which is the number that does mean better or worse.
+        # Third column: the share of each gauge's own deficit that fine-tuning removes,
+        # which is (deficit at M0 minus deficit at M1) divided by the deficit at M0. Deficit
+        # is 1 - x for KGE and r and |log2 x| for the two ratios, so the quantity is
+        # unitless and +1 means the whole gap closed.
+        #
+        # It is not the raw difference M1 - M0, and the reason is a constraint rather than a
+        # preference. The four rows differ eightfold in the size of their raw changes, from
+        # +/-0.085 in r to +/-0.70 in beta, so one shared scale would render the r panel
+        # blank while four separate scales would let one hue mean four magnitudes. Giving
+        # each panel its own diverging ramp was tried and does not fit: only three standard
+        # diverging ramps clear a CIELAB separation of 15 against the four sequential ramps
+        # already in the figure, and those three collide with each other at 8.9 to 9.2.
+        # Normalising by each gauge's own deficit makes a single scale correct instead.
+        #
+        # This is also the quantity the mechanism argument uses, so the figure and that
+        # argument now report the same thing.
         m0 = table[f"M0_{key}" if key != "kge" else "M0_kge"].to_numpy()
         m1 = table[f"M1_{key}" if key != "kge" else "M1_kge"].to_numpy()
-        diff = m1 - m0
-        span = float(np.nanpercentile(np.abs(diff), 90)) or 0.1
+
+        def share(before, after):
+            d0 = deficit_of(before, ratio)
+            d1 = deficit_of(after, ratio)
+            # Divided by the LARGER of the two deficits, not by the one at M0. Dividing by
+            # M0 leaves the worsening direction unbounded: a gauge starting close to the
+            # ideal and drifting away produces an arbitrarily large negative ratio, and 12
+            # to 16 percent of the two ratio rows fell outside a symmetric unit scale.
+            # Dividing by the larger bounds the quantity in [-1, 1] with no clipping at all,
+            # while keeping the same reading: +1 removes the whole gap, 0 changes nothing,
+            # and -1 is the limit of unbounded worsening.
+            scale = np.maximum(np.abs(d0), np.abs(d1))
+            with np.errstate(divide="ignore", invalid="ignore"):
+                out = (d0 - d1) / scale
+            # A gauge already at the ideal has no gap to close, and the ratio there divides
+            # noise by noise. Those are dropped rather than drawn at an arbitrary value.
+            return np.where(scale < 0.02, np.nan, out)
+
+        diff = share(m0, m1)
+        span = 1.0
         a_over = None
         if africa is not None:
             am0 = africa[f"M0_{key}" if key != "kge" else "M0_kge"].to_numpy()
             am1 = africa[f"M1_{key}" if key != "kge" else "M1_kge"].to_numpy()
-            a_over = (africa["long"].to_numpy(), africa["lat"].to_numpy(), am1 - am0)
+            a_over = (africa["long"].to_numpy(), africa["lat"].to_numpy(), share(am0, am1))
         diff_handle = panel(axes[row, 2], lon, lat, diff,
                             f"({chr(ord('a') + row * 3 + 2)})", "RdBu_r",
                             TwoSlopeNorm(vmin=-span, vcenter=0.0, vmax=span),
                             extend="both", overlay=a_over)
-        diff_bars.append((diff_handle, axes[row, 2], f"change in {bar_label}"))
+        diff_bars.append((diff_handle, axes[row, 2],
+                          f"share of {bar_label} gap closed"))
 
     # No suptitle. What it carried -- the agency composition, the run, and what the two
     # marker sizes mean -- belongs in the caption, which is generated from the same files

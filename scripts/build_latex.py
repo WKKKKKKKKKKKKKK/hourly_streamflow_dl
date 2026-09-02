@@ -163,18 +163,23 @@ def map_caption(d: dict) -> str:
         r"observation each score rests on differs. $\alpha$ and $\beta$ use a log scale, so "
         "halving and doubling the observed value sit equally far apart. Their ideal value "
         "of 1 is marked by a line on the colourbar, since a sequential scale gives it no "
-        "colour of its own. A diverging scale is reserved for the difference column, "
-        "where zero is a real centre and the sign is the reading. Each of the four "
-        "quantities has its own ramp, because they do not share a scale and a shared ramp "
-        r"would let the same colour mean different things by row: $r$ is linear with its "
-        r"ideal at the top, while $\alpha$ and $\beta$ are logarithmic with their ideal at "
-        "1 in the middle, marked by a line. Those last two keep identical ranges and ticks, "
-        "so the fact that they are directly comparable stays readable from the axis. The "
-        "four ramps were checked for separability rather than chosen by eye, at a minimum "
-        "pairwise CIELAB distance of 18.4. All twenty-four colourbar ends are pointed and "
-        "each point is earned, since values lie beyond every one of them. The upper bound "
-        r"for $r$ is 0.95 rather than 1.0 for that reason, 1.0 being the ceiling of a "
-        "correlation. "
+        "colour of its own. Each of the four quantities has its own ramp, because they do "
+        "not share a scale and a shared ramp would let the same colour mean different "
+        r"things by row: $r$ is linear with its ideal at the top, while $\alpha$ and "
+        r"$\beta$ are logarithmic with their ideal at 1 in the middle, marked by a line. "
+        "Those last two keep identical ranges and ticks, so the fact that they are directly "
+        "comparable stays readable from the axis. The ramps were checked for separability "
+        "rather than chosen by eye, at a minimum pairwise CIELAB distance of 18.4. All "
+        "colourbar ends are pointed and each point is earned, since values lie beyond every "
+        r"one of them. The upper bound for $r$ is 0.95 rather than 1.0 for that reason, "
+        "1.0 being the ceiling of a correlation. "
+        "The third column shows the share of each gauge's own gap that fine-tuning closes, "
+        "defined as the reduction in its distance from the ideal divided by the larger of "
+        "the distances before and after. That quantity is unitless and bounded in "
+        r"$[-1, 1]$, where $+1$ closes the whole gap and $0$ changes nothing, so one "
+        "diverging scale serves all four rows and a colour can be compared between them. "
+        "The raw differences cannot be shown this way, since they span eightfold between "
+        r"rows, from $\pm 0.085$ in $r$ to $\pm 0.70$ in $\beta$. "
         "Longitude is labelled on the bottom row and latitude on the left column only, since "
         "all twelve panels share one window. Panels: " + ".\\ ".join(parts) + ". In the "
         "difference column the sign is the verdict for KGE and $r$, where larger is better, "
@@ -929,6 +934,16 @@ def main() -> None:
     # The brief forbids em dashes and "not X but Y". Both are habits, so they are checked
     # rather than trusted.
     import re as _re
+    # Control characters reach the .tex when a LaTeX macro is written in a non-raw Python
+    # string: \b becomes a backspace, \r a carriage return, \f a form feed. LaTeX then
+    # fails on an invisible byte, which is a hard error to read backwards from.
+    control = [(i, ord(c)) for i, c in enumerate(text)
+               if ord(c) < 32 and c not in "\n\t"]
+    if control:
+        i, code = control[0]
+        raise SystemExit(f"control character U+{code:04X} at offset {i}: "
+                         f"{text[max(0, i - 60):i + 20]!r} -- a LaTeX macro was written in a "
+                         "non-raw Python string")
     dashes = text.count(" -- ")
     notbut = len(_re.findall(r"\bnot\b[^.]{0,60}\bbut\b", text))
     print(f"style check: {dashes} em dashes, {notbut} 'not ... but' constructions")
@@ -961,6 +976,23 @@ def map_analysis(d: dict) -> str:
     tight, loose = beta_by.idxmin(), beta_by.idxmax()
     kge = d["kge"]
 
+    # The third column is the share of each gauge's own gap that closes, so the prose has to
+    # quote that rather than the raw differences the column used to show.
+    share = {}
+    for key, is_ratio in (("kge", False), ("kge_r", False),
+                          ("kge_alpha", True), ("kge_beta", True)):
+        def dist(v):
+            v = np.asarray(v, dtype=float)
+            if not is_ratio:
+                return 1.0 - v
+            with np.errstate(divide="ignore", invalid="ignore"):
+                return np.abs(np.log2(np.where(v > 0, v, np.nan)))
+        d0, d1 = dist(comp[f"M0_{key}"]), dist(comp[f"M1_{key}"])
+        scale = np.maximum(np.abs(d0), np.abs(d1))
+        with np.errstate(divide="ignore", invalid="ignore"):
+            frac = np.where(scale < 0.02, np.nan, (d0 - d1) / scale)
+        share[key] = float(np.nanmedian(frac))
+
     s = []
     s.append(
         f"Reading the figure row by row gives more than the headline number. The top row "
@@ -989,10 +1021,11 @@ def map_analysis(d: dict) -> str:
         f"and recessions roughly where they belong. Panel~(g) is broadly orange, with median "
         f"$\\alpha$ between \\num{{0.75}} and \\num{{0.84}}, so the same model consistently "
         f"swings less than the river does. The difference column settles which of the two the "
-        f"method acts on. Panel~(f) is close to white throughout, at "
-        f"\\num{{{kge.loc['kge_r', 'median_delta']:+.4f}}} in the median, while panel~(i) "
-        f"carries visible red at \\num{{{kge.loc['kge_alpha', 'median_delta']:+.4f}}}. The "
-        f"repair is one of amplitude.")
+        f"method acts on, and because that column is normalised the two panels can be read "
+        f"against each other. Panel~(f) is close to white throughout: the median gauge closes "
+        f"\\SI{{{100 * share['kge_r']:.1f}}}{{\\percent}} of its timing gap. Panel~(i) carries "
+        f"visible red at \\SI{{{100 * share['kge_alpha']:.1f}}}{{\\percent}} of the amplitude "
+        f"gap, some seven times as much. The repair is one of amplitude.")
     s.append("")
     s.append(
         f"The fourth row carries a warning that only the map makes visible. Panel~(j) is "
