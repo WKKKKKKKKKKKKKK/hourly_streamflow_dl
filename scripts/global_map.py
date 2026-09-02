@@ -289,7 +289,20 @@ def main() -> None:
                            overlay=(over_log(column) if ratio else over(column)))
         # One bar for the M0/M1 pair, deferred until the layout is final so it can be
         # placed from the axes' settled positions.
-        pair_bars.append((handle, [axes[row, 0], axes[row, 1]], ratio, bar_label))
+        # Derived from the values on both sides of the row, so a pointed end always means
+        # data lies beyond it. r's top comes out flat, because 1 is a correlation's ceiling.
+        lo, hi = norm.vmin, norm.vmax
+        raw = np.concatenate([table[f"M0_{key}" if key != "kge" else "M0_kge"].to_numpy(),
+                              table[f"M1_{key}" if key != "kge" else "M1_kge"].to_numpy()])
+        if africa is not None:
+            raw = np.concatenate([raw, africa[f"M0_{key}" if key != "kge" else "M0_kge"].to_numpy(),
+                                  africa[f"M1_{key}" if key != "kge" else "M1_kge"].to_numpy()])
+        seen = log2_of(raw) if ratio else raw
+        below, above = bool(np.nanmin(seen) < lo), bool(np.nanmax(seen) > hi)
+        extend = ("both" if below and above else
+                  "min" if below else "max" if above else "neither")
+        print(f"colourbar {bar_label}: range [{lo:g}, {hi:g}] extend={extend}")
+        pair_bars.append((handle, [axes[row, 0], axes[row, 1]], ratio, bar_label, extend))
 
         # Third column: the plain difference M1 - M0, in the quantity's own units. For KGE
         # and r that is unambiguous -- higher is better, so red is better. For alpha and
@@ -354,11 +367,10 @@ def main() -> None:
             if col != 0:
                 ax.set_yticklabels([])
 
-    def place_bar(handle, ax, label, ratio, diverging):
+    def place_bar(handle, ax, label, ratio, extend):
         box = ax.get_position()
         cax = fig.add_axes([box.x1 + BAR_GAP, box.y0, BAR_W, box.height])
-        bar = fig.colorbar(handle, cax=cax,
-                           extend="both" if (ratio or diverging) else "min",
+        bar = fig.colorbar(handle, cax=cax, extend=extend,
                            ticks=log_ticks if ratio else None)
         if ratio:
             bar.ax.set_yticklabels(tick_text)
@@ -369,11 +381,11 @@ def main() -> None:
         bar.ax.tick_params(labelsize=10)
 
     # Every panel gets its own bar, including both halves of a shared-scale pair.
-    for handle, axs, ratio, label in pair_bars:
+    for handle, axs, ratio, label, extend in pair_bars:
         for ax in axs:
-            place_bar(handle, ax, label, ratio, False)
+            place_bar(handle, ax, label, ratio, extend)
     for handle, ax, label in diff_bars:
-        place_bar(handle, ax, label, False, True)
+        place_bar(handle, ax, label, False, "both")
 
     path = out_dir / f"global_map_{args.domain}.png"
     fig.savefig(path, dpi=args.dpi, bbox_inches="tight")
