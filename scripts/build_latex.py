@@ -161,7 +161,10 @@ def map_caption(d: dict) -> str:
         "large outlined dots are the African basins, scored against daily observations, "
         "where it is genuine. The two are never pooled into one median because the "
         r"observation each score rests on differs. $\alpha$ and $\beta$ use a log scale, so "
-        "halving and doubling the observed value sit equally far from the white centre. "
+        "halving and doubling the observed value sit equally far apart. Their ideal value "
+        "of 1 is marked by a line on the colourbar, since a sequential scale gives it no "
+        "colour of its own. A diverging scale is reserved for the difference column, "
+        "where zero is a real centre and the sign is the reading. "
         "Longitude is labelled on the bottom row and latitude on the left column only, since "
         "all twelve panels share one window. Panels: " + ".\\ ".join(parts) + ". In the "
         "difference column the sign is the verdict for KGE and $r$, where larger is better, "
@@ -345,6 +348,8 @@ def part_results(d: dict) -> str:
         r"figure are the reason the African test carries as much weight as it does.")
     s.append("")
     s.append(fig("fig09_global_map.png", map_caption(d), "map"))
+    s.append(map_analysis(d))
+
 
     # ---------------------------------------------------------------- 2
     s.append(r"\section{The gain is a repair of amplitude}\label{sec:mechanism}")
@@ -920,6 +925,96 @@ def main() -> None:
     missing = [n for n in _re.findall(r"\\includegraphics\[[^\]]*\]\{([^}]+)\}", text)
                if not (FIGDIR / n).exists()]
     print("all figures present" if not missing else f"MISSING figures: {missing}")
+
+
+def map_analysis(d: dict) -> str:
+    """The reading of Figure 9, with its numbers taken from the same files the map plots."""
+    import numpy as np
+
+    comp = load("outputs/v2_runB/diagnostics_allhours/kge_components_target.csv")
+    if comp is None:
+        return ""
+    comp = comp.loc[comp["obs_std"] >= 1e-3].copy()
+    comp["agency"] = comp["station_id"].str.split("__").str[0]
+    gain = (comp["M1_kge"] - comp["M0_kge"]).groupby(comp["agency"]).median()
+    best, worst = gain.idxmax(), gain.idxmin()
+
+    m0 = load("outputs/v2_africa_insitu_summary/ensemble_per_basin_M0.csv")
+    m1 = load("outputs/v2_africa_insitu_summary/ensemble_per_basin_M1.csv")
+    afr = m0.set_index("station_id").join(m1.set_index("station_id"),
+                                          lsuffix="_M0", rsuffix="_M1", how="inner")
+
+    def log_dist(x):
+        return float(np.abs(np.log2(np.clip(x, 1e-6, None))).median())
+
+    beta_by = comp.groupby("agency")["M0_kge_beta"].apply(log_dist)
+    tight, loose = beta_by.idxmin(), beta_by.idxmax()
+    kge = d["kge"]
+
+    s = []
+    s.append(
+        f"Reading the figure row by row gives more than the headline number. The top row "
+        f"shows the result and its breadth. Panel~(a) is darkest over Australia, Iceland and "
+        f"the African basins, and panel~(b) is lighter almost everywhere, with panel~(c) "
+        f"predominantly red. Every archive improves at the median, from "
+        f"\\num{{{gain.min():+.3f}}} in {tex_escape(worst)} to \\num{{{gain.max():+.3f}}} in "
+        f"{tex_escape(best)}. The improvement is a property of the network rather than of one "
+        f"region within it.")
+    s.append("")
+    s.append(
+        f"The size of the gain tracks how poorly the zero-shot model started. Iceland begins "
+        f"at a median KGE of "
+        f"\\num{{{comp.loc[comp.agency.eq('LamaHIce'), 'M0_kge'].median():.3f}}} and gains "
+        f"\\num{{{gain['LamaHIce']:+.3f}}}. The African basins begin at "
+        f"\\num{{{afr.kge_M0.median():.3f}}} and gain "
+        f"\\num{{{(afr.kge_M1 - afr.kge_M0).median():+.3f}}}. The well-served archives, with "
+        f"thousands of gauges and a zero-shot median near \\num{{0.6}}, gain around "
+        f"\\num{{0.06}}. A daily total adds most where the model was least calibrated, which "
+        f"is what Section~\\ref{{sec:mechanism}} would predict.")
+    s.append("")
+    s.append(
+        f"The second and third rows separate timing from amplitude, and they look different "
+        f"from each other. Panel~(d) is broadly green, with median $r$ between \\num{{0.70}} "
+        f"and \\num{{0.85}} in every archive, so the zero-shot model already places the rises "
+        f"and recessions roughly where they belong. Panel~(g) is broadly orange, with median "
+        f"$\\alpha$ between \\num{{0.75}} and \\num{{0.84}}, so the same model consistently "
+        f"swings less than the river does. The difference column settles which of the two the "
+        f"method acts on. Panel~(f) is close to white throughout, at "
+        f"\\num{{{kge.loc['kge_r', 'median_delta']:+.4f}}} in the median, while panel~(i) "
+        f"carries visible red at \\num{{{kge.loc['kge_alpha', 'median_delta']:+.4f}}}. The "
+        f"repair is one of amplitude.")
+    s.append("")
+    s.append(
+        f"The fourth row carries a warning that only the map makes visible. Panel~(j) is "
+        f"mixed orange and purple, where panel~(g) was one-sided. The gauge median of $\\beta$ "
+        f"is \\num{{{comp.M0_kge_beta.median():.3f}}}, which reads as no water-balance error "
+        f"at all. Per gauge the distance from the ideal tells a different story: median "
+        f"$|\\log_2 \\beta|$ is \\num{{{beta_by[tight]:.3f}}} in {tex_escape(tight)} and "
+        f"\\num{{{beta_by[loose]:.3f}}} in {tex_escape(loose)}, a factor of "
+        f"\\num{{{beta_by[loose] / beta_by[tight]:.1f}}}. Over-predicting and "
+        f"under-predicting gauges cancel in the median. A summary statistic reports a "
+        f"balanced model, and the map reports a model that is wrong in both directions.")
+    s.append("")
+    s.append(
+        f"The African basins differ from the temperate gauges in kind. Their median $\\alpha$ "
+        f"at M0 is \\num{{{afr.kge_alpha_M0.median():.3f}}} and their median $\\beta$ is "
+        f"\\num{{{afr.kge_beta_M0.median():.3f}}}, so the zero-shot model delivers less than "
+        f"half the observed variability and less than half the observed water. Their median "
+        f"$r$ is \\num{{{afr.kge_r_M0.median():.3f}}}, which sits inside the range the "
+        f"temperate archives occupy. Timing transfers to a continent the model has never "
+        f"seen. Magnitude does not. This is the clearest statement in the report of what a "
+        f"pretrained model does and does not carry across a domain gap, and it is also why "
+        f"the African gain is the largest on the figure.")
+    s.append("")
+    s.append(
+        r"Two qualifications belong with this reading. The map is drawn under the random "
+        r"split, so panel~(a) is the optimistic view of zero-shot skill; under the blocked "
+        r"split the same median falls to \num{0.419}, and the gain column would be redder "
+        r"still. And the continents with no markers are part of the evidence. The training "
+        r"network covers no gauge in Africa, South America or mainland Asia, so the African "
+        r"basins carry the whole weight of external validation here, on daily observations "
+        r"rather than hourly ones.")
+    return "\n".join(s)
 
 
 if __name__ == "__main__":

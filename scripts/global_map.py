@@ -33,9 +33,22 @@ import matplotlib.pyplot as plt
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from matplotlib.colors import Normalize, TwoSlopeNorm
+from matplotlib.colors import LinearSegmentedColormap, Normalize, TwoSlopeNorm
 
 from common.config import resolve
+
+
+def truncated(name: str, lo: float = 0.10, hi: float = 0.92):
+    """A sequential colormap with its palest extreme removed.
+
+    magma_r runs to near-white at its low end. Alpha sits below 1 at \SI{73}{\percent} of
+    gauges, so that end carries most of the data, and pale markers on a white ground are
+    close to invisible. Trimming the extremes keeps the ordering and keeps every point
+    legible.
+    """
+    base = plt.get_cmap(name)
+    return LinearSegmentedColormap.from_list(
+        f"{name}_trim", base(np.linspace(lo, hi, 256)))
 
 STATIC_CSV = (
     "/ibex/project/c2266/abbaa0a/data/gscad_database/processed/20250630/"
@@ -224,11 +237,19 @@ def main() -> None:
 
     # key, colourbar label, kind, colormap, shared norm for the M0/M1 pair. What each
     # panel shows is enumerated in the caption, not printed on the panel.
+    # A diverging map is reserved for the difference column, where zero is a real centre
+    # and the sign is the reading. The four value panels use sequential maps. For alpha and
+    # beta that costs something worth naming: their ideal is 1.0, deviation either way is an
+    # error, and a diverging map centred at 1.0 shows that directly. A sequential map does
+    # not, so a tick line is drawn on their colorbars at 1.0 to put the ideal back.
+    #
+    # KGE and r keep viridis. The two ratios take magma so that a reader cannot mistake one
+    # family of quantities for the other at a glance.
     ROWS = (
         ("kge", "KGE", "score", "viridis", Normalize(vmin=-0.4, vmax=0.9)),
-        ("kge_r", "r", "score", "viridis", Normalize(vmin=0.0, vmax=1.0)),
-        ("kge_alpha", "alpha", "ratio", "PuOr", Normalize(vmin=-2.0, vmax=2.0)),
-        ("kge_beta", "beta", "ratio", "PuOr", Normalize(vmin=-2.0, vmax=2.0)),
+        ("kge_r", "$r$", "score", "viridis", Normalize(vmin=0.0, vmax=1.0)),
+        ("kge_alpha", r"$\alpha$", "ratio", truncated("magma_r"), Normalize(vmin=-2.0, vmax=2.0)),
+        ("kge_beta", r"$\beta$", "ratio", truncated("magma_r"), Normalize(vmin=-2.0, vmax=2.0)),
     )
 
     # Fit the window to everything that will be drawn, gauges and basins alike, with a
@@ -329,6 +350,9 @@ def main() -> None:
                            ticks=log_ticks if ratio else None)
         if ratio:
             bar.ax.set_yticklabels(tick_text)
+            # The ideal value, marked because a sequential map gives it no colour of its own.
+            bar.ax.axhline(0.0, color="#ffffff", lw=2.4, zorder=4)
+            bar.ax.axhline(0.0, color="#0b0b0b", lw=1.1, zorder=5)
         bar.set_label(label, fontsize=11)
         bar.ax.tick_params(labelsize=10)
 
