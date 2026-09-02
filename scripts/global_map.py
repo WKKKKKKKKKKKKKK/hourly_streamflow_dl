@@ -258,8 +258,11 @@ def main() -> None:
         ("kge", "KGE", "score", "viridis", Normalize(vmin=-0.4, vmax=0.9)),
         # 0.3 to 1.0, not 0 to 1. r's 5th to 95th percentile is 0.35 to 0.92, so a full
         # 0-1 ramp spent most of its range on values that barely occur and rendered the two
-        # panels as almost uniformly dark. The bar extends downward for the 6% below 0.3.
-        ("kge_r", "$r$", "score", truncated("magma_r"), Normalize(vmin=0.3, vmax=1.0)),
+        # panels as almost uniformly dark. The top is 0.95 rather than 1.0 so that its
+        # end can be pointed like every other end in the figure: 1.0 is a correlation's
+        # ceiling, nothing can exceed it, and that end had to be flat. Above 0.95 sit 1.2% of
+        # values, comparable to KGE's 1.4%, so the point is earned rather than assumed.
+        ("kge_r", "$r$", "score", truncated("magma_r"), Normalize(vmin=0.3, vmax=0.95)),
         ("kge_alpha", r"$\alpha$", "ratio", truncated("magma_r"), Normalize(vmin=-2.0, vmax=2.0)),
         ("kge_beta", r"$\beta$", "ratio", truncated("magma_r"), Normalize(vmin=-2.0, vmax=2.0)),
     )
