@@ -245,9 +245,21 @@ def main() -> None:
     #
     # KGE and r keep viridis. The two ratios take magma so that a reader cannot mistake one
     # family of quantities for the other at a glance.
+    # Colour follows role. KGE is the aggregate score and keeps viridis. r, alpha and beta
+    # are its three components and share one ramp, so a reader sees at a glance that rows
+    # two to four decompose row one.
+    #
+    # The same colour therefore means different things by row: dark is good for r, whose
+    # ideal is the top of its scale, and dark is over-dispersed for alpha and beta, whose
+    # ideal is 1 in the middle. Those two were never one goodness scale to begin with, since
+    # deviation either way from 1 is an error. The colourbar label and the marked ideal are
+    # what place the reader, and the caption says so.
     ROWS = (
         ("kge", "KGE", "score", "viridis", Normalize(vmin=-0.4, vmax=0.9)),
-        ("kge_r", "$r$", "score", "viridis", Normalize(vmin=0.0, vmax=1.0)),
+        # 0.3 to 1.0, not 0 to 1. r's 5th to 95th percentile is 0.35 to 0.92, so a full
+        # 0-1 ramp spent most of its range on values that barely occur and rendered the two
+        # panels as almost uniformly dark. The bar extends downward for the 6% below 0.3.
+        ("kge_r", "$r$", "score", truncated("magma_r"), Normalize(vmin=0.3, vmax=1.0)),
         ("kge_alpha", r"$\alpha$", "ratio", truncated("magma_r"), Normalize(vmin=-2.0, vmax=2.0)),
         ("kge_beta", r"$\beta$", "ratio", truncated("magma_r"), Normalize(vmin=-2.0, vmax=2.0)),
     )
