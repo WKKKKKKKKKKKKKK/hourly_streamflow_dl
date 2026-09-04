@@ -77,6 +77,55 @@ XLIM = (-180.0, 180.0)
 YLIM = (-60.0, 80.0)
 
 
+_BORDER_CACHE: dict[str, object] = {}
+
+
+def _borders():
+    """Country boundaries and coastlines as plain line geometries, loaded once.
+
+    Read straight from cartopy's cached Natural Earth shapefiles with geopandas, rather
+    than through a cartopy GeoAxes. The panels already use a linear longitude and latitude
+    axis, which is what PlateCarree draws, so the geometries need no reprojection and the
+    figure keeps its ordinary Axes. Introducing a GeoAxes here would replace the axis
+    machinery the twelve panels, their shared limits and their equal aspect already rely on.
+
+    The 110m resolution is the one cached on this machine and the download path is closed,
+    which is no loss at this size: the panels are about 8 cm wide for 280 degrees of
+    longitude, far coarser than 110m.
+    """
+    if not _BORDER_CACHE:
+        import geopandas as gpd
+        root = Path.home() / ".local/share/cartopy/shapefiles/natural_earth/physical"
+        cultural = Path.home() / ".local/share/cartopy/shapefiles/natural_earth/cultural"
+        found = {}
+        for label, stem, folder in (
+            ("coast", "ne_110m_coastline", root),
+            ("country", "ne_110m_admin_0_boundary_lines_land", cultural),
+        ):
+            hits = sorted(Path.home().glob(
+                f".local/share/cartopy/shapefiles/**/{stem}.shp"))
+            if not hits:
+                raise SystemExit(
+                    f"{stem}.shp is not in the cartopy cache and this machine cannot "
+                    "download it. Run the figure where the cache is populated."
+                )
+            found[label] = gpd.read_file(hits[0]).geometry
+        _BORDER_CACHE.update(found)
+    return _BORDER_CACHE
+
+
+def draw_borders(ax):
+    """Coastlines and country borders under the data.
+
+    Drawn at zorder 1, below the gauges at 2 and the African basins at 4, so a boundary
+    never hides a value. Coastlines are darker than internal borders because the land and
+    sea edge is what a reader uses to place a point, while a national border is context.
+    """
+    b = _borders()
+    b["coast"].plot(ax=ax, color="#5f5f5f", linewidth=0.45, zorder=1)
+    b["country"].plot(ax=ax, color="#9a9a9a", linewidth=0.30, zorder=1)
+
+
 def panel(ax, lon, lat, values, title, cmap, norm, extend="neither", seed=0,
           overlay=None):
     """Draw one map and return its mappable, WITHOUT a colorbar.
@@ -90,10 +139,11 @@ def panel(ax, lon, lat, values, title, cmap, norm, extend="neither", seed=0,
     # density that silently repaints whole regions in the tail colour: an earlier
     # version showed the gain panel as mostly deep red when the median gain is +0.026,
     # and alpha as mostly deep purple when its median is 0.854.
+    draw_borders(ax)
     order = np.random.default_rng(seed).permutation(len(values))
     handle = ax.scatter(
         lon[order], lat[order], c=values[order], s=4, cmap=cmap, norm=norm,
-        linewidths=0, rasterized=True,
+        linewidths=0, rasterized=True, zorder=2,
     )
     if overlay is not None:
         # African basins, drawn LARGER and with a dark edge. 282 of them against 8,843
