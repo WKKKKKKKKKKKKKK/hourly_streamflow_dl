@@ -1061,6 +1061,101 @@ def fig_replay(out: Path) -> str | None:
     return path.name
 
 
+# ---------------------------------------------------------------- figure 13
+def fig_headline(out: Path) -> str | None:
+    """The result itself, on one axis: daily-only fine-tuning against three test settings.
+
+    Every other figure in this report decomposes, stress-tests or explains the result. None
+    of them shows it. fig01 shows the three KGE components, fig04 shows what blocking costs
+    and how much comes back, fig09 shows where the gauges are. A reader looking for the
+    headline number had to assemble it from the prose, which is the wrong place for it.
+
+    Three rows, hardest test last, each a movement from zero-shot to fine-tuned:
+
+      random split    a target gauge usually has a trainable neighbour 10 km away
+      blocked split   that distance becomes 95 km, and the zero-shot baseline collapses
+      Africa          294 basins, no hourly discharge anywhere, never seen in training
+
+    Two things read off this figure at once, and the second is the one worth the slide. The
+    gain GROWS as the test gets harder, from +0.062 to +0.133 to +0.409, while the fine-tuned
+    endpoints of the two temperate rows land within 0.004 of each other. The random split's
+    apparent zero-shot skill was partly spatial proximity; the gain from daily data was not.
+
+    ERA5-Land sits on the Africa row as a reference, not as a competitor on equal terms: it
+    has no river routing, so its basin average is runoff generation rather than discharge.
+    It is there because it is what an operational user would otherwise reach for.
+    """
+    tgt = Path("outputs/v2_runB/diagnostics_allhours/kge_components_target.csv")
+    blk = Path("outputs/v2_blocked/diagnostics_allhours/kge_components_target.csv")
+    afr = Path("outputs/v2_africa_hourly/daily_three_way_summary.json")
+    if not (tgt.exists() and blk.exists() and afr.exists()):
+        return None
+
+    def paired(path):
+        t = pd.read_csv(path)
+        t = t[t["obs_std"] >= 1e-3]
+        d = t["M1_kge"] - t["M0_kge"]
+        return (float(t["M0_kge"].median()), float(t["M1_kge"].median()),
+                float(d.median()), float((d > 0).mean()), len(t))
+
+    three = json.loads(afr.read_text())
+    # The three-way file carries the levels and the ERA5-Land reference; the paired
+    # statistics live with the ensemble summary, which is where the basin-by-basin
+    # difference is computed. Two files rather than one, so both are read explicitly.
+    ens_path = Path("outputs/v2_africa_insitu_summary/ensemble_summary.json")
+    if not ens_path.exists():
+        return None
+    ens = json.loads(ens_path.read_text())["paired"]
+    rows = [
+        ("Random split\n8,843 gauges, hourly", *paired(tgt), None),
+        ("Blocked split\n8,843 gauges, hourly", *paired(blk), None),
+        ("Africa, external\n282 basins, daily", three["M0"]["median_kge"],
+         three["M1"]["median_kge"], ens["median_delta_kge"], ens["frac_improved"],
+         three["M0"]["n_basins"], three["era5_land"]["median_kge"]),
+    ]
+
+    fig, ax = plt.subplots(figsize=(9.0, 4.2))
+    for i, (label, m0, m1, gain, frac, n, era5) in enumerate(rows):
+        y = len(rows) - 1 - i
+        colour = ORANGE if i == 2 else BLUE
+        ax.annotate("", xy=(m1, y), xytext=(m0, y),
+                    arrowprops=dict(arrowstyle="-|>", lw=2.6, color=colour,
+                                    shrinkA=2, shrinkB=2))
+        ax.scatter([m0], [y], s=58, facecolor="white", edgecolor=colour, lw=1.8, zorder=4)
+        ax.scatter([m1], [y], s=58, color=colour, zorder=4)
+        # The gain and the share of gauges that improve, together. A median movement says
+        # nothing about how general it is, and a share says nothing about its size.
+        ax.annotate(f"{gain:+.3f}   {100 * frac:.0f}% of sites improve",
+                    (m1, y), xytext=(10, 0), textcoords="offset points",
+                    va="center", fontsize=10, color=INK, fontweight="semibold")
+        if era5 is not None:
+            ax.scatter([era5], [y], marker="X", s=95, color=AQUA, zorder=4)
+            ax.annotate("ERA5-Land", (era5, y), xytext=(0, -20),
+                        textcoords="offset points", ha="center", fontsize=9.5, color=AQUA)
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels([r[0] for r in rows][::-1], fontsize=10)
+    ax.set_ylim(-0.6, len(rows) - 0.4)
+    ax.set_xlim(-0.52, 0.92)
+    ax.axvline(0, color=GREY, lw=0.9, ls=(0, (4, 3)))
+    ax.annotate("KGE = 0", (0, len(rows) - 0.5), xytext=(4, 0),
+                textcoords="offset points", fontsize=8.5, color=MUTED, va="top")
+    ax.set_xlabel("Median KGE across sites")
+    handles = [Line2D([], [], marker="o", ls="none", mfc="white", mec=INK, mew=1.8, ms=8,
+                      label="M0  zero-shot, no target data used"),
+               Line2D([], [], marker="o", ls="none", color=INK, ms=8,
+                      label="M1  after fine-tuning on daily aggregates only"),
+               Line2D([], [], marker="X", ls="none", color=AQUA, ms=10,
+                      label="ERA5-Land reanalysis runoff, no routing")]
+    fig.legend(handles=handles, loc="lower center", ncol=1, bbox_to_anchor=(0.56, -0.16),
+               fontsize=9, frameon=False, labelcolor=INK)
+    tidy(ax, "x")
+    fig.tight_layout()
+    path = out / "fig13_headline.png"
+    fig.savefig(path)
+    plt.close(fig)
+    return path.name
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate the report's figures.")
     # reports/, not outputs/: these are deliverables, and outputs/ is gitignored,
@@ -1074,7 +1169,7 @@ def main() -> None:
     makers = [fig_components, fig_gain_drivers, fig_configurations, fig_agency_recovery,
               fig_metric_disagreement, fig_convergence, fig_africa_hydrographs,
               fig_intraday, fig_global_map, fig_africa_hourly, fig_component_deficits,
-              fig_replay]
+              fig_replay, fig_headline]
     for maker in makers:
         try:
             name = maker(out)
