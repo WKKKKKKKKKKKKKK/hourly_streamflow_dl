@@ -35,6 +35,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
 
 BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
 RED, GREY = "#d03b3b", "#8a8a85"
@@ -942,6 +943,124 @@ def fig_component_deficits(out: Path) -> str | None:
     return path.name
 
 
+# ---------------------------------------------------------------- figure 12
+def fig_replay(out: Path) -> str | None:
+    """What source replay buys on the source domain, and what it costs on the target.
+
+    Adapting to the target's daily aggregates degrades the source domain: the median source
+    gauge loses 0.051 KGE under a random split and 0.120 under a blocked one, in every fold
+    both times. Replay mixes source batches with their real hourly targets back into the
+    fine-tuning stream, which is legitimate rather than leakage, since Phase I hides the
+    TARGET stations' hourly data and never the source's.
+
+    The result had no figure before this one, only a table and a sentence, and a sentence is
+    the wrong medium for a two-sided trade. Both panels read from
+    outputs/v2_replay_effect/replay_effect.json, which pairs PER GAUGE. That matters here:
+    an earlier version of the analysis paired per fold, and the five target-side fold
+    differences straddle zero, so their median landed on the smallest of them and the ratio
+    read 30 to 1. Over 8,709 paired target gauges it is 4.1 to 1. Replay is a good trade
+    rather than a nearly free one, and the figure has to say the true number.
+
+    The right panel is why the figure earns its space twice. Blocking the split more than
+    doubles the damage, and replay then returns a larger share of it, 54 percent against 29.
+    Replay is not an artefact of the easy split: the harder the spatial extrapolation, the
+    more source skill is at stake and the more of it comes back.
+    """
+    payload = Path("outputs/v2_replay_effect/replay_effect.json")
+    if not payload.exists():
+        return None
+    effects = json.loads(payload.read_text()).get("effects") or {}
+    pairs = [(k, c, t) for k, c, t in
+             (("random", BLUE, "Random split"), ("blocked", ORANGE, "Blocked split"))
+             if k in effects]
+    if not pairs:
+        return None
+
+    fig, (ax, bx) = plt.subplots(1, 2, figsize=(9.6, 4.1),
+                                 gridspec_kw={"width_ratios": [1.3, 1.0]})
+
+    # --- left: the trade, on both axes at once ---------------------------
+    for key, colour, label in pairs:
+        e = effects[key]
+        dx = e["source_degradation_recovered"]
+        dy = e["target_gain_given_up"]
+        ax.annotate("", xy=(dx, dy), xytext=(0, 0),
+                    arrowprops=dict(arrowstyle="-|>", lw=2.2, color=colour,
+                                    shrinkA=0, shrinkB=0))
+        ax.annotate(f"{label}\n{e['recovered_per_unit_given_up']:.1f} : 1",
+                    (dx, dy), textcoords="offset points",
+                    xytext=(9, 14) if key == "random" else (9, 2),
+                    fontsize=9.5, color=colour, fontweight="semibold", va="center")
+    span = 0.085
+    # Break-even: one unit of source skill bought for one unit of target skill. The claim
+    # that the trade is worth making is only meaningful against a drawn reference.
+    ax.plot([0, span], [0, -span], color=GREY, lw=1.0, ls=(0, (4, 3)), zorder=1)
+    # Anchored inside the y window. The line leaves the box long before x = span, so a
+    # label placed at a fraction of span along it lands outside the axes and is clipped
+    # away silently, which is how the first version lost it.
+    y_low = -0.030
+    ax.annotate("break even, 1 : 1", (abs(y_low) * 0.62, y_low * 0.62), fontsize=8.5,
+                color=MUTED, rotation=-52, ha="center", va="bottom")
+    ax.axhline(0, color=INK, lw=0.8)
+    ax.axvline(0, color=INK, lw=0.8)
+    ax.set_xlim(-0.004, span)
+    ax.set_ylim(-0.030, 0.006)
+    ax.set_xlabel("Source-domain KGE regained")
+    ax.set_ylabel("Target-domain KGE given up")
+    ax.set_title("(a)  what replay trades", fontsize=10.5, loc="left")
+    tidy(ax)
+
+    # --- right: the damage, and how much comes back ---------------------
+    labels, before, after, colours = [], [], [], []
+    for key, colour, label in pairs:
+        e = effects[key]
+        labels.append(label.replace(" split", ""))
+        before.append(-e["source_degradation_without_replay"])
+        after.append(-e["source_degradation_without_replay"]
+                     - e["source_degradation_recovered"])
+        colours.append(colour)
+    y = np.arange(len(labels))
+    bx.barh(y, before, height=0.34, color=GREY, alpha=0.30, zorder=2)
+    for i, (a, colour) in enumerate(zip(after, colours)):
+        bx.barh(i, a, height=0.34, color=colour, zorder=3)
+    for i, (b, a) in enumerate(zip(before, after)):
+        # Inside the coloured bar and outside the grey one. On the random row the two ends
+        # are 0.015 apart, and both labels placed to the right of their own end printed as
+        # "0.0360.051".
+        bx.annotate(f"{a:.3f}", (a, i), xytext=(-6, 0), textcoords="offset points",
+                    va="center", ha="right", fontsize=9.5, color="white",
+                    fontweight="semibold")
+        # One label, not two stacked. Placed above the bar, the recovered share sat at
+        # i - 0.29, which for the first row is outside the axes, and it was clipped away
+        # with no warning: the figure showed 54 percent and silently dropped 29.
+        bx.annotate(f"{b:.3f}", (b, i), xytext=(7, 0), textcoords="offset points",
+                    va="center", fontsize=9.5, color=MUTED)
+        bx.annotate(f"{100 * (b - a) / b:.0f}% back", (b, i), xytext=(7, -13),
+                    textcoords="offset points", va="center", fontsize=9,
+                    color=INK, fontweight="semibold")
+    bx.set_yticks(y)
+    bx.set_yticklabels(labels, fontsize=10)
+    # Random on top, matching the reading order of panel (a). Rows are built in the order
+    # of `pairs`, so y = 0 is the random split, and the axis has to be flipped to put it at
+    # the top. The limits are set as a descending pair, which is the flip, rather than
+    # calling invert_yaxis afterwards: the two together cancel.
+    bx.set_ylim(len(labels) - 0.55, -0.45)
+    bx.set_xlim(0, max(before) * 1.22)
+    bx.set_xlabel("Source-domain KGE lost to the transfer")
+    bx.set_title("(b)  how much damage, and how much returns", fontsize=10.5, loc="left")
+    handles = [Patch(facecolor=GREY, alpha=0.30, label="without replay"),
+               Patch(facecolor=INK, label="with replay 0.25 (colour by split)")]
+    bx.legend(handles=handles, fontsize=8.5, loc="upper center",
+              bbox_to_anchor=(0.5, -0.16), ncol=2, frameon=False, labelcolor=INK)
+    tidy(bx, "x")
+
+    fig.tight_layout()
+    path = out / "fig12_replay.png"
+    fig.savefig(path)
+    plt.close(fig)
+    return path.name
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate the report's figures.")
     # reports/, not outputs/: these are deliverables, and outputs/ is gitignored,
@@ -954,7 +1073,8 @@ def main() -> None:
 
     makers = [fig_components, fig_gain_drivers, fig_configurations, fig_agency_recovery,
               fig_metric_disagreement, fig_convergence, fig_africa_hydrographs,
-              fig_intraday, fig_global_map, fig_africa_hourly, fig_component_deficits]
+              fig_intraday, fig_global_map, fig_africa_hourly, fig_component_deficits,
+              fig_replay]
     for maker in makers:
         try:
             name = maker(out)

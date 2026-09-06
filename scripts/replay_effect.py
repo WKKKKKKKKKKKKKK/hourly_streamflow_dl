@@ -20,6 +20,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+from scipy.stats import wilcoxon
 import pandas as pd
 
 from common.utils import setup_logging
@@ -45,6 +46,61 @@ def collect(root: Path) -> dict[int, dict]:
             "source_paired_delta": d["step3_paired_median_delta_kge"],
         }
     return out
+
+
+def per_gauge(root: Path, which: str, domain: str) -> pd.DataFrame | None:
+    """Per-gauge hourly KGE, pooled over folds. per_station_ only, never by_source_."""
+    frames = []
+    for path in sorted(Path(root).glob(
+            f"fold*/transfer/per_station_hourly_*{which}_{domain}_hourly*.csv")):
+        frame = pd.read_csv(path)
+        frame["fold"] = int(path.parts[-3].replace("fold", ""))
+        frames.append(frame)
+    if not frames:
+        return None
+    out = pd.concat(frames, ignore_index=True)
+    out = out[(out["obs_std"] >= 1e-3) & (out["score_status"] == "ok")]
+    return out[["station_id", "fold", "kge"]]
+
+
+def paired_effect(off_root: Path, on_root: Path) -> dict | None:
+    """Replay's effect on both domains, paired PER GAUGE.
+
+    Pairing per gauge rather than per fold. The earlier version took the median of the five
+    fold-level differences on the target side, and those five disagree in sign: +0.0076,
+    -0.0007, +0.0014, -0.0058, -0.0149. A median of five values that straddle zero lands on
+    whichever one happens to sit in the middle, here the smallest in magnitude, and the
+    ratio built on it read 30 to 1. Paired over 8,709 target gauges the cost is -0.0036 and
+    the ratio is 4.1 to 1. The finding survives, its size did not: replay is a good trade,
+    not a nearly free one.
+    """
+    src_before = per_gauge(off_root, "M0", "source")
+    src_off = per_gauge(off_root, "M1", "source")
+    src_on = per_gauge(on_root, "M1", "source")
+    tgt_off = per_gauge(off_root, "M1", "target")
+    tgt_on = per_gauge(on_root, "M1", "target")
+    if any(f is None for f in (src_before, src_off, src_on, tgt_off, tgt_on)):
+        return None
+
+    source = (src_before.merge(src_off, on=["station_id", "fold"], suffixes=("_b", "_off"))
+              .merge(src_on.rename(columns={"kge": "kge_on"}), on=["station_id", "fold"]))
+    target = tgt_off.merge(tgt_on, on=["station_id", "fold"], suffixes=("_off", "_on"))
+
+    degradation = float((source["kge_off"] - source["kge_b"]).median())
+    recovered = source["kge_on"] - source["kge_off"]
+    cost = target["kge_on"] - target["kge_off"]
+    return {
+        "n_source_gauges": int(len(source)),
+        "n_target_gauges": int(len(target)),
+        "source_degradation_without_replay": degradation,
+        "source_degradation_recovered": float(recovered.median()),
+        "share_of_degradation_recovered": float(recovered.median() / abs(degradation)),
+        "recovered_wilcoxon_p": float(wilcoxon(recovered).pvalue),
+        "target_gain_given_up": float(cost.median()),
+        "recovered_per_unit_given_up":
+            float(recovered.median() / abs(cost.median())) if cost.median() else None,
+        "source_gauges_improved_frac": float((recovered > 0).mean()),
+    }
 
 
 def main() -> None:
@@ -93,24 +149,25 @@ def main() -> None:
             continue
         d_src = np.array([on[f]["source_paired_delta"] - off[f]["source_paired_delta"]
                           for f in shared])
-        d_tgt = np.array([on[f]["target_M1"] - off[f]["target_M1"] for f in shared])
-        base = np.median([off[f]["source_paired_delta"] for f in shared])
-        effects[split] = {
-            "n_folds": len(shared),
-            "source_degradation_without_replay": float(base),
-            "source_degradation_recovered": float(np.median(d_src)),
-            "share_of_degradation_recovered": float(np.median(d_src) / abs(base)),
-            "target_gain_given_up": float(np.median(d_tgt)),
-            "recovered_per_unit_given_up":
-                float(np.median(d_src) / abs(np.median(d_tgt))) if np.median(d_tgt) else None,
-            "same_sign_all_folds": bool((d_src > 0).all() or (d_src < 0).all()),
-        }
-        e = effects[split]
-        logger.info("%s split: replay recovers %+.4f of a %.4f source degradation "
-                    "(%.0f%%), and gives up %+.4f on the target. Ratio %.1f to 1.",
-                    split, e["source_degradation_recovered"], base,
-                    100 * e["share_of_degradation_recovered"], e["target_gain_given_up"],
-                    e["recovered_per_unit_given_up"] or float("nan"))
+        roots = {r: Path(path) for sp, r, path in RUNS if sp == split}
+        paired = paired_effect(roots["off"], roots["0.25"])
+        if paired is None:
+            logger.info("%s split: per-gauge tables missing, cannot pair", split)
+            continue
+        paired["n_folds"] = len(shared)
+        paired["same_sign_all_folds"] = bool((d_src > 0).all() or (d_src < 0).all())
+        effects[split] = paired
+        e = paired
+        logger.info(
+            "%s split: replay recovers %+.4f of a %.4f source degradation (%.0f%%, p=%.1e, "
+            "%.1f%% of source gauges improve), and gives up %+.4f on the target. "
+            "Ratio %.1f to 1. Paired over %d source and %d target gauges.",
+            split, e["source_degradation_recovered"],
+            e["source_degradation_without_replay"],
+            100 * e["share_of_degradation_recovered"], e["recovered_wilcoxon_p"],
+            100 * e["source_gauges_improved_frac"], e["target_gain_given_up"],
+            e["recovered_per_unit_given_up"] or float("nan"),
+            e["n_source_gauges"], e["n_target_gauges"])
     with open(args.out_dir / "replay_effect.json", "w", encoding="utf-8") as handle:
         json.dump({"per_run": rows, "effects": effects}, handle, indent=2)
     if len(effects) < 2:

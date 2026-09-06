@@ -63,6 +63,14 @@ def tex_escape(text: str) -> str:
 
 def fig(name: str, caption: str, label: str, width: str = r"\linewidth") -> str:
     """A figure environment, or a visible placeholder if the file is missing."""
+    # width is a LaTeX length, so a bare number is a dimension without a unit. Passing 1.0
+    # compiled to \includegraphics[width=1.0] and failed with "Illegal unit of measure",
+    # which names the symptom and not the caller.
+    if not isinstance(width, str):
+        raise TypeError(
+            f"fig(width=) takes a LaTeX length such as r'\\linewidth' or r'0.8\\linewidth', "
+            f"not {width!r}"
+        )
     path = FIGDIR / name
     if not path.exists():
         return (r"\begin{center}\fbox{\parbox{0.8\linewidth}{\centering "
@@ -114,6 +122,7 @@ def gather() -> dict:
     d["conv"] = load("outputs/convergence_check/summary.json")
     d["lat"] = load("outputs/v2_stratify/maps/by_latitude_target.csv")
     d["step3"] = load("outputs/v2_step3_source/step3_summary.json")
+    d["replay"] = load("outputs/v2_replay_effect/replay_effect.json")
     d["ablation"] = load("outputs/v2_ablation/ablation_summary.json")
     pub = load("outputs/africa_runB/per_basin_pub_baseline.csv")
     d["pub"] = pub
@@ -413,6 +422,19 @@ def part_results(d: dict) -> str:
     return "\n".join(s)
 
 
+REPLAY_CAPTION = (
+    "Source replay as a dial between the two domains, at a ratio of 0.25. Panel (a) shows "
+    "the trade on both axes at once: rightward is source-domain KGE regained, downward is "
+    "target-domain KGE given up, and the dashed diagonal marks break-even, where one unit "
+    "of source skill would cost exactly one unit of target skill. Both arrows land far "
+    "above it. Panel (b) shows in grey the damage the transfer does to the source domain "
+    "without replay, in colour what remains of it with replay, and the share returned. "
+    "Blocking the split more than doubles the damage and replay then returns a larger "
+    "share of it, so the mechanism is not an artefact of the easier split. Every quantity "
+    "is paired per gauge across all five folds."
+)
+
+
 def part_results_tail(d: dict) -> str:
     """Sections 3 to 5: is it real, what it costs, and the external test."""
     kge, degen, split, st3 = d["kge"], d["degen"], d["split"], d.get("step3")
@@ -538,10 +560,57 @@ def part_results_tail(d: dict) -> str:
             r"already calibrated, so the movement that helps one hurts the other. Whether "
             r"the trade is acceptable depends on deployment. Source gauges keep their hourly "
             r"data and do not need the fine-tuned weights, so the two domains can be served "
-            r"by separate checkpoints. Mixing a fraction of source samples back into "
-            r"fine-tuning was tested and works as a dial between the two, damping the "
-            r"re-calibration and giving back part of the target-domain gain.")
+            r"by separate checkpoints. Where one checkpoint has to serve both, a fraction "
+            r"of source samples can be mixed back into fine-tuning, which is legitimate "
+            r"rather than leakage: the premise hides the target stations' hourly data and "
+            r"never the source's.")
         s.append("")
+        rep = d.get("replay") or {}
+        eff = rep.get("effects") or {}
+        if not eff:
+            raise SystemExit(
+                "outputs/v2_replay_effect/replay_effect.json has no effects block. Run "
+                "python -m scripts.replay_effect first; skipping the section silently is "
+                "how it went missing from the .tex once already."
+            )
+        if "random" in eff and "blocked" in eff:
+            r_rand, r_blk = eff["random"], eff["blocked"]
+            s.append(
+                f"Figure~\\ref{{fig:replay}} puts numbers on that dial at a replay ratio of "
+                f"\\num{{0.25}}, one source batch every three target batches. Under the random "
+                f"split it returns \\num{{{r_rand['source_degradation_recovered']:+.4f}}} of the "
+                f"source loss, which is "
+                f"\\SI{{{100 * r_rand['share_of_degradation_recovered']:.0f}}}{{\\percent}} of it, "
+                f"and improves "
+                f"\\SI{{{100 * r_rand['source_gauges_improved_frac']:.0f}}}{{\\percent}} of source "
+                f"gauges, at a target-domain cost of "
+                f"\\num{{{r_rand['target_gain_given_up']:+.4f}}}. The exchange is "
+                f"\\num{{{r_rand['recovered_per_unit_given_up']:.1f}}} units of source skill for "
+                f"one unit of target skill.")
+            s.append("")
+            s.append(
+                f"The blocked split changes the picture in the direction that matters. Without "
+                f"replay it loses \\num{{{r_blk['source_degradation_without_replay']:+.4f}}} on "
+                f"the source domain against "
+                f"\\num{{{r_rand['source_degradation_without_replay']:+.4f}}} under the random "
+                f"split, so the harder extrapolation more than doubles the damage. Replay then "
+                f"returns a larger share of it, "
+                f"\\SI{{{100 * r_blk['share_of_degradation_recovered']:.0f}}}{{\\percent}} against "
+                f"\\SI{{{100 * r_rand['share_of_degradation_recovered']:.0f}}}{{\\percent}}, at an "
+                f"exchange of \\num{{{r_blk['recovered_per_unit_given_up']:.1f}}} to one. Replay is "
+                f"not an artefact of the easier split.")
+            s.append("")
+            s.append(
+                "Both figures are paired per gauge, over "
+                f"\\num{{{r_rand['n_source_gauges']}}} source and "
+                f"\\num{{{r_rand['n_target_gauges']}}} target gauge-folds. An earlier version of "
+                "this analysis paired per fold instead. The five target-side fold differences "
+                "straddle zero, so their median landed on the smallest of them and the exchange "
+                "read \\num{30} to one. The finding survived that correction and its size did "
+                "not, which is why the pairing is stated here.")
+            s.append("")
+            s.append(fig("fig12_replay.png", REPLAY_CAPTION, "replay"))
+            s.append("")
 
     s.append(r"\subsection{A random split flatters the result twice}")
     if split and d["split_m1"] is not None:

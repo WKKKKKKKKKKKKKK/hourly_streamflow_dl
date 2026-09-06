@@ -19,7 +19,7 @@
 \title{Global hourly streamflow under daily-only supervision\\[0.3em]
   \large Phase I}
 \author{Weikang Kong}
-\date{2026-09-04}
+\date{2026-09-06}
 
 \begin{document}
 \maketitle
@@ -318,7 +318,21 @@ Two costs are measurable and both are reported here rather than left to an appen
 \subsection{Adapting to the daily domain degrades the hourly domain}
 Fine-tuning changes the weights, and those weights also serve the four fifths of gauges that kept their hourly data. Re-scoring that source domain after fine-tuning gives a clear answer. Median hourly KGE there falls from \num{0.6367} to \num{0.5452}, and median NSE from \num{0.6211} to \num{0.5298}. Paired gauge by gauge the median change is \num{-0.0539}, and it is negative in every fold. This is a property of the procedure rather than one fold's luck.
 
-The mechanism of Section~\ref{sec:mechanism} explains it. Fine-tuning re-calibrates amplitude toward the daily-only domain. The source domain was already calibrated, so the movement that helps one hurts the other. Whether the trade is acceptable depends on deployment. Source gauges keep their hourly data and do not need the fine-tuned weights, so the two domains can be served by separate checkpoints. Mixing a fraction of source samples back into fine-tuning was tested and works as a dial between the two, damping the re-calibration and giving back part of the target-domain gain.
+The mechanism of Section~\ref{sec:mechanism} explains it. Fine-tuning re-calibrates amplitude toward the daily-only domain. The source domain was already calibrated, so the movement that helps one hurts the other. Whether the trade is acceptable depends on deployment. Source gauges keep their hourly data and do not need the fine-tuned weights, so the two domains can be served by separate checkpoints. Where one checkpoint has to serve both, a fraction of source samples can be mixed back into fine-tuning, which is legitimate rather than leakage: the premise hides the target stations' hourly data and never the source's.
+
+Figure~\ref{fig:replay} puts numbers on that dial at a replay ratio of \num{0.25}, one source batch every three target batches. Under the random split it returns \num{+0.0147} of the source loss, which is \SI{29}{\percent} of it, and improves \SI{56}{\percent} of source gauges, at a target-domain cost of \num{-0.0036}. The exchange is \num{4.1} units of source skill for one unit of target skill.
+
+The blocked split changes the picture in the direction that matters. Without replay it loses \num{-0.1196} on the source domain against \num{-0.0510} under the random split, so the harder extrapolation more than doubles the damage. Replay then returns a larger share of it, \SI{54}{\percent} against \SI{29}{\percent}, at an exchange of \num{5.4} to one. Replay is not an artefact of the easier split.
+
+Both figures are paired per gauge, over \num{34836} source and \num{8709} target gauge-folds. An earlier version of this analysis paired per fold instead. The five target-side fold differences straddle zero, so their median landed on the smallest of them and the exchange read \num{30} to one. The finding survived that correction and its size did not, which is why the pairing is stated here.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{fig12_replay.png}
+  \caption{Source replay as a dial between the two domains, at a ratio of 0.25. Panel (a) shows the trade on both axes at once: rightward is source-domain KGE regained, downward is target-domain KGE given up, and the dashed diagonal marks break-even, where one unit of source skill would cost exactly one unit of target skill. Both arrows land far above it. Panel (b) shows in grey the damage the transfer does to the source domain without replay, in colour what remains of it with replay, and the share returned. Blocking the split more than doubles the damage and replay then returns a larger share of it, so the mechanism is not an artefact of the easier split. Every quantity is paired per gauge across all five folds.}
+  \label{fig:replay}
+\end{figure}
+
 
 \subsection{A random split flatters the result twice}
 Blocking the split costs the zero-shot model a paired median of \num{-0.0594} in KGE, which is \SI{11.0}{\percent} of its random-split level. \SI{63.7}{\percent} of gauges are worse, at Wilcoxon $p = \num{1.6e-168}$, and the drop is negative in all six archives. Some of what looks like zero-shot generalisation under a random split is proximity to a training gauge.
@@ -422,9 +436,9 @@ Run~A takes the prepared batches as they are, and it moves backwards under both 
 
 Within run~B, v1 to v2 lifts the blocked split from \num{0.475} to \num{0.621}, and v3's longer budget changes almost nothing.
 
-That step changes two settings at once, so it cannot say which one acts. Two pairs in the hyperparameter search differ in exactly one key, verified key by key rather than assumed from their names, and they separate the two effects. On M1, forget gate 0 -> 3 contributes \num{+0.0094} and hourly look-back 72 -> 336 contributes \num{+0.0467}. The look-back is the larger by roughly fivefold.
+That step changes two settings at once, so it cannot say which one acts. Two pairs in the hyperparameter search differ in exactly one key, verified key by key rather than assumed from their names, and they separate the two effects. On M1, forget gate 0 -> 3 contributes \num{+0.0176} and hourly look-back 72 -> 336 contributes \num{+0.0581}. The look-back is the larger by roughly fivefold.
 
-Each of those configurations ran \num{1} fold, so both are point estimates with no between-fold spread, judged against a fold-level noise floor of \num{0.0078} measured elsewhere in this work. The forget-gate effect clears that floor only narrowly. A five-fold ablation is required to settle the split and is in progress.
+Both are paired fold by fold over \num{5} folds, so each effect carries its own spread: forget gate 0 -> 3 +0.0176 $\pm$ \num{0.0086}, same sign in every fold; hourly look-back 72 -> 336 +0.0581 $\pm$ \num{0.0313}, same sign in every fold.
 
 The forget gate is retained regardless of how the credit divides. It is part of the published method this model follows, and its absence from v1 was an oversight.
 
