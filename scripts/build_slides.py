@@ -246,6 +246,27 @@ def main() -> None:
              "remove, because the zero-shot model no longer has a near neighbour to lean on.")
 
     # ---------------------------------------------------------------- 3
+    s = figure_slide(prs,
+        "The same result, seen rather than tabulated",
+        "fig15_slide_map.png",
+        f"**Panel (b) is greener almost everywhere, across four continents and six national "
+        f"networks.\n"
+        f"A median cannot show that the result belongs to no single region. The African "
+        f"basins are the larger markers.",
+        footer="Both panels share one colour scale, so they are read against each other by "
+               "construction. Coastlines and national borders at 110 m resolution.",
+        fig_height=Inches(2.5))
+    notes(s, "Use this slide for scale and generality, not for a number. Four continents, "
+             "six agencies, 8,843 gauges plus 282 African basins.\n\n"
+             "Australia and the western United States stay dark in both panels. Those are "
+             "the arid and highly regulated catchments, where a rainfall-runoff model has "
+             "the least to work with. Saying so before being asked is better than being "
+             "asked.\n\n"
+             "The report's version of this map has twelve panels and adds the three KGE "
+             "components and a normalised difference column. That density suits a page, not "
+             "a glance.")
+
+    # ---------------------------------------------------------------- 4
     d = n["deficits"]
     tgt_key = next(k for k in d if k.startswith("target"))
     afr_key = next(k for k in d if k.startswith("Africa"))
@@ -271,7 +292,27 @@ def main() -> None:
              "add timing, and it does not. It loses by 0.021 and it loses on alpha. The "
              "direct test is the rescaling control, still running.")
 
-    # ---------------------------------------------------------------- 4
+    # ---------------------------------------------------------------- 5
+    s = figure_slide(prs,
+        "What the repair looks like in a single catchment",
+        "fig14_slide_hydrograph.png",
+        "**The zero-shot model in blue already has the shape and sits far below the peaks. "
+        "Fine-tuning on daily totals lifts it toward the observation and leaves the shape "
+        "alone.\n"
+        "This is the previous slide's mechanism in a form that needs no metric.",
+        footer="The median and upper-quartile African catchments by fine-tuned KGE, chosen "
+               "by rank rather than by eye. Neither appears anywhere in pretraining.",
+        fig_height=Inches(2.9))
+    notes(s, "This is the slide that makes the result felt rather than reported. Point at "
+             "the lower panel: blue peaks at about 7 mm/d against an observed 19, orange "
+             "reaches about 10. The correction is real and it is incomplete, and both are "
+             "visible.\n\n"
+             "Chosen by rank, the median and upper quartile, so the pair cannot drift into "
+             "being the two that happen to look best. The lower-quartile catchment is "
+             "nearly flat all year and shows an honest but unreadable case; it is in the "
+             "report as fig07 with all three.")
+
+    # ---------------------------------------------------------------- 6
     sp = n["split"]
     s = figure_slide(prs,
         "The blocked split, agency by agency",
@@ -289,7 +330,7 @@ def main() -> None:
              "numbers as the honest ones; the random split flatters both the level and the "
              "precision.")
 
-    # ---------------------------------------------------------------- 5
+    # ---------------------------------------------------------------- 7
     rep, st3 = n["replay"], n["step3"]
     rr, rb = rep["random"], rep["blocked"]
     s = figure_slide(prs,
@@ -312,7 +353,7 @@ def main() -> None:
              f"{abs(rb['source_degradation_without_replay']):.3f}, and replay then returns a "
              "larger share of it. So replay is not an artefact of the easy split.")
 
-    # ---------------------------------------------------------------- 6
+    # ---------------------------------------------------------------- 8
     abl = n["ablation"]
     lines = []
     for _, row in abl.iterrows():

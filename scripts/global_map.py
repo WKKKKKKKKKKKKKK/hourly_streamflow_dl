@@ -495,6 +495,10 @@ def main() -> None:
     plt.close(fig)
     print(f"wrote {path} ({path.stat().st_size / 1024**2:.1f} MiB)")
 
+    # The briefing version, from the same tables so the two cannot disagree.
+    slide = slide_map(table, africa, out_dir)
+    print(f"wrote {slide} ({slide.stat().st_size / 1024**2:.1f} MiB)")
+
     # Regional medians, so the map has numbers behind it rather than only colour.
     bands = pd.cut(table["lat"], [-90, -30, 0, 30, 45, 60, 90],
                    labels=["<-30", "-30..0", "0..30", "30..45", "45..60", ">60"])
@@ -508,6 +512,45 @@ def main() -> None:
     print(regional.to_string(float_format=lambda v: f"{v: .4f}"))
     regional.to_csv(out_dir / f"by_latitude_{args.domain}.csv")
 
+
+
+def slide_map(table, africa, out_dir: Path) -> Path:
+    """Two panels for a briefing: zero-shot and fine-tuned KGE, one shared scale.
+
+    The report's map is a four-by-three matrix of twelve panels. That is the right density
+    for a page a reader can dwell on and the wrong density for a slide, where an audience
+    has one glance. This keeps the two panels that carry the story, drops the components and
+    the difference column, and shares a single colourbar so the two are read against each
+    other by construction rather than by trusting two axes to match.
+
+    What it adds to the metrics is scale and generality. Eight thousand gauges on four
+    continents, the African basins among them as larger markers, and the second panel
+    greener nearly everywhere. A median cannot show that the result is not one region's.
+    """
+    lon, lat = table["long"].to_numpy(), table["lat"].to_numpy()
+    norm = Normalize(vmin=-0.4, vmax=0.9)
+    fig, axes = plt.subplots(1, 2, figsize=(15.0, 4.2))
+    titles = ("(a)  M0, zero-shot", "(b)  M1, after daily-only fine-tuning")
+    for ax, key, title in zip(axes, ("M0_kge", "M1_kge"), titles):
+        over = None
+        if africa is not None:
+            over = (africa["long"].to_numpy(), africa["lat"].to_numpy(),
+                    africa[key].to_numpy())
+        handle = panel(ax, lon, lat, table[key].to_numpy(), "", "viridis", norm,
+                       extend="both", overlay=over)
+        ax.set_title(title, fontsize=14, loc="left", pad=8)
+        ax.tick_params(labelsize=11)
+        ax.set_xlabel("")
+        if ax is not axes[0]:
+            ax.set_yticklabels([])
+    bar = fig.colorbar(handle, ax=axes, orientation="vertical", fraction=0.024,
+                       pad=0.012, extend="both")
+    bar.set_label("KGE", fontsize=13)
+    bar.ax.tick_params(labelsize=11)
+    path = out_dir / "slide_map.png"
+    fig.savefig(path, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    return path
 
 if __name__ == "__main__":
     main()

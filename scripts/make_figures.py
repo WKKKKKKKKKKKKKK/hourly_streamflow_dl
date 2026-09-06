@@ -451,13 +451,17 @@ def fig_africa_hydrographs(out: Path) -> str | None:
     handles = [Line2D([], [], color=INK, lw=1.6, label="Observed"),
                Line2D([], [], color=BLUE, lw=1.8, label="M0  zero-shot"),
                Line2D([], [], color=ORANGE, lw=1.8, label="M1  after African daily fine-tuning")]
-    fig.legend(handles=handles, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.05),
-               fontsize=8, labelcolor=INK)
     fig.suptitle("Africa in situ: lower-quartile, median and upper-quartile catchments by M1 KGE",
                  fontsize=10.5, fontweight="semibold", color=INK, y=0.995)
-    fig.tight_layout(h_pad=1.6)
+    # tight_layout BEFORE the legend and the stamp. Called after them it re-flows the axes
+    # and leaves both figure-level artists where they were, which is how the legend at
+    # y = -0.05 came to sit on top of the stamp at y = -0.03 and on the bottom axis labels.
+    # Reserving the strip at the foot of the figure is what keeps the three apart.
+    fig.tight_layout(h_pad=1.6, rect=(0, 0.075, 1, 1))
+    fig.legend(handles=handles, loc="lower center", ncol=3, bbox_to_anchor=(0.5, 0.030),
+               fontsize=8, labelcolor=INK, frameon=False)
     stamp(fig, "Fine-tuned on African daily observations only; no African catchment appears "
-               "anywhere in pretraining.", y=-0.03)
+               "anywhere in pretraining.", y=0.004)
     path = out / "fig07_africa_hydrographs.png"
     fig.savefig(path)
     plt.close(fig)
@@ -1156,6 +1160,83 @@ def fig_headline(out: Path) -> str | None:
     return path.name
 
 
+# ---------------------------------------------------------------- figure 14
+def fig_slide_hydrograph(out: Path) -> str | None:
+    """Two African catchments at full size: the repair made visible rather than tabulated.
+
+    Every other result here is a distribution or a median, and a briefing audience cannot
+    feel a median. This is the same data as fig07 with the lower-quartile panel dropped and
+    the remaining two given room. The lower-quartile catchment is nearly flat all year, so
+    it shows an honest but unreadable case; these two show the mechanism instead.
+
+    What to look for is the same thing fig11 measures, in a form that needs no explanation.
+    The zero-shot model in blue tracks the shape of the hydrograph and sits well below the
+    observed peaks. Fine-tuning on daily aggregates in orange lifts the amplitude toward
+    the black observation and leaves the shape where it was. Timing was already close and
+    stays close; magnitude was wrong and is corrected.
+    """
+    series = Path("outputs/v2_africa_insitu_summary/ensemble_series_M0.csv.gz")
+    per_basin = Path("outputs/v2_africa_insitu_summary/ensemble_per_basin_M1.csv")
+    if not (series.exists() and per_basin.exists()):
+        return None
+    m0 = pd.read_csv(series, parse_dates=["date"])
+    m1 = pd.read_csv(Path("outputs/v2_africa_insitu_summary/ensemble_series_M1.csv.gz"),
+                     parse_dates=["date"])
+    # M1 scores for the ranking, M0 scores so the title can show the movement. The
+    # per-basin tables carry no M0 column, so the two files are joined here explicitly.
+    scores = pd.read_csv(per_basin)[["station_id", "kge"]]
+    m0_scores = (pd.read_csv("outputs/v2_africa_insitu_summary/ensemble_per_basin_M0.csv")
+                 [["station_id", "kge"]].rename(columns={"kge": "kge_M0"}))
+    scores = scores.merge(m0_scores, on="station_id", how="left")
+    ok = scores[scores["kge"].notna()].sort_values("kge")
+    if len(ok) < 4:
+        return None
+    # The median and upper-quartile catchments by fine-tuned KGE. Named by rank rather than
+    # chosen by eye, so the pair cannot drift into being the two that look best.
+    picks = [ok.iloc[len(ok) // 2], ok.iloc[int(0.75 * len(ok))]]
+
+    fig, axes = plt.subplots(2, 1, figsize=(11.0, 5.0))
+    for ax, row in zip(axes, picks):
+        sid = row["station_id"]
+        a = m0[m0["station_id"] == sid].sort_values("date")
+        b = m1[m1["station_id"] == sid].sort_values("date")
+        if a.empty or b.empty:
+            continue
+        # The wettest two years of record, so the panel shows the part of the series where
+        # amplitude errors matter rather than a flat dry stretch.
+        year_totals = a.assign(y=a["date"].dt.year).groupby("y")["obs"].sum()
+        best = int(year_totals.idxmax()) if len(year_totals) else int(a["date"].dt.year.min())
+        lo = pd.Timestamp(f"{best}-01-01")
+        hi = pd.Timestamp(f"{best + 1}-12-31")
+        a, b = a[a["date"].between(lo, hi)], b[b["date"].between(lo, hi)]
+        ax.fill_between(a["date"], 0, a["obs"], color="#d9d7d1", zorder=1)
+        ax.plot(a["date"], a["obs"], color=INK, lw=1.7, zorder=4, label="Observed")
+        ax.plot(a["date"], a["ensemble"], color=BLUE, lw=1.9, zorder=2,
+                label="M0  zero-shot")
+        ax.plot(b["date"], b["ensemble"], color=ORANGE, lw=1.9, zorder=3,
+                label="M1  after daily-only fine-tuning")
+        title = f'{sid}    KGE {row["kge"]:+.2f}'
+        if pd.notna(row.get("kge_M0")):
+            title = f'{sid}    KGE {row["kge_M0"]:+.2f}  to  {row["kge"]:+.2f}'
+        ax.set_title(title, fontsize=12, loc="left", fontweight="semibold")
+        ax.set_ylabel("Runoff (mm/d)", fontsize=11)
+        ax.tick_params(labelsize=10)
+        # Trimmed to what the record actually covers, not to the two-year request. The
+        # second catchment's series stops in January of the following year, and the fixed
+        # window left half that panel blank, which reads as a gap in the model rather than
+        # the end of the observations.
+        ax.set_xlim(a["date"].min(), a["date"].max())
+        tidy(ax, "y")
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.tight_layout(h_pad=2.0, rect=(0, 0.085, 1, 1))
+    fig.legend(handles, labels, loc="lower center", ncol=3, bbox_to_anchor=(0.5, 0.015),
+               fontsize=11, labelcolor=INK, frameon=False)
+    path = out / "fig14_slide_hydrograph.png"
+    fig.savefig(path)
+    plt.close(fig)
+    return path.name
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate the report's figures.")
     # reports/, not outputs/: these are deliverables, and outputs/ is gitignored,
@@ -1169,7 +1250,7 @@ def main() -> None:
     makers = [fig_components, fig_gain_drivers, fig_configurations, fig_agency_recovery,
               fig_metric_disagreement, fig_convergence, fig_africa_hydrographs,
               fig_intraday, fig_global_map, fig_africa_hourly, fig_component_deficits,
-              fig_replay, fig_headline]
+              fig_replay, fig_headline, fig_slide_hydrograph]
     for maker in makers:
         try:
             name = maker(out)
