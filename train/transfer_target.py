@@ -99,8 +99,15 @@ def _replay_step(model, batch, optimizer, criterion, device, grad_clip, weight):
 
 
 def train_one_epoch(model, loader, optimizer, criterion, device, grad_clip, logger,
-                    log_every=100, replay=None):
-    """``replay``: dict(stream, criterion, every, weight) to interleave source batches."""
+                    log_every=100, replay=None, supervision="daily"):
+    """``replay``: dict(stream, criterion, every, weight) to interleave source batches.
+
+    ``supervision`` is "daily" for Phase I proper, where the target stations' hourly
+    observations are hidden and the loss sees only 24 h aggregates. Setting it to "hourly"
+    lifts that premise and trains on the target's real hourly targets. That arm is not a
+    Phase I result: it is the upper bound the daily result is measured against, answering
+    what the same transfer would achieve if the target region had hourly gauges after all.
+    """
     model.train()
     totals: dict[str, float] = {}
     n_rows = n_batches = n_skipped = 0
@@ -111,29 +118,42 @@ def train_one_epoch(model, loader, optimizer, criterion, device, grad_clip, logg
     for batch in loader:
         if not batch["stations"]:
             continue
-        y_daily = batch["y_daily"]
-        if y_daily is None:
-            raise ValueError("transfer training needs a dataset built with with_daily=True")
-        finite = torch.isfinite(y_daily)
-        if not bool(finite.any()):
-            # Every row in this batch sits inside a time gap wider than 24 h.
-            n_skipped += 1
-            continue
+        if supervision == "hourly":
+            # The upper-bound arm. Rows are not filtered on a complete 24 h window,
+            # because an hourly loss does not need one: it scores each hour it has, and
+            # MTSBasinNSELoss already handles missing hours the way pretraining does.
+            x = {key: value.to(device, non_blocking=True) for key, value in batch["x"].items()}
+            y_hourly = batch["y"].to(device, non_blocking=True)
+            stn_std = batch["stn_std"].to(device, non_blocking=True)
+            optimizer.zero_grad(set_to_none=True)
+            outputs = model({"D": x["D"], "H": x["H"]}, x["S"])
+            parts = criterion(outputs, y_hourly, stn_std)
+            rows_this_batch = y_hourly.shape[0]
+        else:
+            y_daily = batch["y_daily"]
+            if y_daily is None:
+                raise ValueError("transfer training needs a dataset built with with_daily=True")
+            finite = torch.isfinite(y_daily)
+            if not bool(finite.any()):
+                # Every row in this batch sits inside a time gap wider than 24 h.
+                n_skipped += 1
+                continue
 
-        x = {key: value[finite].to(device, non_blocking=True) for key, value in batch["x"].items()}
-        y_daily = y_daily[finite].to(device, non_blocking=True)
-        stn_std = batch["stn_std"][finite].to(device, non_blocking=True)
-        daily_mask = batch["daily_mask"][finite].to(device, non_blocking=True)
+            x = {key: value[finite].to(device, non_blocking=True) for key, value in batch["x"].items()}
+            y_daily = y_daily[finite].to(device, non_blocking=True)
+            stn_std = batch["stn_std"][finite].to(device, non_blocking=True)
+            daily_mask = batch["daily_mask"][finite].to(device, non_blocking=True)
 
-        optimizer.zero_grad(set_to_none=True)
-        outputs = model({"D": x["D"], "H": x["H"]}, x["S"])
-        parts = criterion(outputs, y_daily, stn_std, daily_mask)
+            optimizer.zero_grad(set_to_none=True)
+            outputs = model({"D": x["D"], "H": x["H"]}, x["S"])
+            parts = criterion(outputs, y_daily, stn_std, daily_mask)
+            rows_this_batch = y_daily.shape[0]
         parts["loss"].backward()
         if grad_clip:
             torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], grad_clip)
         optimizer.step()
 
-        rows = y_daily.shape[0]
+        rows = rows_this_batch
         n_rows += rows
         n_batches += 1
         for key, value in parts.items():
@@ -252,9 +272,36 @@ def main() -> None:
     logger.info("frozen modules %s | %d trainable / %d frozen params",
                 list(cfg.transfer.freeze_modules or []), n_trainable, n_frozen)
 
-    criterion = DailyAggregateTransferLoss(
-        daily_window=DAILY_WINDOW, agg_loss_weight=float(cfg.transfer.agg_loss_weight)
-    )
+    # Phase I hides the target's hourly observations, so the default objective sees only
+    # 24 h aggregates. The "hourly" setting lifts that premise to measure the ceiling the
+    # daily result is compared against; it is a reference arm, never a Phase I number.
+    supervision = str(cfg.get_path("transfer.target_supervision", "daily")).lower()
+    if supervision not in ("daily", "hourly"):
+        raise ValueError(
+            f"transfer.target_supervision must be 'daily' or 'hourly', got {supervision!r}"
+        )
+    if supervision == "hourly":
+        criterion = MTSBasinNSELoss(
+            frequency_factor=int(cfg.model.frequency_factor),
+            reg_lambda=float(cfg.train.reg_lambda),
+            reg_window=cfg.model.get("reg_window"),
+        ).to(device)
+    else:
+        criterion = DailyAggregateTransferLoss(
+            daily_window=DAILY_WINDOW, agg_loss_weight=float(cfg.transfer.agg_loss_weight)
+        )
+
+    # Which holdout metric picks the epoch. Selection is a SEPARATE key from the objective
+    # on purpose: the existing daily runs already log the hourly test score each epoch
+    # without using it, and comparing the epoch daily selection picks against the epoch
+    # hourly would have picked puts the cost of daily selection at 0.005 median KGE
+    # against a total gain of 0.062. Keeping the two keys apart is what let that be
+    # measured, and it lets one arm change the objective alone.
+    select_on = str(cfg.get_path("transfer.select_on", "daily")).lower()
+    if select_on not in ("daily", "hourly"):
+        raise ValueError(f"transfer.select_on must be 'daily' or 'hourly', got {select_on!r}")
+    logger.info("target supervision: %s | epoch selection on: %s holdout KGE",
+                supervision, select_on)
     optimizer = torch.optim.Adam(
         [p for p in model.parameters() if p.requires_grad],
         lr=float(cfg.transfer.lr),
@@ -327,7 +374,7 @@ def main() -> None:
         t0 = time.time()
         losses, n_rows = train_one_epoch(
             model, fit_loader, optimizer, criterion, device, float(cfg.transfer.grad_clip), logger,
-            replay=replay,
+            replay=replay, supervision=supervision,
         )
         train_secs = time.time() - t0
 
@@ -367,10 +414,11 @@ def main() -> None:
         )
         wandb_log(run, row, step=epoch)
 
-        if stopper.step(daily_summary["median_kge"], epoch):
+        selection_kge = (hourly_on_holdout if select_on == "hourly" else daily_summary)["median_kge"]
+        if stopper.step(selection_kge, epoch):
             best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
             atomic_save(best_state, out_dir / "best_transfer_model.pth")
-            logger.info("  new best daily KGE %.4f", stopper.best)
+            logger.info("  new best %s KGE %.4f", select_on, stopper.best)
         pd.DataFrame(history).to_csv(out_dir / "training_history.csv", index=False)
 
         if stopper.should_stop:
@@ -378,8 +426,8 @@ def main() -> None:
             break
 
     model.load_state_dict(best_state)
-    logger.info("restored best transfer weights (epoch %d, holdout daily KGE %.4f)",
-                stopper.best_epoch, stopper.best)
+    logger.info("restored best transfer weights (epoch %d, holdout %s KGE %.4f)",
+                stopper.best_epoch, select_on, stopper.best)
 
     # --- M1: Step 2 result -------------------------------------------------
     logger.info("evaluating M1 (M_transfer on the target validation period) ...")

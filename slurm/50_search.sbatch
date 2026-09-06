@@ -33,7 +33,15 @@ print(resolve(load_config('$CONFIG', None).output_root))")
 # improves, so it exists mid-run too, and a chunked --resume would see it and exit as
 # though the fold were finished. 10_pretrain_runB.sbatch already learned this; this
 # script had kept the older, wrong guard because it had only ever run unchunked.
-if [[ -f "$OUT/fold$FOLD/pretrain/DONE" && "${FORCE:-0}" != "1" ]]; then
+# Guard on the LAST stage, and guard each stage separately. This job runs two stages and
+# the guard used to test only the first, so a fold whose pretrain finished inside one
+# 4 h chunk while its transfer had not yet started was skipped by every later chunk: the
+# guard saw pretrain/DONE and exited 0, reporting success, and the transfer never ran.
+# Five folds across two search variants were left in that state before this was found,
+# and the ablation that pairs those variants could only use the two folds that survived.
+# Neither train.pretrain_source nor train.transfer_target checks DONE on its own, so the
+# per-stage guard has to live here.
+if [[ -f "$OUT/fold$FOLD/transfer/DONE" && "${FORCE:-0}" != "1" ]]; then
   # exit 0: "already done" is success for an idempotent job, and a non-zero code here
   # breaks downstream --dependency=afterok. The two guards in this repo that DO exit
   # non-zero (41_africa, 40_basin_average) refuse for a different reason -- a required
@@ -42,7 +50,11 @@ if [[ -f "$OUT/fold$FOLD/pretrain/DONE" && "${FORCE:-0}" != "1" ]]; then
 fi
 echo "variant=$NAME fold=$FOLD out=$OUT node=$(hostname)"
 
-"$PYTHON_BIN" -u -m train.pretrain_source --config "$CONFIG" --fold "$FOLD" --resume \
-  --set "wandb.group=phase1_search" "wandb.mode=${WANDB_MODE:-online}"
+if [[ -f "$OUT/fold$FOLD/pretrain/DONE" && "${FORCE:-0}" != "1" ]]; then
+  echo "pretrain already done, going straight to transfer"
+else
+  "$PYTHON_BIN" -u -m train.pretrain_source --config "$CONFIG" --fold "$FOLD" --resume \
+    --set "wandb.group=phase1_search" "wandb.mode=${WANDB_MODE:-online}"
+fi
 "$PYTHON_BIN" -u -m train.transfer_target --config "$CONFIG" --fold "$FOLD" --peek-hourly \
   --set "wandb.group=phase1_search"
