@@ -194,16 +194,28 @@ def main() -> None:
         # The headline of this script: the share of an hourly-supervised gain that
         # daily-only supervision already achieves. Computed from the two paired gains,
         # both measured against the same zero-shot baseline on the same gauges.
-        share = gains["M1_daily"] / gains[name] if gains[name] else float("nan")
         paired = arms["M1_daily"].merge(arms[name], on=["station_id", "fold"],
                                         suffixes=("_daily", "_other"))
         head_to_head = paired["kge_daily"] - paired["kge_other"]
-        logger.info(
-            "daily-only recovers %.1f%% of the %s gain (%+.4f of %+.4f). "
-            "Head to head on %d gauges: median %+.4f, daily ahead at %.1f%%.",
-            100 * share, name, gains["M1_daily"], gains[name], len(paired),
-            head_to_head.median(), 100 * (head_to_head > 0).mean(),
-        )
+        # Reported as a head-to-head difference, not as a percentage of the hourly gain.
+        # A share only reads sensibly while the hourly arm is the larger of the two, and it
+        # is not: "daily recovers 172% of the hourly gain" is arithmetic noise dressed as a
+        # finding. The paired difference says the same thing without the false ceiling.
+        share = gains["M1_daily"] / gains[name] if gains[name] else float("nan")
+        if gains[name] >= gains["M1_daily"]:
+            logger.info(
+                "daily-only reaches %.1f%% of the %s gain (%+.4f of %+.4f). Head to head "
+                "on %d gauges: median %+.4f, daily ahead at %.1f%%.",
+                100 * share, name, gains["M1_daily"], gains[name], len(paired),
+                head_to_head.median(), 100 * (head_to_head > 0).mean(),
+            )
+        else:
+            logger.info(
+                "daily-only BEATS %s: gain %+.4f against %+.4f. Head to head on %d gauges: "
+                "median %+.4f, daily ahead at %.1f%%.",
+                name, gains["M1_daily"], gains[name], len(paired),
+                head_to_head.median(), 100 * (head_to_head > 0).mean(),
+            )
 
     cost = selection_cost(Path("outputs/v2_runB"))
     if cost:
