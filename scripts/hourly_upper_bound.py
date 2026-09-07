@@ -136,6 +136,66 @@ def selection_cost(run: Path) -> dict:
     }
 
 
+
+# transfer.lr was never in the search grid: every one of the 20-odd search configs carries
+# 5e-4, and the ones named lr1e4 or lr5e3 vary the PRETRAIN rate. Sweeping it for the hourly
+# arms alone would tilt the comparison the other way, so all three arms get the same values
+# and each is credited with its own best.
+SWEEP = {
+    "M1_daily": {5e-4: "outputs/v2_runB",
+                 2e-4: "outputs/v2_lrsweep_daily_lr2e4",
+                 1e-4: "outputs/v2_lrsweep_daily_lr1e4"},
+    "M1_obj": {5e-4: "outputs/v2_hourly_obj",
+               2e-4: "outputs/v2_lrsweep_obj_lr2e4",
+               1e-4: "outputs/v2_lrsweep_obj_lr1e4"},
+    "M1_upper": {5e-4: "outputs/v2_hourly_upper",
+                 2e-4: "outputs/v2_lrsweep_upper_lr2e4",
+                 1e-4: "outputs/v2_lrsweep_upper_lr1e4"},
+}
+
+
+def sweep_effect(zero_shot: pd.DataFrame, logger) -> dict:
+    """Each arm's paired gain at each learning rate, and the best each arm reaches.
+
+    The point of the sweep is fairness rather than tuning. A result where the arm with LESS
+    information wins invites the obvious objection that the better-informed arm was
+    misconfigured, and the objection is only answered by giving every arm the same freedom.
+    """
+    out = {}
+    for arm, roots in SWEEP.items():
+        per_lr = {}
+        for lr, root in sorted(roots.items()):
+            frame = per_gauge(Path(root), "M1")
+            if frame.empty:
+                continue
+            merged = zero_shot.merge(frame, on=["station_id", "fold"],
+                                     suffixes=("_m0", "_m1"))
+            delta = merged["kge_m1"] - merged["kge_m0"]
+            per_lr[f"{lr:.0e}"] = {
+                "median_M1": float(frame["kge"].median()),
+                "paired_gain": float(delta.median()),
+                "frac_improved": float((delta > 0).mean()),
+                "n": int(len(merged)),
+            }
+        if not per_lr:
+            continue
+        best_lr = max(per_lr, key=lambda k: per_lr[k]["paired_gain"])
+        out[arm] = {"per_lr": per_lr, "best_lr": best_lr,
+                    "best_gain": per_lr[best_lr]["paired_gain"]}
+        logger.info("  %-9s best at lr %s, gain %+.4f  (%s)", arm, best_lr,
+                    per_lr[best_lr]["paired_gain"],
+                    ", ".join(f"{k}: {v['paired_gain']:+.4f}" for k, v in per_lr.items()))
+    if {"M1_daily", "M1_obj", "M1_upper"} <= set(out):
+        daily = out["M1_daily"]["best_gain"]
+        hourly = max(out["M1_obj"]["best_gain"], out["M1_upper"]["best_gain"])
+        out["daily_margin_at_best"] = daily - hourly
+        logger.info(
+            "  each arm at its own best: daily %+.4f against the better hourly arm's "
+            "%+.4f, a margin of %+.4f. The ordering does not come from a rate tuned for "
+            "the daily objective.", daily, hourly, daily - hourly)
+    return out
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out-dir", default="outputs/v2_hourly_bound", type=Path)
@@ -228,7 +288,11 @@ def main() -> None:
             cost["same_epoch_folds"],
         )
 
-    payload = {"paired_gain_over_M0": gains, "selection_cost": cost,
+    logger.info("")
+    logger.info("learning-rate sweep, all three arms, paired against the same zero-shot:")
+    sweep = sweep_effect(zero_shot, logger)
+
+    payload = {"paired_gain_over_M0": gains, "selection_cost": cost, "lr_sweep": sweep,
                "config_deltas": {n: {k: list(v) for k, v in config_delta(c).items()}
                                  for n, _, c in ARMS if n != "M1_daily"}}
     (args.out_dir / "hourly_upper_bound.json").write_text(

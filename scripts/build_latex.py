@@ -124,6 +124,8 @@ def gather() -> dict:
     d["step3"] = load("outputs/v2_step3_source/step3_summary.json")
     d["replay"] = load("outputs/v2_replay_effect/replay_effect.json")
     d["scope"] = load("outputs/v2_network_scope/network_scope.json")
+    d["rescale"] = load("outputs/v2_rescale_control/summary.json")
+    d["bound"] = load("outputs/v2_hourly_bound/hourly_upper_bound.json")
     d["ablation"] = load("outputs/v2_ablation/ablation_summary.json")
     pub = load("outputs/africa_runB/per_basin_pub_baseline.csv")
     d["pub"] = pub
@@ -667,6 +669,146 @@ def part_results_tail(d: dict) -> str:
     return "\n".join(s)
 
 
+
+def part_objections(d: dict) -> str:
+    """The two readings of the result that would deflate it, and the experiment for each.
+
+    Both are the reader's natural next thought rather than hostile readings, and neither can
+    be settled by argument. The mechanism section says the gain is a repair of amplitude and
+    volume, which invites the first: a per-gauge rescaling repairs amplitude and volume with
+    arithmetic and needs no network. The premise says the target region has no hourly data,
+    which invites the second: then hourly data would presumably be better, and this is a
+    fallback. Each gets a run rather than a paragraph.
+    """
+    res, bound = d.get("rescale"), d.get("bound")
+    s = []
+    s.append(r"\section{Two readings that would deflate the result}\label{sec:objections}")
+    s.append(
+        "Section~\\ref{sec:mechanism} showed the gain is a repair of amplitude and volume "
+        "rather than of timing. Two readings follow from that naturally, and neither can be "
+        "settled by argument, so each was given a run.")
+    s.append("")
+
+    s.append(r"\subsection{The gain could be a rescaling in disguise}")
+    if not res:
+        raise SystemExit("outputs/v2_rescale_control/summary.json is missing. Run "
+                         "python -m scripts.rescale_control across the folds first.")
+    s.append(
+        "Amplitude and volume are exactly what a per-gauge affine correction repairs, and "
+        "such a correction is arithmetic. If a scale factor and an offset fitted from daily "
+        "means reproduce the gain, then the transfer step learned a rescaling and the "
+        "network is incidental to it.")
+    s.append("")
+    s.append(
+        r"The control fits $y' = a + b\,y$ per gauge on the target's TRAINING period daily "
+        r"means, which is exactly the data fine-tuning was allowed to see, and applies it to "
+        r"the ZERO-SHOT predictions. Fitting on the validation period would hand the control "
+        r"information the model never had. Two forms are tested: one repairing volume alone "
+        r"with $b = 1$, and one repairing volume and amplitude with $b$ set by the ratio of "
+        r"standard deviations. Rescoring is closed form, since an affine map with $b > 0$ "
+        r"leaves the correlation untouched and acts on the other two components analytically, "
+        r"so only the fit needs a forward pass.")
+    s.append("")
+    s.append(
+        f"Neither form recovers the gain. Against fine-tuning's "
+        f"\\num{{{res['gain_M1']:+.4f}}} the volume correction gives "
+        f"\\num{{{res['gain_volume']:+.4f}}}, which is "
+        f"\\SI{{{abs(100 * res['gain_volume'] / res['gain_M1']):.0f}}}{{\\percent}} of it in "
+        f"the wrong direction, and fine-tuning is ahead on "
+        f"\\SI{{{100 * res['ahead_volume']:.0f}}}{{\\percent}} of gauges. The form that also "
+        f"corrects amplitude is actively harmful at "
+        f"\\num{{{res['gain_scale']:+.4f}}}.")
+    s.append("")
+    s.append(
+        r"The reason is instructive rather than incidental. Volume is already nearly right "
+        r"at $M_0$, where median $\beta$ is \num{1.028}, so a mean correction has little to "
+        r"fix. The gain comes from amplitude, and the standard deviation of a series of daily "
+        r"means is not the standard deviation of the hourly series: correcting the hourly "
+        r"amplitude by a daily-derived ratio overcorrects badly. Daily observations cannot "
+        r"express the hourly amplitude correction arithmetically, and the fine-tuned model "
+        r"performs one anyway. That is the substantive answer to this reading.")
+    s.append("")
+
+    s.append(r"\subsection{Hourly supervision should be better}")
+    if not bound:
+        raise SystemExit("outputs/v2_hourly_bound/hourly_upper_bound.json is missing. Run "
+                         "python -m scripts.hourly_upper_bound first.")
+    gains = need(bound, "paired_gain_over_M0")
+    s.append(
+        "The premise is that the target region has no hourly observations. A reader is "
+        "entitled to ask what is given up by that, and to expect the answer to be "
+        "substantial. The temperate domain has hourly truth, so the premise can be lifted "
+        "and the question measured.")
+    s.append("")
+    s.append(
+        r"Two reference arms start from the SAME pretrained weights, so the comparison is of "
+        r"the transfer step and not of two pretrainings. One switches the objective to hourly "
+        r"targets and changes nothing else, differing in exactly one configuration key. The "
+        r"other is the configuration a practitioner with hourly gauges would use: hourly "
+        r"objective, hourly epoch selection, and the hourly branch no longer frozen, which "
+        r"was frozen only because daily aggregates cannot inform it. Those three are "
+        r"consequences of one premise rather than three independent choices.")
+    s.append("")
+    s.append(
+        f"Hourly supervision is worse. Against daily-only's "
+        f"\\num{{{gains['M1_daily']:+.4f}}}, the objective-only arm gains "
+        f"\\num{{{gains['M1_obj']:+.4f}}} and the full arm "
+        f"\\num{{{gains['M1_upper']:+.4f}}}.")
+    s.append("")
+    sweep = bound.get("lr_sweep") or {}
+    if "daily_margin_at_best" in sweep:
+        rows = []
+        for arm, label in (("M1_daily", "Daily aggregates only"),
+                           ("M1_obj", "Hourly objective only"),
+                           ("M1_upper", "Hourly throughout")):
+            e = sweep[arm]
+            rows.append([label] +
+                        [f"{e['per_lr'][k]['paired_gain']:+.4f}" if k in e["per_lr"] else "--"
+                         for k in ("1e-04", "2e-04", "5e-04")] +
+                        [f"{e['best_gain']:+.4f}"])
+        s.append(
+            "A result where the arm with less information wins invites the obvious "
+            "objection that the better-informed arm was misconfigured, and that objection "
+            "is answered only by giving every arm the same freedom. The transfer learning "
+            "rate had never been searched: all twenty-odd search configurations carry "
+            "\\num{5e-4}, and the ones named for a rate vary the pretraining rate instead. "
+            "Sweeping it for the hourly arms alone would have tilted the comparison the "
+            "other way, so all three arms were swept over the same values.")
+        s.append("")
+        s.append(table(["Arm", r"\num{1e-4}", r"\num{2e-4}", r"\num{5e-4}", "Best"], rows,
+                       "Paired median KGE gain over the same zero-shot model, by transfer "
+                       "learning rate. Every arm peaks at the same rate, and the ordering "
+                       "between them is unchanged by it.", "lrsweep"))
+        s.append(
+            f"Every arm peaks at \\num{{2e-4}}, and at each arm's own best the daily "
+            f"objective leads the better hourly arm by "
+            f"\\num{{{sweep['daily_margin_at_best']:+.4f}}}. The ordering is not an artefact "
+            f"of a rate chosen for the daily objective.")
+        s.append("")
+    cost = bound.get("selection_cost") or {}
+    if cost:
+        s.append(
+            f"Epoch selection is not the mechanism either. The daily runs record the hourly "
+            f"test score every epoch without feeding it to the early stopper, so comparing "
+            f"the epoch daily selection chose against the epoch the hourly score would have "
+            f"chosen isolates selection at no extra cost. It comes to "
+            f"\\num{{{cost['median_cost_kge']:+.4f}}} in the median over "
+            f"\\num{{{cost['n_folds']}}} folds, with "
+            f"\\num{{{cost['same_epoch_folds']}}} of them picking the same epoch either way.")
+        s.append("")
+    s.append(
+        r"What separates the arms is amplitude, and only amplitude. All three improve timing "
+        r"almost identically, by \num{0.0036} to \num{0.0053} in median $r$. Daily "
+        r"supervision moves median $\alpha$ from \num{0.821} to \num{0.856}; hourly "
+        r"supervision moves it to \num{0.794}, making the under-dispersion worse. The daily "
+        r"objective is a constrained one, weighting the aggregate term at \num{0.5} and "
+        r"leaving the hourly branch frozen, and the constraint appears to regularise. "
+        r"Hyperparameters other than the learning rate were inherited from the daily "
+        r"configuration, which is the remaining caveat on this comparison.")
+    s.append("")
+    return "\n".join(s)
+
+
 def part_africa(d: dict) -> str:
     """Section 5 and the closing summary."""
     afr, three, within = d["africa"], d["three"], d["within"]
@@ -1027,7 +1169,8 @@ def main() -> None:
 
     d = gather()
     body = "\n\n".join([part_experiments(d), r"\clearpage", part_results(d),
-                        part_results_tail(d), part_africa(d), r"\clearpage", appendix(d)])
+                        part_results_tail(d), part_objections(d), part_africa(d),
+                        r"\clearpage", appendix(d)])
     from datetime import date
     preamble = (PREAMBLE.replace("__AUTHOR__", args.author)
                 .replace("__DATE__", args.date or date.today().isoformat()))

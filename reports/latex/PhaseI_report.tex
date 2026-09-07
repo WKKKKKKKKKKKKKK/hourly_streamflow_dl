@@ -373,6 +373,49 @@ Table~\ref{tab:recovery} gives the same breakdown numerically.
 A random split also overstates the precision of the result, which is easier to miss than the level. The fold-to-fold standard deviation of M1 is \num{0.0035} under the random split and \num{0.0411} under the blocked one, a factor of \num{11.8} at Levene $p = \num{0.034}$. Near-duplicate gauges sit on both sides of a random split, so its validation metric averages over fewer independent catchments than its gauge count suggests. The honest statement of the blocked result is about $0.62 \pm 0.04$. Quoting $0.628 \pm 0.004$ would be reporting the split's smoothness as if it were the model's stability.
 
 
+\section{Two readings that would deflate the result}\label{sec:objections}
+Section~\ref{sec:mechanism} showed the gain is a repair of amplitude and volume rather than of timing. Two readings follow from that naturally, and neither can be settled by argument, so each was given a run.
+
+\subsection{The gain could be a rescaling in disguise}
+Amplitude and volume are exactly what a per-gauge affine correction repairs, and such a correction is arithmetic. If a scale factor and an offset fitted from daily means reproduce the gain, then the transfer step learned a rescaling and the network is incidental to it.
+
+The control fits $y' = a + b\,y$ per gauge on the target's TRAINING period daily means, which is exactly the data fine-tuning was allowed to see, and applies it to the ZERO-SHOT predictions. Fitting on the validation period would hand the control information the model never had. Two forms are tested: one repairing volume alone with $b = 1$, and one repairing volume and amplitude with $b$ set by the ratio of standard deviations. Rescoring is closed form, since an affine map with $b > 0$ leaves the correlation untouched and acts on the other two components analytically, so only the fit needs a forward pass.
+
+Neither form recovers the gain. Against fine-tuning's \num{+0.0573} the volume correction gives \num{-0.0015}, which is \SI{3}{\percent} of it in the wrong direction, and fine-tuning is ahead on \SI{70}{\percent} of gauges. The form that also corrects amplitude is actively harmful at \num{-0.3003}.
+
+The reason is instructive rather than incidental. Volume is already nearly right at $M_0$, where median $\beta$ is \num{1.028}, so a mean correction has little to fix. The gain comes from amplitude, and the standard deviation of a series of daily means is not the standard deviation of the hourly series: correcting the hourly amplitude by a daily-derived ratio overcorrects badly. Daily observations cannot express the hourly amplitude correction arithmetically, and the fine-tuned model performs one anyway. That is the substantive answer to this reading.
+
+\subsection{Hourly supervision should be better}
+The premise is that the target region has no hourly observations. A reader is entitled to ask what is given up by that, and to expect the answer to be substantial. The temperate domain has hourly truth, so the premise can be lifted and the question measured.
+
+Two reference arms start from the SAME pretrained weights, so the comparison is of the transfer step and not of two pretrainings. One switches the objective to hourly targets and changes nothing else, differing in exactly one configuration key. The other is the configuration a practitioner with hourly gauges would use: hourly objective, hourly epoch selection, and the hourly branch no longer frozen, which was frozen only because daily aggregates cannot inform it. Those three are consequences of one premise rather than three independent choices.
+
+Hourly supervision is worse. Against daily-only's \num{+0.0576}, the objective-only arm gains \num{+0.0335} and the full arm \num{+0.0327}.
+
+A result where the arm with less information wins invites the obvious objection that the better-informed arm was misconfigured, and that objection is answered only by giving every arm the same freedom. The transfer learning rate had never been searched: all twenty-odd search configurations carry \num{5e-4}, and the ones named for a rate vary the pretraining rate instead. Sweeping it for the hourly arms alone would have tilted the comparison the other way, so all three arms were swept over the same values.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Paired median KGE gain over the same zero-shot model, by transfer learning rate. Every arm peaks at the same rate, and the ordering between them is unchanged by it.}
+  \label{tab:lrsweep}
+  \begin{tabular}{lrrrr}
+    \toprule
+    Arm & \num{1e-4} & \num{2e-4} & \num{5e-4} & Best \\
+    \midrule
+    Daily aggregates only & +0.0574 & +0.0636 & +0.0576 & +0.0636 \\
+    Hourly objective only & +0.0302 & +0.0419 & +0.0335 & +0.0419 \\
+    Hourly throughout & +0.0502 & +0.0515 & +0.0327 & +0.0515 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Every arm peaks at \num{2e-4}, and at each arm's own best the daily objective leads the better hourly arm by \num{+0.0121}. The ordering is not an artefact of a rate chosen for the daily objective.
+
+Epoch selection is not the mechanism either. The daily runs record the hourly test score every epoch without feeding it to the early stopper, so comparing the epoch daily selection chose against the epoch the hourly score would have chosen isolates selection at no extra cost. It comes to \num{-0.0053} in the median over \num{5} folds, with \num{2} of them picking the same epoch either way.
+
+What separates the arms is amplitude, and only amplitude. All three improve timing almost identically, by \num{0.0036} to \num{0.0053} in median $r$. Daily supervision moves median $\alpha$ from \num{0.821} to \num{0.856}; hourly supervision moves it to \num{0.794}, making the under-dispersion worse. The daily objective is a constrained one, weighting the aggregate term at \num{0.5} and leaving the hourly branch frozen, and the constraint appears to regularise. Hyperparameters other than the learning rate were inherited from the daily configuration, which is the remaining caveat on this comparison.
+
+
 \section{Africa, where the premise is real}\label{sec:africa}
 Everything so far rests on hiding data that exists. That is a fair test of the method and a weak test of its reach, because the held-out gauges still sit inside a network the model was trained on. Africa provides the harder case. Its catchments appear nowhere in pretraining, and they genuinely lack hourly discharge.
 

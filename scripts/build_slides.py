@@ -72,6 +72,8 @@ def load_numbers() -> dict:
         # Keys are the human-readable domain names the deficits script writes, and the
         # values are already fractions removed, so the slide does not recompute them.
         "deficits": js("outputs/v2_component_deficits/component_deficits_summary.json"),
+        "rescale": js("outputs/v2_rescale_control/summary.json"),
+        "bound": js("outputs/v2_hourly_bound/hourly_upper_bound.json"),
         "replay": js("outputs/v2_replay_effect/replay_effect.json")["effects"],
         "step3": js("outputs/v2_step3_source/step3_summary.json"),
         "ablation": pd.read_csv("outputs/v2_ablation/ablation_v1_v2.csv"),
@@ -355,36 +357,67 @@ def main() -> None:
 
     # ---------------------------------------------------------------- 8
     abl = n["ablation"]
+    res, bd = n["rescale"], n["bound"]
+    g, sw = bd["paired_gain_over_M0"], bd["lr_sweep"]
     lines = []
     for _, row in abl.iterrows():
         lines.append(f"  {row['change']}: {row['delta_M1']:+.4f} "
                      f"(sd {row['delta_M1_sd']:.4f}, {row['n_folds_paired']} folds)")
-    s = text_slide(prs, "Where this stands, and what is still running",
+
+    # ---------------------------------------------------------------- 9
+    s = text_slide(prs, "Two readings that would deflate the result, and the runs that answer them",
+        "The gain repairs amplitude and volume. A per-gauge rescaling repairs those with "
+        "arithmetic, so does it?\n"
+        f"**  No. Fitted on the training-period daily means and applied to the zero-shot "
+        f"output, a volume correction gives {res['gain_volume']:+.4f} against fine-tuning's "
+        f"{res['gain_M1']:+.4f}, and fine-tuning leads on "
+        f"{100 * res['ahead_volume']:.0f}% of gauges.\n"
+        "  Volume is already near-right at M0. The gain is in amplitude, and the standard "
+        "deviation of daily means is not that of the hourly series, so no daily-derived "
+        "factor can express the correction the model performs.\n"
+        "\n"
+        "The premise hides hourly data. So hourly supervision would be better?\n"
+        f"**  No. Daily-only gains {g['M1_daily']:+.4f}; hourly supervision "
+        f"{g['M1_obj']:+.4f} to {g['M1_upper']:+.4f}.\n"
+        f"  All three arms were swept over the transfer learning rate, which had never been "
+        f"searched. Each peaks at 2e-4, and there the daily objective still leads by "
+        f"{sw['daily_margin_at_best']:+.4f}.\n"
+        "  The difference is entirely amplitude: daily supervision moves alpha 0.821 to "
+        "0.856, hourly supervision to 0.794.",
+        size=15)
+    notes(s, "These two slides' worth of runs are what moved the claim from 'daily data is a "
+             "workable substitute' to 'daily aggregate supervision is the better transfer "
+             "signal'. Both objections are the reader's natural next thought, and neither is "
+             "answerable by argument.\n\n"
+             "Remaining caveat, state it if asked: hyperparameters other than the learning "
+             "rate were inherited from the daily configuration.\n\n"
+             "The plausible mechanism for the second result is that the daily objective is a "
+             "constrained one, weighting the aggregate term at 0.5 and leaving the hourly "
+             "branch frozen, and the constraint regularises.")
+
+    # ---------------------------------------------------------------- 10
+    s = text_slide(prs, "Where this stands",
         "Settled\n"
         f"  Five-fold cross-validation on {n['random']['n']:,} gauges, six agencies\n"
         "  Spatially blocked split, 10.4 km to 94.9 km nearest trainable neighbour\n"
         f"  External test on {n['africa']['n']} African basins, none seen in training\n"
         "  Single-variable ablation, all five folds:\n"
         + "\n".join(lines) + "\n"
+        "  Rescaling control and hourly-supervision reference arms, five folds each\n"
         "\n"
-        "Running\n"
-        "**  Rescaling control: is the gain more than a per-gauge stretch of the zero-shot "
-        "output? This is the one that decides how large a claim the paper can make.\n"
-        "  Learning-rate sweep, 30 jobs across three arms, testing an unexpected result "
-        "under a configuration tuned for each arm\n"
+        "Scope, stated rather than defended\n"
+        "  Catchments to 10,000 km2, median 363. Large basins untested, and the forcing "
+        "reaches the model as catchment-mean scalars, so routing is not learnable from it.\n"
+        f"  Six of seven available networks; the Czech 437 gauges sit inside the retained "
+        "attribute range on every compared property.\n"
         "\n"
-        "Publication\n"
-        "  Solid for HESS or WRR now. A favourable rescaling control opens a higher venue.",
-        size=16)
-    notes(s, "The result held back from the deck: daily-only supervision currently BEATS "
-             "hourly supervision on the target domain, +0.058 against +0.033, and the "
-             "difference is entirely in alpha. Daily supervision improves the "
-             "under-dispersion, hourly supervision worsens it. The plausible mechanism is "
-             "that the daily objective is a constrained one and the constraint regularises.\n"
-             "\n"
-             "It is not on a slide because the hyperparameters were tuned for the daily arm "
-             "and the sweep that rules out a misconfigured hourly arm has not finished. "
-             "Mention it verbally as preliminary if asked what surprised you.")
+        "**Publication: the two controls above answer the objections that would have forced a "
+        "smaller claim. The result is a methodological one now, not only an application.",
+        size=15)
+    notes(s, "Optional next step worth mentioning: the daily arm's own best rate is 2e-4, "
+             "not the 5e-4 used throughout, which would lift the headline gain from +0.058 "
+             "to +0.064. Re-running the blocked, Africa and replay arms at that rate is a "
+             "few hours and would make every number consistent at the better configuration.")
 
     prs.save(OUT)
     print(f"wrote {OUT} | {len(prs.slides.__iter__.__self__._sldIdLst)} slides")
