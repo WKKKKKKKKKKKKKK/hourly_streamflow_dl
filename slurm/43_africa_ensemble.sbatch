@@ -11,5 +11,15 @@ cd "$REPO_ROOT"; mkdir -p logs
 source "${CONDA_ENV_SETUP:-/dev/null}" 2>/dev/null || true
 PYTHON_BIN="${PYTHON_BIN:-$(command -v python3)}"
 CONFIG="${CONFIG:-configs/phase1_runB.yaml}"
-echo "config=$CONFIG node=$(hostname)"
-"$PYTHON_BIN" -u -m scripts.africa_insitu_ensemble --config "$CONFIG"
+# Pass through the run location as well as the config. Without these the script's defaults
+# win and it silently ensembles a different set of folds than the caller meant, writing over
+# that set's summary. The learning-rate re-run needs a second, separately located set.
+GLOB=(); [[ -n "${INSITU_GLOB:-}" ]] && GLOB=(--insitu-glob "$INSITU_GLOB")
+PRE=();  [[ -n "${PRETRAIN_ROOT:-}" ]] && PRE=(--pretrain-root "$PRETRAIN_ROOT")
+OUT=();  [[ -n "${OUT_DIR:-}" ]]     && OUT=(--out-dir "$OUT_DIR")
+echo "config=$CONFIG glob=${INSITU_GLOB:-default} out=${OUT_DIR:-default} node=$(hostname)"
+# Assert the GPU before starting. On a login node this is a many-thousand-batch forward pass
+# on CPU that does not finish, and it slows the node for everyone rather than failing.
+"$PYTHON_BIN" -c "import torch; assert torch.cuda.is_available(), 'no GPU on this node'"
+"$PYTHON_BIN" -u -m scripts.africa_insitu_ensemble --config "$CONFIG" \
+  "${GLOB[@]}" "${PRE[@]}" "${OUT[@]}"

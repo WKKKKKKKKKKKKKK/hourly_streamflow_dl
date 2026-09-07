@@ -94,6 +94,11 @@ def main() -> None:
     parser = add_common_args(argparse.ArgumentParser(
         description="Ensemble the in-situ African folds by averaging predictions."))
     parser.add_argument("--insitu-glob", default="outputs/africa_insitu_fold")
+    parser.add_argument(
+        "--pretrain-root", default=None,
+        help="Run holding fold{N}/pretrain/best_model.pth for M0. Defaults to the config's "
+             "own output_root, which is wrong for any variant that reuses another run's "
+             "pretrained weights.")
     parser.add_argument("--folds", default="0,1,2,3,4")
     parser.add_argument("--forcing", default=DEFAULT_FORCING)
     parser.add_argument("--basins", default="africa/africa_basins.gpkg")
@@ -133,7 +138,13 @@ def main() -> None:
     folds = [int(f) for f in args.folds.split(",") if f.strip()]
     per_model = {"M0": [], "M1": []}
     for fold in folds:
-        m0 = resolve(cfg.output_root) / f"fold{fold}" / "pretrain" / "best_model.pth"
+        # M0 comes from the PRETRAINED checkpoints, which live with the run that did the
+        # pretraining rather than with the config's own output_root. A variant that only
+        # re-runs the transfer stage, such as the learning-rate re-run, writes to a fresh
+        # output_root that holds no pretrain directory at all, and deriving M0 from it fails
+        # after the forcing has already been loaded. --pretrain-root names them explicitly.
+        m0_root = Path(args.pretrain_root) if args.pretrain_root else resolve(cfg.output_root)
+        m0 = m0_root / f"fold{fold}" / "pretrain" / "best_model.pth"
         m1 = Path(f"{args.insitu_glob}{fold}") / "best_africa_model.pth"
         for tag, path in (("M0", m0), ("M1", m1)):
             if not path.exists():

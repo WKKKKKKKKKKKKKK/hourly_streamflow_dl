@@ -74,6 +74,7 @@ def load_numbers() -> dict:
         "deficits": js("outputs/v2_component_deficits/component_deficits_summary.json"),
         "rescale": js("outputs/v2_rescale_control/summary.json"),
         "bound": js("outputs/v2_hourly_bound/hourly_upper_bound.json"),
+        "lrrobust": js("outputs/v2_lr_robustness/lr_robustness.json"),
         "replay": js("outputs/v2_replay_effect/replay_effect.json")["effects"],
         "step3": js("outputs/v2_step3_source/step3_summary.json"),
         "ablation": pd.read_csv("outputs/v2_ablation/ablation_v1_v2.csv"),
@@ -404,6 +405,12 @@ def main() -> None:
         "  Single-variable ablation, all five folds:\n"
         + "\n".join(lines) + "\n"
         "  Rescaling control and hourly-supervision reference arms, five folds each\n"
+        f"  Every arm re-run at a second transfer learning rate: the random-split gain spans "
+        f"{n['lrrobust']['gain_span']['random']['min']:+.4f} to "
+        f"{n['lrrobust']['gain_span']['random']['max']:+.4f}, the blocked "
+        f"{n['lrrobust']['gain_span']['blocked']['min']:+.4f} to "
+        f"{n['lrrobust']['gain_span']['blocked']['max']:+.4f}, both far inside the blocked "
+        f"split's own fold spread\n"
         "\n"
         "Scope, stated rather than defended\n"
         "  Catchments to 10,000 km2, median 363. Large basins untested, and the forcing "

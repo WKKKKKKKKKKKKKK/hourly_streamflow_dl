@@ -25,12 +25,25 @@ import pandas as pd
 
 from common.utils import setup_logging
 
-RUNS = (
-    ("random", "off", "outputs/v2_runB"),
-    ("random", "0.25", "outputs/v2_replay025"),
-    ("blocked", "off", "outputs/v2_blocked"),
-    ("blocked", "0.25", "outputs/v2_blocked_replay025"),
-)
+# Two complete sets, one per transfer learning rate. The rate was never searched until the
+# hourly-supervision comparison forced a sweep, which found every arm peaks at 2e-4 rather
+# than the 5e-4 the study had used throughout. Mixing rates across arms would confound the
+# split comparison with the rate, so each set is self-consistent and selectable.
+RUN_SETS = {
+    "5e-4": (
+        ("random", "off", "outputs/v2_runB"),
+        ("random", "0.25", "outputs/v2_replay025"),
+        ("blocked", "off", "outputs/v2_blocked"),
+        ("blocked", "0.25", "outputs/v2_blocked_replay025"),
+    ),
+    "2e-4": (
+        ("random", "off", "outputs/v2_lrsweep_daily_lr2e4"),
+        ("random", "0.25", "outputs/v2lr2_replay"),
+        ("blocked", "off", "outputs/v2lr2_blocked"),
+        ("blocked", "0.25", "outputs/v2lr2_blocked_replay"),
+    ),
+}
+RUNS = RUN_SETS["5e-4"]
 
 
 def collect(root: Path) -> dict[int, dict]:
@@ -105,10 +118,15 @@ def paired_effect(off_root: Path, on_root: Path) -> dict | None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Compare source replay under both splits.")
+    parser.add_argument("--lr", default="5e-4", choices=sorted(RUN_SETS),
+                        help="Which self-consistent set of runs to read.")
     parser.add_argument("--out-dir", default="outputs/v2_replay_effect", type=Path)
     args = parser.parse_args()
     args.out_dir.mkdir(parents=True, exist_ok=True)
     logger = setup_logging(args.out_dir / "replay_effect.log")
+    global RUNS
+    RUNS = RUN_SETS[args.lr]
+    logger.info("transfer learning rate %s", args.lr)
 
     per_run = {}
     rows = []
