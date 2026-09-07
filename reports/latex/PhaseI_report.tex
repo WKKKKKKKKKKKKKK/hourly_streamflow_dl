@@ -19,7 +19,7 @@
 \title{Global hourly streamflow under daily-only supervision\\[0.3em]
   \large Phase I}
 \author{Weikang Kong}
-\date{2026-09-06}
+\date{2026-09-07}
 
 \begin{document}
 \maketitle
@@ -56,7 +56,11 @@ The gap between M0 and M1 is the quantity of interest. It says how much of the h
 \section{Data}\label{sec:data}
 \subsection{Discharge observations and the training network}
 
-The hourly training network comprises \num{9181} gauges compiled into a single archive of
+The source database holds \num{10423} hourly gauges across 7 national and regional networks. This study uses a prepared subset of \num{9181} across six, and the difference has three separate causes, only the first two of which are filters. Catchments larger than \num{10000}\,\si{\km\squared} are absent, which removes \num{668} gauges, and so are records shorter than \num{1095} days. The Czech collection, \num{437} gauges, is not in the prepared subset at all; the area cap accounts for only \num{8} of those, so its absence is a composition choice made when the dataset was assembled rather than a criterion applied here.
+
+That last exclusion is the one a reader could mistake for selection, so it was measured rather than asserted. The Czech catchments occupy no attribute space that the retained sample does not already span: against the \num{1297} German and Austrian gauges that are included, between \SI{84}{\percent} and \SI{95}{\percent} of them fall inside the 5th-to-95th-percentile range on area, slope, elevation, clay and sand fraction, and forest cover. Their absence therefore narrows the sample and not the covered domain. The area cap is the more consequential boundary of the two, and it is stated as a scope limit rather than defended: the tested range runs to \num{9981}\,\si{\km\squared} with a median of \num{366}, so behaviour on large river basins is outside it. Section~\ref{sec:summary} returns to why that extrapolation is not safe.
+
+Within that subset, the hourly training network comprises \num{9181} gauges compiled into a single archive of
 \num{403248} hourly steps. The record begins at 00:00 UTC on 1 January 1980 and ends at
 23:00 UTC on 31 December 2025, covering \num{16802} days, that is \num{46} complete
 calendar years with no gap in the time axis. Six national and regional collections contribute, in descending order of
@@ -424,6 +428,8 @@ Four limits belong beside that result.
   \item The adaptation degrades the source domain, by a paired median of \num{0.054} in KGE, in every fold.
   \item A random split overstates both the level and the precision of the result. Blocked-split numbers with their honest spread are the ones to quote.
   \item The training network is temperate and northern. The African test is the only genuinely external evidence here, and it rests on the \num{302} records that are all the daily database holds for the continent.
+  \item Catchment size is bounded. The tested range runs to \num{9981}\,\si{\km\squared} with a median of \num{366}, because the prepared dataset carries an area cap of \num{10000}. Behaviour on large river basins is untested, and extrapolating to them is not safe for a reason that is structural rather than statistical. The forcing reaches the model as three catchment-mean scalars, so the spatial pattern of a rainfall event is averaged away before the model sees it. In a small catchment that costs nothing, since everything reaches the outlet within hours. In a large basin the same catchment-mean rainfall produces a different hydrograph depending on whether it fell near the headwaters or near the outlet, and the model receives identical input in both cases. Channel routing and upstream reservoir operation are absent from the inputs for the same reason, the second irreducibly so, since a release schedule is a human decision and not a function of weather. Within the tested range the direction is in fact favourable, with zero-shot KGE rising from \num{0.406} in the smallest fifth of catchments to \num{0.605} in the largest, so the limitation is an absence of evidence rather than evidence of failure.
+  \item The network is a subset of what the database holds. Of \num{10423} hourly gauges across 7 collections, the prepared dataset carries \num{9181} across six, with the Czech collection of \num{437} absent for reasons that predate this study. That exclusion narrows the sample without narrowing the covered domain, as Section~\ref{sec:data} quantifies, but a seventh network remains available and unused.
 \end{enumerate}
 
 \clearpage

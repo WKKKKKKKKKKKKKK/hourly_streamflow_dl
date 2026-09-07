@@ -61,6 +61,8 @@ DAILY_WINDOW = 24
 def fit_statistics(model, loader, device, y_mean, y_std, logger=None):
     """Per-gauge mean and standard deviation of DAILY prediction and observation.
 
+    Both in NORMALISED units, which is what the dataset stores y_daily in.
+
     Daily, not hourly, because the premise is that only daily observations exist in the
     target region. Accumulated as running sums so a fold's training period never has to be
     held in memory as a series.
@@ -85,7 +87,12 @@ def fit_statistics(model, loader, device, y_mean, y_std, logger=None):
             # The daily value the model implies: the mean of its last 24 hourly outputs,
             # which is the same aggregation the daily objective and the daily scores use.
             sim = out["H_seq"][:, -DAILY_WINDOW:].squeeze(-1).float().cpu().numpy().mean(axis=1)
-            sim = sim * y_std + y_mean
+            # BOTH sides stay in normalised space. batch["y_daily"] is normalised, and
+            # de-normalising only the prediction mixes the two: the fitted observation mean
+            # came out NEGATIVE, which runoff cannot be, and the affine correction built on
+            # it drove median KGE from +0.63 to -1.2. The scale factors cancel in the ratio
+            # b = sd_obs / sd_sim anyway, and the offset a is applied to a normalised
+            # prediction, so nothing here needs physical units.
             for station, s, o, k in zip(stations, sim, y_daily, keep):
                 if not k:
                     continue
@@ -95,12 +102,23 @@ def fit_statistics(model, loader, device, y_mean, y_std, logger=None):
             if logger and n_batches % 200 == 0:
                 logger.info("  fitting pass: %d batches", n_batches)
 
+    # A sanity check that would have caught the units bug on the first run. In normalised
+    # space the observed daily mean is (physical - y_mean) / y_std, so it is bounded below
+    # by -y_mean / y_std for a non-negative quantity like runoff. Anything below that means
+    # the two sides of the fit are in different units.
+    floor = -y_mean / y_std - 1e-6
     rows = []
     for station, (n, s1, s2, o1, o2) in acc.items():
         if n < 2:
             continue
         mu_s, mu_o = s1 / n, o1 / n
         var_s, var_o = s2 / n - mu_s ** 2, o2 / n - mu_o ** 2
+        if mu_o < floor:
+            raise SystemExit(
+                f"{station}: fitted observed daily mean {mu_o:.4f} is below the normalised "
+                f"floor {floor:.4f}. Runoff cannot be negative, so the prediction and the "
+                "observation are in different units here."
+            )
         rows.append({
             "station_id": station, "n_days_fit": int(n),
             "fit_sim_mean": mu_s, "fit_obs_mean": mu_o,

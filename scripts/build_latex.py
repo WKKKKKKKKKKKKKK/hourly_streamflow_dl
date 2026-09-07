@@ -123,6 +123,7 @@ def gather() -> dict:
     d["lat"] = load("outputs/v2_stratify/maps/by_latitude_target.csv")
     d["step3"] = load("outputs/v2_step3_source/step3_summary.json")
     d["replay"] = load("outputs/v2_replay_effect/replay_effect.json")
+    d["scope"] = load("outputs/v2_network_scope/network_scope.json")
     d["ablation"] = load("outputs/v2_ablation/ablation_summary.json")
     pub = load("outputs/africa_runB/per_basin_pub_baseline.csv")
     d["pub"] = pub
@@ -798,6 +799,37 @@ def part_africa(d: dict) -> str:
     s.append(r"  \item The training network is temperate and northern. The African test is "
              r"the only genuinely external evidence here, and it rests on the \num{302} "
              r"records that are all the daily database holds for the continent.")
+    sc = d.get("scope") or {}
+    if sc:
+        # The scope limit the data section states and this section has to justify. It is the
+        # boundary a reader is most likely to test, since every operational question about
+        # flood forecasting is about large rivers.
+        s.append(
+            f"  \\item Catchment size is bounded. The tested range runs to "
+            f"\\num{{{int(sc['tested_area_max_km2'])}}}\\,\\si{{\\km\\squared}} with a median of "
+            f"\\num{{{int(sc['tested_area_median_km2'])}}}, because the prepared dataset carries an "
+            f"area cap of \\num{{{int(sc['max_area_km2'])}}}. Behaviour on large river basins is "
+            f"untested, and extrapolating to them is not safe for a reason that is structural "
+            f"rather than statistical. The forcing reaches the model as three catchment-mean "
+            f"scalars, so the spatial pattern of a rainfall event is averaged away before the "
+            f"model sees it. In a small catchment that costs nothing, since everything reaches "
+            f"the outlet within hours. In a large basin the same catchment-mean rainfall "
+            f"produces a different hydrograph depending on whether it fell near the headwaters "
+            f"or near the outlet, and the model receives identical input in both cases. "
+            f"Channel routing and upstream reservoir operation are absent from the inputs for "
+            f"the same reason, the second irreducibly so, since a release schedule is a human "
+            f"decision and not a function of weather. Within the tested range the direction is "
+            f"in fact favourable, with zero-shot KGE rising from \\num{{0.406}} in the smallest "
+            f"fifth of catchments to \\num{{0.605}} in the largest, so the limitation is an "
+            f"absence of evidence rather than evidence of failure.")
+        s.append(
+            f"  \\item The network is a subset of what the database holds. Of "
+            f"\\num{{{sc['source_gauges']}}} hourly gauges across {sc['source_networks']} "
+            f"collections, the prepared dataset carries \\num{{{sc['prepared_gauges']}}} across "
+            f"six, with the Czech collection of \\num{{{sc['absent_gauges']}}} absent for "
+            f"reasons that predate this study. That exclusion narrows the sample without "
+            f"narrowing the covered domain, as Section~\\ref{{sec:data}} quantifies, but a "
+            f"seventh network remains available and unused.")
     s.append(r"\end{enumerate}")
     return "\n".join(s)
 
