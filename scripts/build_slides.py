@@ -53,6 +53,11 @@ def load_numbers() -> dict:
         return json.loads(p.read_text())
 
     def paired(path):
+        # The diagnostics table has no score_status column, so this filters on obs_std
+        # alone. scripts/lr_robustness reads the per-station files, which carry both, and
+        # the two gave 0.0039 and 0.0069 for the same endpoint gap. A deck and a report
+        # disagreeing on one number is worse than either number, so the endpoint gap is
+        # taken from the robustness JSON below rather than recomputed here.
         t = pd.read_csv(path)
         t = t[t["obs_std"] >= 1e-3]
         d = t["M1_kge"] - t["M0_kge"]
@@ -75,6 +80,8 @@ def load_numbers() -> dict:
         "rescale": js("outputs/v2_rescale_control/summary.json"),
         "bound": js("outputs/v2_hourly_bound/hourly_upper_bound.json"),
         "lrrobust": js("outputs/v2_lr_robustness/lr_robustness.json"),
+        "prox": js("outputs/v2_split_effect/proximity.json"),
+        "within": js("outputs/v2_africa_hourly/within_day_summary.json"),
         "replay": js("outputs/v2_replay_effect/replay_effect.json")["effects"],
         "step3": js("outputs/v2_step3_source/step3_summary.json"),
         "ablation": pd.read_csv("outputs/v2_ablation/ablation_v1_v2.csv"),
@@ -229,7 +236,7 @@ def main() -> None:
         "fig13_headline.png",
         f"**The gain grows from {r['gain']:+.3f} to {b['gain']:+.3f} to {a['gain']:+.3f} as "
         f"the test gets harder, while the two temperate endpoints land "
-        f"{abs(r['m1'] - b['m1']):.3f} apart.\n"
+        f"{n['lrrobust']['derived']['5e-4']['endpoint_gap']:.4f} apart.\n"
         "The zero-shot baseline's apparent skill was partly spatial proximity. The gain from "
         "daily data was not.",
         footer="Fine-tuning uses 24-hour aggregates only. The target stations' hourly "
@@ -316,6 +323,76 @@ def main() -> None:
              "report as fig07 with all three.")
 
     # ---------------------------------------------------------------- 6
+    w = n["within"]
+    s = text_slide(prs, "The one claim Africa cannot support",
+        "The premise is that Africa has no hourly discharge. That is why the region needs "
+        "this method, and it is also why the hourly output there cannot be scored. No "
+        "observation exists to score it against, in any of the 294 basins.\n"
+        "\n"
+        "**What can be said is what the hourly output looks like, not how accurate it is.\n"
+        f"  Within-day variability falls after fine-tuning, from a coefficient of variation "
+        f"of {w['median_cv_M0']:.4f} to {w['median_cv_M1']:.4f} over {w['n_basins']} basins "
+        f"(paired, p = {w['wilcoxon_p']:.0e}), and it rises in "
+        f"{100 * w['share_of_basins_with_higher_cv_after_finetuning']:.0f}% of them.\n"
+        f"  The model damps the rainfall diurnal cycle heavily: forcing peaks at "
+        f"{w['median_diurnal_ratio_pcp']:.2f} times its own mean over the average day, the "
+        f"model at {w['median_diurnal_ratio_M1']:.2f}, a factor of "
+        f"{w['diurnal_damping_M1']:.1f}.\n"
+        "  Where hourly observations DO exist, in the temperate domain, the average day is "
+        "measured to be nearly flat too, so a flat response is not evidence of a flattened "
+        "model.\n"
+        "\n"
+        "The claim that the method improves HOURLY skill rests entirely on the temperate "
+        "experiment, where hourly truth exists. Africa shows the method reaches a region "
+        "that has no hourly data, at daily resolution. Those are two different claims and "
+        "the paper keeps them apart.",
+        size=15)
+    notes(s, "Say this before being asked. The deck's title claims hourly transfer and its "
+             "most striking application cannot verify hourly skill, so a listener who "
+             "notices that on their own will trust the rest less.\n\n"
+             "The fix worth proposing for Phase II: a pseudo-Africa holdout. Take a "
+             "climatically similar region that DOES have hourly observations, tropical "
+             "Australia or Brazil, pretend it has none, run the full protocol, then score "
+             "the hourly output against the observations that were withheld. That converts "
+             "Africa's unverifiable claim into a verifiable analogue.")
+
+    # ---------------------------------------------------------------- 7
+    px = n["prox"]
+    s = text_slide(prs, "Why a random split is interpolation, not generalisation",
+        f"Under a random split a target gauge usually has a trainable one nearby: "
+        f"{100 * px['frac_within_10km']:.0f}% are within 10 km and "
+        f"{100 * px['frac_within_1km']:.1f}% within 1 km, which is often the same river. "
+        f"Blocking moves the median from 10.4 km to 94.9 km.\n"
+        "\n"
+        "Neighbouring catchments share climate, geology and often a channel, so a model can "
+        "score well by recognising a region rather than by learning how attributes map to "
+        "response. A random split cannot tell those apart.\n"
+        "\n"
+        "**Three pieces of evidence that the shortcut is being used:\n"
+        f"  Within the random split itself, zero-shot skill falls with distance: median KGE "
+        f"{px['q1_m0']:.3f} at {px['q1_km']:.1f} km against {px['q5_m0']:.3f} at "
+        f"{px['q5_km']:.0f} km, Spearman {px['rho']:+.3f}. Same training set, same "
+        f"hyperparameters, only distance differs.\n"
+        "  Blocking the split drops zero-shot KGE by 0.10, negative in all six networks.\n"
+        "  Fine-tuning brings both back together, 0.0069 apart. What blocking removed was "
+        "nearby information, and daily aggregates restore it.\n"
+        "\n"
+        "Distance and attribute similarity cannot be separated in observational data, so the "
+        "honest claim is narrow: part of the zero-shot score comes from a highly similar "
+        "training catchment existing, not from generalising across attributes.",
+        size=15)
+    notes(s, "This is the slide to use if asked how we know the random split is "
+             "contaminated. The within-split correlation is the strongest single piece, "
+             "because the training set, hyperparameters and fold count are all identical and "
+             "only distance varies, so it cannot be explained by the blocked split holding "
+             "out harder regions.\n\n"
+             "A random split also flatters the PRECISION, not only the level: fold-to-fold "
+             "standard deviation of M1 is 0.0035 random against 0.0411 blocked, a factor of "
+             "11.8, because each blocked fold holds out different continents rather than a "
+             "different sample of the same regions. Quote the blocked numbers with their "
+             "spread as the honest ones.")
+
+    # ---------------------------------------------------------------- 8
     sp = n["split"]
     s = figure_slide(prs,
         "The blocked split, agency by agency",
@@ -379,7 +456,8 @@ def main() -> None:
         "\n"
         "The premise hides hourly data. So hourly supervision would be better?\n"
         f"**  No. Daily-only gains {g['M1_daily']:+.4f}; hourly supervision "
-        f"{g['M1_obj']:+.4f} to {g['M1_upper']:+.4f}.\n"
+        f"{min(g['M1_obj'], g['M1_upper']):+.4f} to "
+        f"{max(g['M1_obj'], g['M1_upper']):+.4f}.\n"
         f"  All three arms were swept over the transfer learning rate, which had never been "
         f"searched. Each peaks at 2e-4, and there the daily objective still leads by "
         f"{sw['daily_margin_at_best']:+.4f}.\n"
@@ -425,6 +503,38 @@ def main() -> None:
              "not the 5e-4 used throughout, which would lift the headline gain from +0.058 "
              "to +0.064. Re-running the blocked, Africa and replay arms at that rate is a "
              "few hours and would make every number consistent at the better configuration.")
+
+    # ---------------------------------------------------------------- 13
+    s = text_slide(prs, "What Phase II should do, in priority order",
+        "**1.  Make the hourly claim verifiable outside the temperate domain\n"
+        "  A pseudo-Africa holdout: take tropical Australia or Brazil, which do have hourly "
+        "observations, hide them, run the full protocol, then score the hourly output "
+        "against what was withheld. This is the single largest gap in the story and the "
+        "cheapest to close, since no new data is needed.\n"
+        "\n"
+        "**2.  Find where catchment size breaks the method\n"
+        "  The database holds 668 catchments above the current 10,000 km2 cap and they are "
+        "already prepared upstream. Raising the cap and re-running the evaluation locates "
+        "the breakpoint without changing the model. Expect degradation, since the forcing "
+        "reaches the model as catchment-mean scalars, but measuring where it starts is worth "
+        "more than predicting it.\n"
+        "\n"
+        "3.  Ask whether the constrained objective is the mechanism\n"
+        "  Daily supervision beating hourly supervision is the most interesting result here "
+        "and its explanation is currently a hypothesis. Varying the aggregate loss weight "
+        "and the frozen-module set under hourly supervision would test it directly.\n"
+        "\n"
+        "4.  Add the seventh network\n"
+        "  437 Czech gauges with complete records, absent for reasons that predate this "
+        "work. Low scientific value, since they add no attribute space, but it removes a "
+        "question a reviewer will ask.",
+        size=15)
+    notes(s, "Items 1 and 2 are the ones that change what the paper can claim. Item 3 would "
+             "turn an observation into a mechanism and is the most interesting of the four "
+             "scientifically. Item 4 is housekeeping.\n\n"
+             "If asked what would be needed to serve large basins properly rather than just "
+             "measure the failure: distributed forcing instead of catchment means, or an "
+             "explicit routing component. Both are architecture work, not a re-run.")
 
     prs.save(OUT)
     print(f"wrote {OUT} | {len(prs.slides.__iter__.__self__._sldIdLst)} slides")
