@@ -19,7 +19,7 @@
 \title{Global hourly streamflow under daily-only supervision\\[0.3em]
   \large Phase I}
 \author{Weikang Kong}
-\date{2026-09-07}
+\date{2026-09-09}
 
 \begin{document}
 \maketitle
@@ -251,6 +251,10 @@ The fourth row carries a warning that only the map makes visible. Panel~(j) is m
 The African basins differ from the temperate gauges in kind. Their median $\alpha$ at M0 is \num{0.440} and their median $\beta$ is \num{0.475}, so the zero-shot model delivers less than half the observed variability and less than half the observed water. Their median $r$ is \num{0.706}, which sits inside the range the temperate archives occupy. Timing transfers to a continent the model has never seen. Magnitude does not. This is the clearest statement in the report of what a pretrained model does and does not carry across a domain gap, and it is also why the African gain is the largest on the figure.
 
 Two qualifications belong with this reading. The map is drawn under the random split, so panel~(a) is the optimistic view of zero-shot skill; under the blocked split the same median falls to \num{0.419}, and the gain column would be redder still. And the continents with no markers are part of the evidence. The training network covers no gauge in Africa, South America or mainland Asia, so the African basins carry the whole weight of external validation here, on daily observations rather than hourly ones.
+The headline comparison is a per-gauge paired test rather than a pooled one. Over \num{8862} gauges, \num{8066} show a significant paired change at $\alpha = \num{0.05}$ before correction, against \num{443} expected by chance, and \num{8049} survive Benjamini-Hochberg control of the false discovery rate. Of those, \num{4712} improve and \num{3337} degrade, so the effect is not a small number of gauges carrying a population median.
+
+That the degraded count is large matters and is stated here rather than in a footnote. Roughly two gauges improve for every one that worsens, which is a real distribution and not a uniform lift. The median is positive, \SI{66}{\percent} of gauges improve, and the remainder are worse off under this procedure.
+
 \section{The gain is a repair of amplitude}\label{sec:mechanism}
 A 24-hour total carries how much water arrived on a day. It carries almost nothing about which hour it arrived in. If that is the whole of what the daily signal contributes, then fine-tuning on it should move the amplitude and water-balance terms of KGE and leave the correlation term nearly where it was. This is a prediction that can fail, and it is worth checking rather than assuming.
 

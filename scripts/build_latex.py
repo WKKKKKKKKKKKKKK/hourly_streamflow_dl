@@ -383,6 +383,30 @@ def part_results(d: dict) -> str:
 
 
     # ---------------------------------------------------------------- 2
+    sg = d.get("sig")
+    if sg:
+        # PLAN.md names the per-gauge paired Wilcoxon with BH-FDR as the test the headline
+        # conclusion rests on. It had been computed and never reported, which left the main
+        # result resting on a pooled p-value alone. A pooled test says the population moved;
+        # it says nothing about how many individual gauges moved detectably.
+        s.append(
+            f"The headline comparison is a per-gauge paired test rather than a pooled one. "
+            f"Over \\num{{{sg['n_stations']}}} gauges, \\num{{{sg['n_uncorrected_significant']}}} "
+            f"show a significant paired change at $\\alpha = \\num{{{sg['alpha']}}}$ before "
+            f"correction, against \\num{{{sg['n_expected_by_chance']:.0f}}} expected by chance, "
+            f"and \\num{{{sg['n_significant_after_bh']}}} survive Benjamini-Hochberg control of "
+            f"the false discovery rate. Of those, \\num{{{sg['n_improved']}}} improve and "
+            f"\\num{{{sg['n_degraded']}}} degrade, so the effect is not a small number of "
+            f"gauges carrying a population median.")
+        s.append("")
+        s.append(
+            f"That the degraded count is large matters and is stated here rather than in a "
+            f"footnote. Roughly two gauges improve for every one that worsens, which is a "
+            f"real distribution and not a uniform lift. The median is positive, "
+            f"\\SI{{{100 * sg['frac_kge_improved']:.0f}}}{{\\percent}} of gauges improve, and "
+            f"the remainder are worse off under this procedure.")
+        s.append("")
+
     s.append(r"\section{The gain is a repair of amplitude}\label{sec:mechanism}")
     r_, a_, b_ = kge.loc["kge_r"], kge.loc["kge_alpha"], kge.loc["kge_beta"]
     s.append(
