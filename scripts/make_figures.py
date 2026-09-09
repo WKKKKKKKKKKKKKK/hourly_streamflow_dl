@@ -1237,6 +1237,97 @@ def fig_slide_hydrograph(out: Path) -> str | None:
     return path.name
 
 
+# ---------------------------------------------------------------- figure 16
+def fig_spatial_profile(out: Path) -> str | None:
+    """Skill against distance to the nearest trainable gauge, for both splits.
+
+    The spatial cross-validation literature converged on this object from opposite camps.
+    Brenning (2023) argues the autocorrelation range is the wrong criterion for building
+    spatial test sets and that assessment should target the intended prediction horizon,
+    reporting error as a function of prediction distance. Mila et al. (2022) and Linnenbrink
+    et al. (2024) reach the same quantity by matching the test-to-train distance
+    distribution to the deployment task's. Ploton et al. (2020) got there first with a
+    buffered leave-one-out curve. Wadoux et al. (2021), who reject spatial cross-validation
+    outright, still concede standard cross-validation is deficient for strongly clustered
+    data, which is what a network with 5,767 of 8,843 gauges in one country is.
+
+    So a single blocked-split number is not the defensible object. The profile is, and it
+    says something a scalar cannot: the two splits' curves have OPPOSITE slopes. Zero-shot
+    skill falls with distance, steeply under blocking, while the gain from daily aggregates
+    RISES with distance. The further the model is from anything it trained on, the worse it
+    starts and the more the daily data returns.
+
+    Bands are fixed distances rather than quantiles, so both splits sit on one x axis.
+    Quantile bands would put the random split's top band at 32 km and the blocked split's at
+    180 km, which is exactly the comparison the profile exists to prevent.
+    """
+    payload = Path("outputs/v2_spatial_profile/spatial_profile.json")
+    if not payload.exists():
+        return None
+    data = json.loads(payload.read_text())
+    splits = data.get("splits") or {}
+    if not splits:
+        return None
+
+    fig, (ax, bx) = plt.subplots(1, 2, figsize=(10.0, 4.2), sharex=True)
+    colours = {"random": BLUE, "blocked": ORANGE}
+    for name, entry in splits.items():
+        prof = entry.get("profile") or []
+        if not prof:
+            continue
+        # Band midpoint on a log axis. The top band is open-ended, so it is placed at
+        # 1.6x its lower edge rather than at infinity.
+        x = [np.sqrt(p["lo_km"] * p["hi_km"]) if np.isfinite(p["hi_km"]) and p["lo_km"] > 0
+             else (p["lo_km"] * 1.6 if p["lo_km"] > 0 else 2.5) for p in prof]
+        colour = colours.get(name, GREY)
+        n_band = [p["n"] for p in prof]
+        # Marker AREA proportional to the band's gauge count. Both curves have a band
+        # holding under fifty gauges, at opposite ends, and drawn at uniform size those
+        # points dominate the shape of the line: the random split's apparent collapse past
+        # 80 km rests on 47 gauges and the blocked split's high first point on 49. The
+        # counts are printed as well, but a reader takes the shape from the marks.
+        sizes = [max(18.0, min(150.0, 150.0 * n / max(n_band))) for n in n_band]
+        ax.plot(x, [p["M0"] for p in prof], "-", color=colour, lw=2.0)
+        ax.scatter(x, [p["M0"] for p in prof], s=sizes, color=colour, zorder=3)
+        ax.plot(x, [p["M1"] for p in prof], "--", color=colour, lw=1.6, alpha=0.9)
+        ax.scatter(x, [p["M1"] for p in prof], s=sizes, facecolor="white",
+                   edgecolor=colour, lw=1.5, marker="s", zorder=3)
+        bx.plot(x, [p["gain"] for p in prof], "-", color=colour, lw=2.2,
+                label=f"{name} split")
+        bx.scatter(x, [p["gain"] for p in prof], s=sizes, color=colour, zorder=3)
+        for p, xi in zip(prof, x):
+            bx.annotate(f"{p['n']:,}", (xi, p["gain"]), xytext=(0, 11),
+                        textcoords="offset points", ha="center", fontsize=7.5,
+                        color=MUTED)
+
+    ax.set_xscale("log")
+    ax.set_xlabel("Distance to the nearest trainable gauge (km)")
+    ax.set_ylabel("Median KGE")
+    ax.set_title("(a)  where the model starts, and where it ends", fontsize=10.5, loc="left")
+    handles = [Line2D([], [], color=BLUE, lw=2, label="Random split"),
+               Line2D([], [], color=ORANGE, lw=2, label="Blocked split"),
+               Line2D([], [], color=INK, lw=2, marker="o", ms=6, label="M0  zero-shot"),
+               Line2D([], [], color=INK, lw=1.6, ls="--", marker="s", ms=5, mfc="white",
+                      label="M1  fine-tuned"),
+               Line2D([], [], color=MUTED, lw=0, marker="o", ms=3,
+                      label="marker area is the band's gauge count")]
+    ax.legend(handles=handles, fontsize=8.5, frameon=False, labelcolor=INK, loc="lower left")
+    tidy(ax)
+
+    bx.axhline(0, color=INK, lw=0.8)
+    bx.set_xlabel("Distance to the nearest trainable gauge (km)")
+    bx.set_ylabel("Median paired gain in KGE")
+    bx.set_title("(b)  and how much the daily data returns", fontsize=10.5, loc="left")
+    bx.legend(fontsize=9, frameon=False, labelcolor=INK, loc="upper left")
+    tidy(bx)
+
+    fig.tight_layout()
+    path = out / "fig16_spatial_profile.png"
+    fig.savefig(path)
+    plt.close(fig)
+    return path.name
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate the report's figures.")
     # reports/, not outputs/: these are deliverables, and outputs/ is gitignored,
@@ -1250,7 +1341,8 @@ def main() -> None:
     makers = [fig_components, fig_gain_drivers, fig_configurations, fig_agency_recovery,
               fig_metric_disagreement, fig_convergence, fig_africa_hydrographs,
               fig_intraday, fig_global_map, fig_africa_hourly, fig_component_deficits,
-              fig_replay, fig_headline, fig_slide_hydrograph]
+              fig_replay, fig_headline, fig_slide_hydrograph,
+              fig_spatial_profile]
     for maker in makers:
         try:
             name = maker(out)
