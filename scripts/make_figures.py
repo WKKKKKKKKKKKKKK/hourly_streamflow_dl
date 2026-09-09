@@ -1300,7 +1300,31 @@ def fig_spatial_profile(out: Path) -> str | None:
                         textcoords="offset points", ha="center", fontsize=7.5,
                         color=MUTED)
 
+    # Africa on the same axis. Its 294 basins sit a median 7,621 km from the training
+    # network, so the deployment task lies two orders of magnitude beyond either split's
+    # median, and the profile can be closed with a measurement rather than an
+    # extrapolation. Every point on this curve is observed.
+    deploy = data.get("deployment")
+    afr_path = Path("outputs/v2_africa_insitu_summary/ensemble_summary.json")
+    if deploy and afr_path.exists():
+        afr = json.loads(afr_path.read_text())
+        xa = deploy["median_km"]
+        ax.axvline(xa, color=AQUA, lw=1.2, ls=(0, (5, 3)), zorder=1)
+        ax.scatter([xa], [afr["M0"]["median_kge"]], s=110, color=AQUA, marker="D", zorder=5)
+        ax.scatter([xa], [afr["M1"]["median_kge"]], s=110, facecolor="white",
+                   edgecolor=AQUA, lw=2.0, marker="D", zorder=5)
+        ax.annotate("Africa\n294 basins", (xa, afr["M1"]["median_kge"]),
+                    xytext=(-6, 12), textcoords="offset points", ha="right",
+                    fontsize=9, color=AQUA, fontweight="semibold")
+        bx.axvline(xa, color=AQUA, lw=1.2, ls=(0, (5, 3)), zorder=1)
+        bx.scatter([xa], [afr["paired"]["median_delta_kge"]], s=110, color=AQUA,
+                   marker="D", zorder=5)
+        bx.annotate("Africa", (xa, afr["paired"]["median_delta_kge"]),
+                    xytext=(-8, 0), textcoords="offset points", ha="right", va="center",
+                    fontsize=9, color=AQUA, fontweight="semibold")
+
     ax.set_xscale("log")
+    bx.set_xscale("log")
     ax.set_xlabel("Distance to the nearest trainable gauge (km)")
     ax.set_ylabel("Median KGE")
     ax.set_title("(a)  where the model starts, and where it ends", fontsize=10.5, loc="left")
@@ -1309,6 +1333,8 @@ def fig_spatial_profile(out: Path) -> str | None:
                Line2D([], [], color=INK, lw=2, marker="o", ms=6, label="M0  zero-shot"),
                Line2D([], [], color=INK, lw=1.6, ls="--", marker="s", ms=5, mfc="white",
                       label="M1  fine-tuned"),
+               Line2D([], [], color=AQUA, lw=0, marker="D", ms=7,
+                      label="Africa, the real deployment domain"),
                Line2D([], [], color=MUTED, lw=0, marker="o", ms=3,
                       label="marker area is the band's gauge count")]
     ax.legend(handles=handles, fontsize=8.5, frameon=False, labelcolor=INK, loc="lower left")

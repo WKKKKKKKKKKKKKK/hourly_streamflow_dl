@@ -52,6 +52,69 @@ EDGES = [0, 5, 10, 20, 40, 80, 160, np.inf]
 BUFFER_KM = 20.0
 
 
+
+EARTH_RADIUS_KM = 6371.0
+AFRICA_BASINS = "africa/africa_basins.csv"
+STATIC_CSV = ("/ibex/project/c2266/abbaa0a/data/gscad_database/processed/20250630/"
+              "hourly/dataframes/static.csv")
+
+
+def unit_vectors(lat_deg, lon_deg):
+    lat, lon = np.radians(np.asarray(lat_deg)), np.radians(np.asarray(lon_deg))
+    return np.column_stack([np.cos(lat) * np.cos(lon),
+                            np.cos(lat) * np.sin(lon),
+                            np.sin(lat)])
+
+
+def deployment_distances(logger) -> dict | None:
+    """How far the actual deployment target sits from the training network.
+
+    This is the quantity Brenning (2023) says the assessment should target and that
+    kNNDM matches its folds to: not "at what distance does the test set become
+    independent" but "at what distances do I intend to predict". Both are answerable only
+    against a stated deployment domain, and this study has a real one rather than a
+    hypothetical: the 294 African basins, none of which appears anywhere in training and
+    none of which has hourly discharge.
+
+    Computed on 3-D unit vectors so nothing breaks at the dateline, the same way the
+    blocked split is built.
+    """
+    basins_path, static_path = Path(AFRICA_BASINS), Path(STATIC_CSV)
+    if not (basins_path.exists() and static_path.exists()):
+        logger.info("deployment distances: inputs missing, skipping")
+        return None
+    basins = pd.read_csv(basins_path)
+    folds = pd.read_csv(FOLDS)
+    static = pd.read_csv(static_path, comment="#", index_col=0)[["lat", "long"]]
+    train = static.loc[static.index.intersection(folds["station_id"].astype(str))]
+    if train.empty or basins.empty:
+        return None
+
+    gauge_v = unit_vectors(train["lat"].to_numpy(), train["long"].to_numpy())
+    basin_v = unit_vectors(basins["lat"].to_numpy(), basins["long"].to_numpy())
+    cos = np.clip(basin_v @ gauge_v.T, -1.0, 1.0)
+    nearest = EARTH_RADIUS_KM * np.arccos(cos).min(axis=1)
+
+    out = {
+        "n_deployment_targets": int(len(basins)),
+        "n_training_gauges": int(len(train)),
+        "median_km": float(np.median(nearest)),
+        "p05_km": float(np.percentile(nearest, 5)),
+        "p25_km": float(np.percentile(nearest, 25)),
+        "p75_km": float(np.percentile(nearest, 75)),
+        "p95_km": float(np.percentile(nearest, 95)),
+        "min_km": float(nearest.min()),
+        "frac_beyond_random_median": None,
+        "frac_beyond_blocked_median": None,
+    }
+    logger.info("deployment domain: %d African basins against %d training gauges",
+                out["n_deployment_targets"], out["n_training_gauges"])
+    logger.info("  distance to the nearest training gauge: median %.0f km "
+                "(5-95%%: %.0f to %.0f, min %.0f)",
+                out["median_km"], out["p05_km"], out["p95_km"], out["min_km"])
+    return out, nearest
+
+
 def per_gauge(root: str) -> pd.DataFrame:
     """Paired M0 and M1 per gauge, pooled over folds."""
     path = Path(root) / "diagnostics_allhours" / "kge_components_target.csv"
@@ -156,6 +219,23 @@ def main() -> None:
                     entry["buffered"]["M0"], entry["buffered"]["M1"],
                     entry["buffered"]["gain"], entry["unbuffered"]["gain"])
         logger.info("")
+
+    # --- which part of the profile the deployment task actually occupies ---------
+    got = deployment_distances(logger)
+    if got is not None:
+        deploy, nearest = got
+        for name, entry in payload["splits"].items():
+            median = entry["median_km"]
+            share = float((nearest > median).mean())
+            deploy[f"frac_beyond_{name}_median"] = share
+            logger.info("  %.1f%% of deployment targets are further from the training "
+                        "network than the %s split's median of %.1f km",
+                        100 * share, name, median)
+        payload["deployment"] = deploy
+        logger.info("")
+        logger.info("The deployment distance distribution is what decides which split's "
+                    "number to quote. Reporting the random-split figure for this task "
+                    "would describe a prediction problem the model does not face.")
 
     if rows_out:
         pd.concat(rows_out, ignore_index=True).to_csv(
