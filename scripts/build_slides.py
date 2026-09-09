@@ -81,6 +81,7 @@ def load_numbers() -> dict:
         "bound": js("outputs/v2_hourly_bound/hourly_upper_bound.json"),
         "lrrobust": js("outputs/v2_lr_robustness/lr_robustness.json"),
         "prox": js("outputs/v2_split_effect/proximity.json"),
+        "profile": js("outputs/v2_spatial_profile/spatial_profile.json"),
         "within": js("outputs/v2_africa_hourly/within_day_summary.json"),
         "replay": js("outputs/v2_replay_effect/replay_effect.json")["effects"],
         "step3": js("outputs/v2_step3_source/step3_summary.json"),
@@ -357,40 +358,45 @@ def main() -> None:
              "Africa's unverifiable claim into a verifiable analogue.")
 
     # ---------------------------------------------------------------- 7
-    px = n["prox"]
-    s = text_slide(prs, "Why a random split is interpolation, not generalisation",
-        f"Under a random split a target gauge usually has a trainable one nearby: "
-        f"{100 * px['frac_within_10km']:.0f}% are within 10 km and "
-        f"{100 * px['frac_within_1km']:.1f}% within 1 km, which is often the same river. "
-        f"Blocking moves the median from 10.4 km to 94.9 km.\n"
-        "\n"
-        "Neighbouring catchments share climate, geology and often a channel, so a model can "
-        "score well by recognising a region rather than by learning how attributes map to "
-        "response. A random split cannot tell those apart.\n"
-        "\n"
-        "**Three pieces of evidence that the shortcut is being used:\n"
-        f"  Within the random split itself, zero-shot skill falls with distance: median KGE "
-        f"{px['q1_m0']:.3f} at {px['q1_km']:.1f} km against {px['q5_m0']:.3f} at "
-        f"{px['q5_km']:.0f} km, Spearman {px['rho']:+.3f}. Same training set, same "
-        f"hyperparameters, only distance differs.\n"
-        "  Blocking the split drops zero-shot KGE by 0.10, negative in all six networks.\n"
-        "  Fine-tuning brings both back together, 0.0069 apart. What blocking removed was "
-        "nearby information, and daily aggregates restore it.\n"
-        "\n"
-        "Distance and attribute similarity cannot be separated in observational data, so the "
-        "honest claim is narrow: part of the zero-shot score comes from a highly similar "
-        "training catchment existing, not from generalising across attributes.",
-        size=15)
-    notes(s, "This is the slide to use if asked how we know the random split is "
-             "contaminated. The within-split correlation is the strongest single piece, "
-             "because the training set, hyperparameters and fold count are all identical and "
-             "only distance varies, so it cannot be explained by the blocked split holding "
-             "out harder regions.\n\n"
-             "A random split also flatters the PRECISION, not only the level: fold-to-fold "
-             "standard deviation of M1 is 0.0035 random against 0.0411 blocked, a factor of "
-             "11.8, because each blocked fold holds out different continents rather than a "
-             "different sample of the same regions. Quote the blocked numbers with their "
-             "spread as the honest ones.")
+    px, pf = n["prox"], n["profile"]
+    dep = pf["deployment"]
+    blk = pf["splits"]["blocked"]
+    s = figure_slide(prs,
+        "Which evaluation number applies, and to what",
+        "fig16_spatial_profile.png",
+        f"**The two curves have opposite slopes: the further the model sits from anything it "
+        f"trained on, the worse it starts and the more the daily data returns.\n"
+        f"The deployment domain is measured, not assumed. Africa sits a median "
+        f"{dep['median_km']:,.0f} km from the training network, so "
+        f"{100 * dep['frac_beyond_blocked_median']:.0f}% of real targets are further away "
+        f"than either split's median.",
+        footer="Marker area is the band's gauge count. Under a random split "
+               f"{100 * px['frac_within_10km']:.0f}% of held-out gauges have a trainable one "
+               f"within 10 km and {100 * px['frac_within_1km']:.1f}% within 1 km, often the "
+               "same river.",
+        fig_height=Inches(3.0))
+    notes(s, "Use this slide if asked how we know a random split is contaminated, and if "
+             "asked which number to believe.\n\n"
+             f"The strongest single piece is within-split: zero-shot KGE falls from "
+             f"{px['q1_m0']:.3f} at {px['q1_km']:.1f} km to {px['q5_m0']:.3f} at "
+             f"{px['q5_km']:.0f} km, Spearman {px['rho']:+.3f}. Training set, "
+             f"hyperparameters and fold count are identical across those bands, so only "
+             f"distance varies and the blocked split holding out harder regions cannot "
+             f"explain it.\n\n"
+             f"Say the uncomfortable part before being asked: the deployment domain is "
+             f"about {dep['median_km'] / blk['median_km']:.0f} times further than the "
+             f"blocked split, so 0.436 is still optimistic for Africa. The profile closes "
+             f"with a measurement rather than an extrapolation, since Africa's zero-shot "
+             f"median is observed at 0.114.\n\n"
+             f"One objection to blocked folds is residual dependence at block borders. Our "
+             f"minimum is {blk['min_km']:.1f} km and "
+             f"{100 * blk['frac_within_buffer']:.1f}% sit within 20 km; removing those "
+             f"{blk['buffered']['n_removed']} gauges changes the gain from "
+             f"{blk['unbuffered']['gain']:+.4f} to {blk['buffered']['gain']:+.4f}. The same "
+             f"buffer removes 77% of the random split and drops its zero-shot median from "
+             f"0.531 to 0.476.\n\n"
+             "A random split also flatters the PRECISION: fold-to-fold standard deviation "
+             "of M1 is 0.0035 random against 0.0411 blocked, a factor of 11.8.")
 
     # ---------------------------------------------------------------- 8
     sp = n["split"]

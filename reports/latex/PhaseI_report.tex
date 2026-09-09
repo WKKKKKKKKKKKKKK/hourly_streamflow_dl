@@ -342,6 +342,52 @@ Both figures are paired per gauge, over \num{34836} source and \num{8709} target
 \end{figure}
 
 
+\subsection{Which split's number applies, and to what}\label{sec:profile}
+Whether a random split flatters the result depends on what the result is for, and that question has an answer rather than a preference. The methodological literature reaches it from opposite directions. One position holds that the range of spatial autocorrelation is the wrong criterion for building a test set, and that assessment should instead report error against the distance at which predictions are intended. Another builds folds so that the test-to-training nearest-neighbour distance distribution matches the one the prediction task faces. A third rejects spatial cross-validation outright, while conceding that ordinary cross-validation is deficient for strongly clustered samples with large differences in sampling density. That concession describes this network exactly, with \num{5278} of \num{8843} gauges in one country, and the remedy those authors prefer, probability sampling of the prediction area, is unavailable for a gauge network whose locations were chosen by water agencies rather than by a sampling design.
+
+What all three positions do agree on is the quantity to report: skill as a function of distance to the nearest gauge the model was allowed to train on, read against the distance distribution of the deployment task. Figure~\ref{fig:profile} is that profile.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Skill against distance to the nearest trainable gauge. Bands are fixed distances rather than quantiles so both splits share one axis. The final row is the deployment domain, measured rather than extrapolated.}
+  \label{tab:profile}
+  \begin{tabular}{lrrrrr}
+    \toprule
+    Split & Distance band (km) & $n$ & $M_0$ & $M_1$ & Gain \\
+    \midrule
+    Random & 0 to 5 & 2,102 & 0.5471 & 0.6427 & +0.0691 \\
+    Random & 5 to 10 & 2,173 & 0.5471 & 0.6441 & +0.0667 \\
+    Random & 10 to 20 & 2,539 & 0.5271 & 0.6223 & +0.0573 \\
+    Random & 20 to 40 & 1,545 & 0.5231 & 0.6105 & +0.0530 \\
+    Random & 40 to 80 & 426 & 0.3151 & 0.4816 & +0.0869 \\
+    Random & 80 to 160 & 47 & -0.0563 & -0.1081 & +0.0390 \\
+    Blocked & 5 to 10 & 49 & 0.5182 & 0.7075 & +0.1832 \\
+    Blocked & 10 to 20 & 302 & 0.5067 & 0.7025 & +0.1114 \\
+    Blocked & 20 to 40 & 1,035 & 0.5483 & 0.6820 & +0.1019 \\
+    Blocked & 40 to 80 & 2,312 & 0.5078 & 0.6662 & +0.1186 \\
+    Blocked & 80 to 160 & 3,347 & 0.4148 & 0.6100 & +0.1344 \\
+    Blocked & 160 to $\infty$ & 1,788 & 0.1904 & 0.4689 & +0.1871 \\
+    Africa & 7621 (median) & 294 & 0.1143 & 0.5761 & +0.4094 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The two curves have opposite slopes, and that is the finding. Zero-shot skill falls with distance, and under blocking it falls from \num{0.5483} in the 20-to-40\,\si{\km} band to \num{0.1904} beyond \num{160}\,\si{\km}. The gain from daily aggregates rises along the same axis, from \num{+0.1019} to \num{+0.1871}. Within the random split alone, zero-shot skill against distance gives a Spearman correlation of \num{-0.0896} ($p = \num{3.2e-17}$), and the blocked split \num{-0.2601}. Those are WITHIN-split correlations, with the training set, the hyperparameters and the fold count identical across the bands, so the harder regions a blocked split holds out cannot explain them.
+
+The deployment domain settles which number applies. The \num{294} African basins sit a median \num{7621}\,\si{\km} from the nearest gauge in the training network, with a 5th percentile of \num{4140} and a minimum of \num{1127}. Against the random split's median of \num{10.4}\,\si{\km} and the blocked split's \num{94.1}, \SI{100}{\percent} of deployment targets are further away than either. Quoting the random-split figure for this task would describe a prediction problem the model does not face.
+
+The same fact cuts the other way and is stated here rather than left to a reader. The deployment domain is roughly \num{81} times further from the training network than the blocked split's median, so the blocked estimate is still optimistic for it. The profile can nonetheless be closed with an observation instead of an extrapolation, because Africa's zero-shot median is measured. Zero-shot skill falls monotonically along the entire range and the gain rises along it, with every point observed.
+
+One objection to blocked folds is that contiguous blocks leave residual dependence at their borders, which choosing a better block size does not fix and a distance buffer does. The blocked split's minimum distance is \num{2.99}\,\si{\km}, with \SI{4.1}{\percent} of gauges inside \num{20}\,\si{\km}. Re-scoring with those \num{361} gauges removed gives a gain of \num{+0.1338} against \num{+0.1329} unbuffered, so the objection does not bite here. The same buffer applied to the random split removes \num{6814} gauges, \SI{77}{\percent} of it, and drops its zero-shot median from \num{0.5266} to \num{0.4762}, which is itself a measure of how much that split's skill leans on proximity.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{fig16_spatial_profile.png}
+  \caption{Skill against distance to the nearest gauge the model was allowed to train on. Panel (a) shows where the model starts, filled markers, and where it ends, open markers. Panel (b) shows the paired gain. The two splits' curves have opposite slopes: zero-shot skill falls with distance while the gain from daily aggregates rises. Marker area is the band's gauge count, because both curves have a band under fifty gauges at opposite ends and at uniform size those points would dictate the shape of the line. Bands are fixed distances rather than quantiles so the two splits share one axis. The diamonds are the deployment domain, the 294 African basins, at their own median distance of 7,621 km, which closes the profile with a measurement rather than an extrapolation.}
+  \label{fig:profile}
+\end{figure}
+
+
 \subsection{A random split flatters the result twice}
 Blocking the split costs the zero-shot model a paired median of \num{-0.0594} in KGE, which is \SI{11.0}{\percent} of its random-split level. \SI{63.7}{\percent} of gauges are worse, at Wilcoxon $p = \num{1.6e-168}$, and the drop is negative in all six archives. Some of what looks like zero-shot generalisation under a random split is proximity to a training gauge.
 

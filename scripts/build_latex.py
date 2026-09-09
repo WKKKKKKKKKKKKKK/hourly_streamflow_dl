@@ -127,6 +127,7 @@ def gather() -> dict:
     d["rescale"] = load("outputs/v2_rescale_control/summary.json")
     d["bound"] = load("outputs/v2_hourly_bound/hourly_upper_bound.json")
     d["lrrobust"] = load("outputs/v2_lr_robustness/lr_robustness.json")
+    d["profile"] = load("outputs/v2_spatial_profile/spatial_profile.json")
     d["ablation"] = load("outputs/v2_ablation/ablation_summary.json")
     pub = load("outputs/africa_runB/per_basin_pub_baseline.csv")
     d["pub"] = pub
@@ -463,6 +464,20 @@ REPLAY_CAPTION = (
 )
 
 
+PROFILE_CAPTION = (
+    "Skill against distance to the nearest gauge the model was allowed to train on. "
+    "Panel (a) shows where the model starts, filled markers, and where it ends, open "
+    "markers. Panel (b) shows the paired gain. The two splits' curves have opposite "
+    "slopes: zero-shot skill falls with distance while the gain from daily aggregates "
+    "rises. Marker area is the band's gauge count, because both curves have a band under "
+    "fifty gauges at opposite ends and at uniform size those points would dictate the "
+    "shape of the line. Bands are fixed distances rather than quantiles so the two splits "
+    "share one axis. The diamonds are the deployment domain, the 294 African basins, at "
+    "their own median distance of 7,621 km, which closes the profile with a measurement "
+    "rather than an extrapolation."
+)
+
+
 def part_results_tail(d: dict) -> str:
     """Sections 3 to 5: is it real, what it costs, and the external test."""
     kge, degen, split, st3 = d["kge"], d["degen"], d["split"], d.get("step3")
@@ -639,6 +654,118 @@ def part_results_tail(d: dict) -> str:
             s.append("")
             s.append(fig("fig12_replay.png", REPLAY_CAPTION, "replay"))
             s.append("")
+
+    pr = d.get("profile")
+    if pr:
+        dep = pr.get("deployment") or {}
+        rnd = (pr["splits"].get("random") or {})
+        blk = (pr["splits"].get("blocked") or {})
+        s.append(r"\subsection{Which split's number applies, and to what}"
+                 r"\label{sec:profile}")
+        s.append(
+            "Whether a random split flatters the result depends on what the result is for, "
+            "and that question has an answer rather than a preference. The methodological "
+            "literature reaches it from opposite directions. One position holds that the "
+            "range of spatial autocorrelation is the wrong criterion for building a test "
+            "set, and that assessment should instead report error against the distance at "
+            "which predictions are intended. Another builds folds so that the "
+            "test-to-training nearest-neighbour distance distribution matches the one the "
+            "prediction task faces. A third rejects spatial cross-validation outright, "
+            "while conceding that ordinary cross-validation is deficient for strongly "
+            "clustered samples with large differences in sampling density. That concession "
+            "describes this network exactly, with \\num{5278} of \\num{8843} gauges in one "
+            "country, and the remedy those authors prefer, probability sampling of the "
+            "prediction area, is unavailable for a gauge network whose locations were "
+            "chosen by water agencies rather than by a sampling design.")
+        s.append("")
+        s.append(
+            r"What all three positions do agree on is the quantity to report: skill as a "
+            r"function of distance to the nearest gauge the model was allowed to train on, "
+            r"read against the distance distribution of the deployment task. "
+            r"Figure~\ref{fig:profile} is that profile.")
+        s.append("")
+        rows = []
+        for name, entry in (("Random", rnd), ("Blocked", blk)):
+            for band in entry.get("profile", []):
+                hi = "$\\infty$" if not np.isfinite(band["hi_km"]) else f"{band['hi_km']:.0f}"
+                rows.append([name, f"{band['lo_km']:.0f} to {hi}", f"{band['n']:,}",
+                             f"{band['M0']:.4f}", f"{band['M1']:.4f}",
+                             f"{band['gain']:+.4f}"])
+        if dep:
+            afr = d.get("africa")
+            if afr:
+                rows.append(["Africa", f"{dep['median_km']:.0f} (median)",
+                             f"{dep['n_deployment_targets']}",
+                             f"{need(afr, 'M0', 'median_kge'):.4f}",
+                             f"{need(afr, 'M1', 'median_kge'):.4f}",
+                             f"{need(afr, 'paired', 'median_delta_kge'):+.4f}"])
+        s.append(table(["Split", "Distance band (km)", "$n$", "$M_0$", "$M_1$", "Gain"],
+                       rows,
+                       "Skill against distance to the nearest trainable gauge. Bands are "
+                       "fixed distances rather than quantiles so both splits share one "
+                       "axis. The final row is the deployment domain, measured rather than "
+                       "extrapolated.", "profile"))
+        s.append(
+            f"The two curves have opposite slopes, and that is the finding. Zero-shot skill "
+            f"falls with distance, and under blocking it falls from "
+            f"\\num{{{blk['profile'][2]['M0']:.4f}}} in the 20-to-40\\,\\si{{\\km}} band to "
+            f"\\num{{{blk['profile'][-1]['M0']:.4f}}} beyond "
+            f"\\num{{{blk['profile'][-1]['lo_km']:.0f}}}\\,\\si{{\\km}}. The gain from daily "
+            f"aggregates rises along the same axis, from "
+            f"\\num{{{blk['profile'][2]['gain']:+.4f}}} to "
+            f"\\num{{{blk['profile'][-1]['gain']:+.4f}}}. Within the random split alone, "
+            f"zero-shot skill against distance gives a Spearman correlation of "
+            f"\\num{{{rnd['spearman_M0_vs_km']['rho']:+.4f}}} "
+            f"($p = \\num{{{rnd['spearman_M0_vs_km']['p']:.1e}}}$), and the blocked split "
+            f"\\num{{{blk['spearman_M0_vs_km']['rho']:+.4f}}}. Those are WITHIN-split "
+            f"correlations, with the training set, the hyperparameters and the fold count "
+            f"identical across the bands, so the harder regions a blocked split holds out "
+            f"cannot explain them.")
+        s.append("")
+        if dep:
+            s.append(
+                f"The deployment domain settles which number applies. The "
+                f"\\num{{{dep['n_deployment_targets']}}} African basins sit a median "
+                f"\\num{{{dep['median_km']:.0f}}}\\,\\si{{\\km}} from the nearest gauge in "
+                f"the training network, with a 5th percentile of "
+                f"\\num{{{dep['p05_km']:.0f}}} and a minimum of "
+                f"\\num{{{dep['min_km']:.0f}}}. Against the random split's median of "
+                f"\\num{{{rnd['median_km']:.1f}}}\\,\\si{{\\km}} and the blocked split's "
+                f"\\num{{{blk['median_km']:.1f}}}, "
+                f"\\SI{{{100 * dep['frac_beyond_blocked_median']:.0f}}}{{\\percent}} of "
+                f"deployment targets are further away than either. Quoting the "
+                f"random-split figure for this task would describe a prediction problem the "
+                f"model does not face.")
+            s.append("")
+            s.append(
+                f"The same fact cuts the other way and is stated here rather than left to a "
+                f"reader. The deployment domain is roughly "
+                f"\\num{{{dep['median_km'] / blk['median_km']:.0f}}} times further from the "
+                f"training network than the blocked split's median, so the blocked estimate "
+                f"is still optimistic for it. The profile can nonetheless be closed with an "
+                f"observation instead of an extrapolation, because Africa's zero-shot median "
+                f"is measured. Zero-shot skill falls monotonically along the entire range "
+                f"and the gain rises along it, with every point observed.")
+            s.append("")
+        s.append(
+            f"One objection to blocked folds is that contiguous blocks leave residual "
+            f"dependence at their borders, which choosing a better block size does not fix "
+            f"and a distance buffer does. The blocked split's minimum distance is "
+            f"\\num{{{blk['min_km']:.2f}}}\\,\\si{{\\km}}, with "
+            f"\\SI{{{100 * blk['frac_within_buffer']:.1f}}}{{\\percent}} of gauges inside "
+            f"\\num{{{pr['buffer_km']:.0f}}}\\,\\si{{\\km}}. Re-scoring with those "
+            f"\\num{{{blk['buffered']['n_removed']}}} gauges removed gives a gain of "
+            f"\\num{{{blk['buffered']['gain']:+.4f}}} against "
+            f"\\num{{{blk['unbuffered']['gain']:+.4f}}} unbuffered, so the objection does "
+            f"not bite here. The same buffer applied to the random split removes "
+            f"\\num{{{rnd['buffered']['n_removed']}}} gauges, "
+            f"\\SI{{{100 * rnd['frac_within_buffer']:.0f}}}{{\\percent}} of it, and drops "
+            f"its zero-shot median from \\num{{{rnd['unbuffered']['M0']:.4f}}} to "
+            f"\\num{{{rnd['buffered']['M0']:.4f}}}, which is itself a measure of how much "
+            f"that split's skill leans on proximity.")
+        s.append("")
+        s.append(fig("fig16_spatial_profile.png", PROFILE_CAPTION, "profile"))
+        s.append("")
 
     s.append(r"\subsection{A random split flatters the result twice}")
     if split and d["split_m1"] is not None:
