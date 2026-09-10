@@ -1376,6 +1376,51 @@ experiments. Part~II reports and analyses the results.
 """
 
 
+
+# Numbers that are allowed to be written literally in the prose. Everything else that looks
+# like a result has to come from a file, because a literal does not change when the runs
+# change and a report whose sentences disagree with its own tables is worse than either.
+LITERAL_ALLOWED = {
+    # Configuration and design constants, not measurements.
+    "0.5", "0.25", "1.0", "0.95", "0.02", "0.05", "2.0", "3.0", "24", "336", "365",
+    # Forget-gate sigmoid values, which are properties of the initialisation and not of
+    # any run: sigmoid(0) and sigmoid(3).
+    "0.500", "0.953",
+    # Colourbar bounds in figure captions, which describe the figure and not a result.
+    "0.085", "0.70",
+}
+
+
+def check_literals(_unused=None) -> list[tuple[int, str, str]]:
+    """Find result-shaped numbers typed literally into this file's own source.
+
+    A hard-coded figure survives a re-run untouched while every table around it updates, so
+    the prose quietly starts contradicting the tables. That is the failure this catches.
+
+    It scans the SOURCE, not the generated document. Scanning the output cannot work: a
+    number produced by an f-string from a JSON file and a number typed by hand look
+    identical there, and the first run of this check flagged 249 of them, nearly all
+    computed. In the source the two are distinguishable, because a computed value appears
+    inside a brace expression and a literal does not.
+    """
+    import re as _re
+    source = Path(__file__).read_text().split("\n")
+    number = _re.compile(r"(?<![\w.])([+-]?\d\.\d{2,4})(?![\w])")
+    # A line that formats a value has a replacement field with a conversion or format spec.
+    computed = _re.compile(r"\{[^{}]*[:!][^{}]*\}")
+    out = []
+    for i, line in enumerate(source, 1):
+        stripped = line.strip()
+        if stripped.startswith("#") or '"' not in line and "'" not in line:
+            continue
+        if computed.search(line):
+            continue
+        for m in number.finditer(line):
+            if m.group(1).lstrip("+-") in LITERAL_ALLOWED:
+                continue
+            out.append((i, m.group(1), stripped[:100]))
+    return out
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build the Phase I report as LaTeX.")
     parser.add_argument("--out", default="reports/latex/PhaseI_report.tex", type=Path)
@@ -1408,6 +1453,16 @@ def main() -> None:
         raise SystemExit(f"control character U+{code:04X} at offset {i}: "
                          f"{text[max(0, i - 60):i + 20]!r} -- a LaTeX macro was written in a "
                          "non-raw Python string")
+    literals = check_literals(text)
+    if literals:
+        print(f"  {len(literals)} literal numbers in the prose that no file supplies:")
+        for i, value, line in literals[:12]:
+            print(f"    L{i:<5} {value:>8s}  {line}")
+        if len(literals) > 12:
+            print(f"    ... and {len(literals) - 12} more")
+        print("  These will not change when the runs change. Move each to a file lookup, "
+              "or add it to LITERAL_ALLOWED if it is a design constant rather than a "
+              "measurement.")
     dashes = text.count(" -- ")
     notbut = len(_re.findall(r"\bnot\b[^.]{0,60}\bbut\b", text))
     print(f"style check: {dashes} em dashes, {notbut} 'not ... but' constructions")
