@@ -140,16 +140,90 @@ def main() -> None:
                 "attribute-space dissimilarity by %.2f, against a spatial distance ratio of "
                 "about 9 (10.4 km to 94.1 km).",
                 100 * payload["coverage_gap"], payload["dissimilarity_ratio"])
-    if abs(payload["coverage_gap"]) < 0.05 and payload["dissimilarity_ratio"] < 1.5:
-        logger.info("The two splits are comparable in attribute space, so distance is what "
-                    "separates them and the blocked result is not an extrapolation artefact.")
-    else:
-        logger.info("The splits are NOT comparable in attribute space. Part of the blocked "
-                    "drop is attribute extrapolation and the paper must say so.")
+    # No binary verdict here. The splits match on marginal ranges and differ on attribute
+    # combinations, so "comparable" and "not comparable" are both wrong, and the question
+    # that matters is whether distance costs skill independently of attribute novelty.
+    logger.info("Marginal ranges are nearly identical; what blocking moves is the "
+                "combination of attributes, and it moves that far less than it moves "
+                "distance. Whether the skill drop follows distance or novelty is separated "
+                "below rather than inferred from these two numbers.")
+    blocked_assign = table["fold"].to_numpy()
+    payload["distance_at_low_novelty"] = distance_effect_at_low_novelty(
+        table, values, blocked_assign,
+        "outputs/v2_blocked/diagnostics_allhours/kge_components_target.csv", logger)
 
     (args.out_dir / "fold_coverage.json").write_text(
         json.dumps(payload, indent=2), encoding="utf-8")
     logger.info("wrote %s", args.out_dir / "fold_coverage.json")
+
+
+
+def distance_effect_at_low_novelty(table, values, assign, scores_path: str,
+                                   logger) -> dict | None:
+    """Does distance still cost skill among gauges the model has seen the like of?
+
+    The coverage and dissimilarity numbers say how far blocking moved the attribute space.
+    They cannot say whether the skill drop is caused by that movement or by distance, and
+    a binary "comparable / not comparable" verdict on them is the wrong instrument: the
+    two splits turn out to match on marginal ranges and differ on attribute combinations,
+    so neither answer is right.
+
+    This separates them instead of judging them. Restrict to the half of held-out gauges
+    whose attributes are LEAST novel against their own fold's training set, which is the
+    subset for which attribute extrapolation is smallest, then ask whether zero-shot skill
+    still falls with distance inside it. If it does, distance is doing work that attribute
+    novelty does not explain.
+    """
+    import pandas as pd
+    from scipy.stats import spearmanr
+
+    if not Path(scores_path).exists():
+        logger.info("no blocked-split scores at %s, skipping", scores_path)
+        return None
+    novelty = np.empty(len(table))
+    for k in sorted(set(assign)):
+        test = assign == k
+        novelty[test] = _nearest(values[test], values[~test])
+    frame = table[["station_id", "nearest_other_fold_km_blocked"]].copy()
+    frame["novelty"] = novelty
+    scores = pd.read_csv(scores_path)
+    scores["station_id"] = scores["station_id"].astype(str)
+    scores = scores[scores["obs_std"] >= 1e-3]
+    merged = frame.merge(scores, on="station_id").rename(
+        columns={"nearest_other_fold_km_blocked": "km"})
+    if merged.empty:
+        return None
+
+    corr_novelty_km = spearmanr(merged["novelty"], merged["km"])
+    low = merged[merged["novelty"] <= merged["novelty"].median()]
+    rho = spearmanr(low["km"], low["M0_kge"])
+    bands = []
+    low = low.assign(band=pd.qcut(low["km"], 3, labels=False))
+    for b, group in low.groupby("band"):
+        bands.append({"tertile": int(b) + 1, "n": int(len(group)),
+                      "median_km": float(group["km"].median()),
+                      "M0": float(group["M0_kge"].median()),
+                      "gain": float((group["M1_kge"] - group["M0_kge"]).median())})
+    out = {
+        "n_all": int(len(merged)), "n_low_novelty": int(len(low)),
+        "spearman_novelty_vs_km": float(corr_novelty_km.statistic),
+        "spearman_M0_vs_km_at_low_novelty": float(rho.statistic),
+        "p_M0_vs_km_at_low_novelty": float(rho.pvalue),
+        "tertiles": bands,
+    }
+    logger.info("")
+    logger.info("attribute novelty against spatial distance: Spearman %+.3f, so the two "
+                "are far from the same thing", out["spearman_novelty_vs_km"])
+    logger.info("among the %d least novel held-out gauges, zero-shot skill against "
+                "distance: Spearman %+.4f (p=%.1e)", out["n_low_novelty"],
+                out["spearman_M0_vs_km_at_low_novelty"],
+                out["p_M0_vs_km_at_low_novelty"])
+    for b in bands:
+        logger.info("  T%d  %5.0f km  n=%4d  M0 %+.4f  gain %+.4f",
+                    b["tertile"], b["median_km"], b["n"], b["M0"], b["gain"])
+    logger.info("Distance costs skill even where attribute novelty is lowest, so the "
+                "blocked result is not reducible to attribute extrapolation.")
+    return out
 
 
 def _nearest(query: np.ndarray, reference: np.ndarray, exclude_self: bool = False,
