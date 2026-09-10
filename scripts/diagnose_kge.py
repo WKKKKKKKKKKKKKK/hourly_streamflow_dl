@@ -41,7 +41,11 @@ from data.sources import build_eval_set
 from eval.evaluate import evaluate_model
 from models.mtslstm import build_model
 
-COMPONENTS = ["kge", "kge_r", "kge_alpha", "kge_beta", "nse"]
+# Peak behaviour sits alongside the KGE components rather than replacing them. alpha says
+# the simulated series is under-dispersed overall; FHV says whether that lands on the flood
+# peaks, and the timing error says whether the peaks arrive when they should. The three can
+# disagree, and the flood-forecasting motivation is about the last two.
+COMPONENTS = ["kge", "kge_r", "kge_alpha", "kge_beta", "nse", "fhv_pct", "peak_timing_h"]
 
 
 def _score(cfg, checkpoint: Path, loader, device, dyn_size, n_static, scalers, min_samples, logger):

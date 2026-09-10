@@ -63,6 +63,74 @@ def kge_components(obs: np.ndarray, sim: np.ndarray) -> tuple[float, float, floa
     return float(kge), float(r), float(alpha), float(beta)
 
 
+
+def peak_flow_bias(obs: np.ndarray, sim: np.ndarray, top_fraction: float = 0.02) -> float:
+    """FHV: bias over the highest flows, as a percentage.
+
+    The standard high-flow diagnostic in this literature, defined on the top 2 percent of
+    the FLOW DURATION CURVE rather than on identified events, so it needs no event
+    definition and no threshold per gauge. Negative means the model under-predicts peaks,
+    which is what a squared-error objective produces and what every model in Kratzert et
+    al. (2019) Table 3 shows.
+
+    KGE's alpha already says the simulated series is under-dispersed overall. FHV says
+    whether that under-dispersion lands where it matters for flood forecasting, and the
+    two can disagree: a model can carry the right variance and still clip the top of it.
+    """
+    if obs.size < 50:
+        return float("nan")
+    k = max(1, int(round(top_fraction * obs.size)))
+    obs_top = np.sort(obs)[-k:]
+    sim_top = np.sort(sim)[-k:]
+    denom = obs_top.sum()
+    if not np.isfinite(denom) or denom == 0:
+        return float("nan")
+    return float(100.0 * (sim_top.sum() - denom) / denom)
+
+
+def peak_timing_error(obs: np.ndarray, sim: np.ndarray, window: int = 12,
+                      quantile: float = 0.99) -> float:
+    """Mean absolute timing error at observed peaks, in hours.
+
+    An observed peak is a local maximum above the gauge's own high quantile that is the
+    largest value within +/- ``window`` hours. The simulated peak is then the largest
+    simulated value in the same window, and the error is the gap between their positions.
+    Defining the peak on the observation and searching the simulation around it is the
+    convention in Gauch et al. (2021); the alternative, matching simulated peaks to
+    observed ones, has to solve an assignment problem and rewards a model that emits few
+    peaks.
+
+    Returns NaN when the series is too short or holds fewer than three qualifying peaks,
+    since a mean over one or two events is not a timing estimate.
+    """
+    if obs.size < 4 * window + 1:
+        return float("nan")
+    threshold = np.nanquantile(obs, quantile)
+    if not np.isfinite(threshold):
+        return float("nan")
+    errors = []
+    i = window
+    while i < obs.size - window:
+        centre = obs[i]
+        if centre < threshold or not np.isfinite(centre):
+            i += 1
+            continue
+        local = obs[i - window:i + window + 1]
+        if centre < np.nanmax(local):
+            i += 1
+            continue
+        sim_local = sim[i - window:i + window + 1]
+        if not np.isfinite(sim_local).any():
+            i += window
+            continue
+        errors.append(abs(int(np.nanargmax(sim_local)) - window))
+        # Step past this peak so one broad event is not counted many times.
+        i += window
+    if len(errors) < 3:
+        return float("nan")
+    return float(np.mean(errors))
+
+
 class StationAccumulator:
     """Collects (obs, sim) pairs per station across batches, in standardized space."""
 
@@ -103,6 +171,11 @@ class StationAccumulator:
                 "kge_alpha": float("nan"),
                 "kge_beta": float("nan"),
                 "sim_std": float("nan"),
+                # Peak behaviour, alongside the KGE components. alpha says the series is
+                # under-dispersed; these say whether that lands on the flood peaks and
+                # whether the peaks arrive at the right time.
+                "fhv_pct": float("nan"),
+                "peak_timing_h": float("nan"),
             }
             if obs.size < max(2, min_samples):
                 row["score_status"] = "excluded"
@@ -112,6 +185,8 @@ class StationAccumulator:
 
             nse, kge = compute_nse(obs, sim), compute_kge(obs, sim)
             _, row["kge_r"], row["kge_alpha"], row["kge_beta"] = kge_components(obs, sim)
+            row["fhv_pct"] = peak_flow_bias(obs, sim)
+            row["peak_timing_h"] = peak_timing_error(obs, sim)
             if not (np.isfinite(nse) and np.isfinite(kge)):
                 reasons = []
                 if not np.isfinite(row["obs_std"]):
