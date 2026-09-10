@@ -288,8 +288,15 @@ def main() -> None:
         ).to(device)
     else:
         criterion = DailyAggregateTransferLoss(
-            daily_window=DAILY_WINDOW, agg_loss_weight=float(cfg.transfer.agg_loss_weight)
+            daily_window=DAILY_WINDOW,
+            agg_loss_weight=float(cfg.transfer.agg_loss_weight),
+            daily_branch_weight=float(
+                cfg.get_path("transfer.daily_branch_weight", 1.0)),
         )
+        logger.info("daily objective: daily-branch term weight %.2f, hourly-aggregate "
+                    "term weight %.2f",
+                    float(cfg.get_path("transfer.daily_branch_weight", 1.0)),
+                    float(cfg.transfer.agg_loss_weight))
 
     # Which holdout metric picks the epoch. Selection is a SEPARATE key from the objective
     # on purpose: the existing daily runs already log the hourly test score each epoch

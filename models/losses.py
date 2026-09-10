@@ -96,10 +96,36 @@ class DailyAggregateTransferLoss(nn.Module):
     partial day is compared like for like.
     """
 
-    def __init__(self, daily_window: int = 24, agg_loss_weight: float = 0.5, eps: float = NSE_EPS):
+    def __init__(self, daily_window: int = 24, agg_loss_weight: float = 0.5,
+                 daily_branch_weight: float = 1.0, eps: float = NSE_EPS):
         super().__init__()
         self.daily_window = int(daily_window)
         self.agg_loss_weight = float(agg_loss_weight)
+        # The weight on the DAILY BRANCH term, which was hard-coded at 1.0. It is a free
+        # parameter because the two terms represent two different ways of using a daily
+        # observation, and only one of them is what the literature does.
+        #
+        #   daily_branch_weight only  supervises outputs["D"], the daily branch's own head.
+        #                             The hourly branch is reached solely through the state
+        #                             handed over at the transfer index.
+        #   agg_loss_weight only      supervises the mean of 24 hourly outputs against the
+        #                             same daily observation. This is the conventional
+        #                             formulation, the one used when a model has no separate
+        #                             daily branch to supervise.
+        #
+        # They are not interchangeable. The aggregate term is degenerate: any 24 values with
+        # the right mean satisfy it, including a flat line, so on its own it has a failure
+        # mode the daily-branch term cannot have, since that branch emits one value per day
+        # and has no within-day degrees of freedom to misuse.
+        #
+        # Setting either to zero isolates the other, which is what makes the comparison with
+        # the conventional formulation possible at all.
+        self.daily_branch_weight = float(daily_branch_weight)
+        if self.daily_branch_weight <= 0 and self.agg_loss_weight <= 0:
+            raise ValueError(
+                "both loss terms are switched off: set daily_branch_weight or "
+                "agg_loss_weight above zero"
+            )
         self.eps = float(eps)
 
     def forward(
@@ -111,7 +137,7 @@ class DailyAggregateTransferLoss(nn.Module):
     ) -> dict[str, torch.Tensor]:
         loss_daily = basin_nse(outputs["D"], y_daily, stn_std, self.eps)
         parts = {"loss_daily_branch": loss_daily.detach()}
-        total = loss_daily
+        total = self.daily_branch_weight * loss_daily
 
         h_seq = outputs.get("H_seq")
         if self.agg_loss_weight > 0 and h_seq is not None and h_seq.size(1) >= self.daily_window:
