@@ -14,8 +14,8 @@
 
 set -eo pipefail
 REPO_ROOT="${GMTS_REPO:-${SLURM_SUBMIT_DIR:-$PWD}}"
-if [[ ! -f "$REPO_ROOT/configs/phase1.yaml" ]]; then
-  echo "REPO_ROOT=$REPO_ROOT is not the global_mtslstm repo." >&2
+if [[ ! -f "$REPO_ROOT/train/pretrain_source.py" ]]; then
+  echo "REPO_ROOT=$REPO_ROOT is not the repository root." >&2
   exit 2
 fi
 cd "$REPO_ROOT"
@@ -26,8 +26,8 @@ PYTHON_BIN="${PYTHON_BIN:-$(command -v python3)}"
 
 PRESET="${PRESET:-forcing}"
 case "$PRESET" in
-  forcing) MODULE=scripts.basin_average_era5_forcing; DIR=/ibex/user/kongw0a/era5_land_africa_forcing ;;
-  runoff)  MODULE=scripts.basin_average_era5_land;    DIR=/ibex/user/kongw0a/era5_land_africa ;;
+  forcing) MODULE=scripts.prep.basin_average_era5_forcing; DIR=/ibex/user/kongw0a/era5_land_africa_forcing ;;
+  runoff)  MODULE=scripts.prep.basin_average_era5_land;    DIR=/ibex/user/kongw0a/era5_land_africa ;;
   *) echo "PRESET must be forcing|runoff, got $PRESET" >&2; exit 2 ;;
 esac
 

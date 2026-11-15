@@ -36,6 +36,8 @@ import torch
 
 from common.config import add_common_args, load_config, resolve
 from common.metrics import compute_kge, compute_nse, kge_components
+from common.alignment import alignment_of_cfg, assert_same_alignment, write_alignment
+from common.tracks import assert_same_track
 from common.utils import EarlyStopping, atomic_save, get_device, set_seed, setup_logging
 from data.africa import (
     AfricaWindowDataset,
@@ -56,15 +58,26 @@ DEFAULT_FORCING = (
 
 
 @torch.no_grad()
-def score(model, loader, device, y_mean: float, y_std: float, min_days: int = 100):
-    """Per-basin daily KGE/NSE in mm/d, plus the r/alpha/beta split."""
+def score(model, loader, device, y_mean: float, y_std: float, min_days: int = 100,
+          branch: str = "agg"):
+    """Per-basin daily KGE/NSE in mm/d, plus the r/alpha/beta split.
+
+    ``branch`` selects what is scored. "agg" is the 24-hour mean of the hourly branch,
+    which is what the transfer objective constrains and what every result so far reports.
+    "daily" is the daily branch's own output, which is an ordinary daily LSTM: the
+    baseline a reader would reach for if they had daily observations and no hourly model.
+    Both are in the same normalised hourly-mean units, so the conversion below is shared.
+    """
+    if branch not in ("agg", "daily"):
+        raise ValueError(f"branch must be 'agg' or 'daily', got {branch!r}")
     model.eval()
     sim: dict[str, list] = {}
     obs: dict[str, list] = {}
     for batch in loader:
         x = {k: v.to(device, non_blocking=True) for k, v in batch["x"].items()}
         outputs = model({"D": x["D"], "H": x["H"]}, x["S"])
-        pred = daily_aggregate_prediction(outputs, DAILY_WINDOW).float().cpu().numpy()
+        pred = (daily_aggregate_prediction(outputs, DAILY_WINDOW) if branch == "agg"
+                else outputs["D"]).float().cpu().numpy()
         # mm/h -> mm/d, the same conversion eval.africa makes.
         pred = (pred * y_std + y_mean) * DAILY_WINDOW
         truth = batch["y_daily_obs"].numpy()
@@ -102,14 +115,35 @@ def main() -> None:
         description="Fine-tune on African daily observations (Phase I protocol, in situ)."))
     parser.add_argument("--fold", type=int, required=True)
     parser.add_argument("--pretrained", default=None)
+    # The two baseline switches. --scratch skips the pretrained checkpoint entirely, so the
+    # run measures what the same architecture achieves on African daily observations alone;
+    # --score-branch daily reads the daily LSTM's own head instead of the hourly aggregate.
+    # Together they give an ordinary daily LSTM trained on exactly the data, split, forcing
+    # and attributes the main experiment uses, which is the only comparison that isolates
+    # the method rather than the setup.
+    parser.add_argument("--scratch", action="store_true")
+    parser.add_argument(
+        "--select-frac", type=float, default=0.1,
+        help="Fraction of each basin's record, taken from the tail of the training "
+             "period, reserved for choosing the epoch. 0 reproduces the earlier "
+             "behaviour of selecting on the validation period, which is selection on "
+             "the evaluation set and is kept only to reproduce those runs.")
+    parser.add_argument("--score-branch", default="agg", choices=("agg", "daily"))
     parser.add_argument("--forcing", default=DEFAULT_FORCING)
     parser.add_argument("--basins", default="africa/africa_basins.gpkg")
     parser.add_argument("--out-dir", default=None)
     parser.add_argument("--epochs", type=int, default=None)
+    parser.add_argument("--patience", type=int, default=None)
     parser.add_argument("--train-frac", type=float, default=0.7)
     args = parser.parse_args()
 
     cfg = load_config(args.config, args.set)
+    # Same rule as train.transfer_target: the aligned daily window is for the standalone
+    # daily-LSTM baseline only, never for a pretrained MTS-LSTM.
+    if cfg.data.get("daily_includes_target_day", False) and not (
+            args.scratch and args.score_branch == "daily"):
+        raise SystemExit("data.daily_includes_target_day is only allowed with --scratch "
+                         "--score-branch daily (the daily-LSTM baseline)")
     out_dir = Path(args.out_dir) if args.out_dir else resolve(cfg.output_root) / f"fold{args.fold}" / "africa_transfer"
     out_dir.mkdir(parents=True, exist_ok=True)
     logger = setup_logging(out_dir / "africa_transfer.log")
@@ -119,8 +153,17 @@ def main() -> None:
     pretrained = Path(args.pretrained) if args.pretrained else (
         resolve(cfg.output_root) / f"fold{args.fold}" / "pretrain" / "best_model.pth"
     )
-    if not pretrained.exists():
+    if not args.scratch and not pretrained.exists():
         raise SystemExit(f"pretrained checkpoint not found: {pretrained}")
+    # A scratch run loads no checkpoint, so there is nothing to cross.
+    if not args.scratch:
+        assert_same_track(pretrained, out_dir, logger=logger,
+                          cache=cfg.data.get("cache_dir"), dataset_root=cfg.data.root,
+                          static_table=cfg.data.get("static_csv"))
+        assert_same_alignment(pretrained, cfg, logger=logger)
+    # This script writes no run_meta.json, so record the layout beside the model for any
+    # later evaluation to check against (common.alignment).
+    write_alignment(out_dir, cfg)
     logger.info("fold %d | device %s | starting from %s", args.fold, device, pretrained)
 
     scalers = load_scalers(cfg.data.root)
@@ -143,9 +186,17 @@ def main() -> None:
                   lookback_hourly=int(cfg.data.lookback_hourly),
                   lookback_daily=int(cfg.data.get("lookback_daily", 365)),
                   chunk_size=int(cfg.data.get("chunk_size", 512)),
-                  train_frac=args.train_frac, scalers=scalers, logger=logger)
+                  train_frac=args.train_frac, select_frac=args.select_frac,
+                  scalers=scalers, logger=logger,
+                  daily_includes_target_day=bool(
+                      cfg.data.get("daily_includes_target_day", False)),
+                  window_alignment=alignment_of_cfg(cfg))
     train_ds = AfricaWindowDataset(split="training", with_daily=True, **common)
     valid_ds = AfricaWindowDataset(split="validation", **common)
+    # The slice the epoch is chosen on. It sits inside the training period, so the
+    # validation period is read exactly twice: once for M0 and once for the final M1.
+    select_ds = (AfricaWindowDataset(split="selection", **common)
+                 if args.select_frac > 0 else None)
 
     # A unit slip in the target is invisible during training: the loss converges
     # perfectly well in the wrong units and only the final alpha/beta reveal it. The
@@ -169,35 +220,50 @@ def main() -> None:
     pin = device.type == "cuda"
     train_loader = make_loader(train_ds, num_workers=num_workers, pin_memory=pin, shuffle=True)
     valid_loader = make_loader(valid_ds, num_workers=num_workers, pin_memory=pin)
+    select_loader = (make_loader(select_ds, num_workers=num_workers, pin_memory=pin)
+                     if select_ds is not None else valid_loader)
+    logger.info("epoch selection on: %s",
+                f"a held-out tail of the training period ({args.select_frac:.0%} of each "
+                f"record, {len(select_ds)} samples)" if select_ds is not None
+                else "THE VALIDATION PERIOD -- selection on the evaluation set")
 
     model = build_model(cfg, dyn_input_size=dyn_size, static_input_size=len(static_names)).to(device)
-    model.load_state_dict(torch.load(pretrained, map_location=device, weights_only=True))
+    if args.scratch:
+        logger.info("SCRATCH run: no pretrained checkpoint is loaded, and M0 is not scored "
+                    "because a randomly initialised model has no zero-shot skill to report")
+    else:
+        model.load_state_dict(torch.load(pretrained, map_location=device, weights_only=True))
 
-    # M0 first: the same checkpoint, zero-shot on the African validation period, so M1
-    # is compared against the model it actually started from on the same basins/days.
-    logger.info("scoring M0 (zero-shot) on the African validation period ...")
-    m0 = score(model, valid_loader, device, y_mean, y_std)
-    m0_summary = summarise(m0, "M0")
-    if not 0.05 <= m0_summary["median_alpha"] <= 20:
-        raise SystemExit(
-            f"M0 alpha is {m0_summary['median_alpha']:.2f} before any fine-tuning -- that is "
-            "a units or input-structure problem, not a model property. Refusing to continue."
-        )
-    logger.info("M0: median KGE %.4f | r %.3f alpha %.3f beta %.3f | %d basins",
-                m0_summary["median_kge"], m0_summary["median_r"],
-                m0_summary["median_alpha"], m0_summary["median_beta"], m0_summary["n_basins"])
-    m0.to_csv(out_dir / "per_basin_M0.csv", index=False)
+        # M0 first: the same checkpoint, zero-shot on the African validation period, so M1
+        # is compared against the model it actually started from on the same basins/days.
+        logger.info("scoring M0 (zero-shot) on the African validation period ...")
+        m0 = score(model, valid_loader, device, y_mean, y_std, branch=args.score_branch)
+        m0_summary = summarise(m0, "M0")
+        if not 0.05 <= m0_summary["median_alpha"] <= 20:
+            raise SystemExit(
+                f"M0 alpha is {m0_summary['median_alpha']:.2f} before any fine-tuning -- that "
+                "is a units or input-structure problem, not a model property. Refusing to "
+                "continue."
+            )
+        logger.info("M0: median KGE %.4f | r %.3f alpha %.3f beta %.3f | %d basins",
+                    m0_summary["median_kge"], m0_summary["median_r"],
+                    m0_summary["median_alpha"], m0_summary["median_beta"],
+                    m0_summary["n_basins"])
+        m0.to_csv(out_dir / "per_basin_M0.csv", index=False)
 
     n_trainable, n_frozen = set_trainable(model, list(cfg.transfer.freeze_modules or []))
     logger.info("frozen %s | %d trainable / %d frozen params",
                 list(cfg.transfer.freeze_modules or []), n_trainable, n_frozen)
     criterion = DailyAggregateTransferLoss(
-        daily_window=DAILY_WINDOW, agg_loss_weight=float(cfg.transfer.agg_loss_weight))
+        daily_window=DAILY_WINDOW, agg_loss_weight=float(cfg.transfer.agg_loss_weight),
+        daily_branch_weight=float(cfg.get_path("transfer.daily_branch_weight", 1.0)))
     optimizer = torch.optim.Adam([p for p in model.parameters() if p.requires_grad],
                                  lr=float(cfg.transfer.lr),
                                  weight_decay=float(cfg.transfer.weight_decay))
     epochs = args.epochs if args.epochs is not None else int(cfg.transfer.epochs)
-    stopper = EarlyStopping(patience=int(cfg.transfer.patience), mode="max")
+    patience = args.patience if args.patience is not None else int(cfg.transfer.patience)
+    logger.info("early stopping patience: %d epochs", patience)
+    stopper = EarlyStopping(patience=patience, mode="max")
     best_state = copy.deepcopy(model.state_dict())
     history = []
 
@@ -232,11 +298,19 @@ def main() -> None:
 
         # Selection uses DAILY skill on the African validation period, which is all the
         # premise allows: these basins have no hourly observations at all.
-        current = score(model, valid_loader, device, y_mean, y_std)
+        current = score(model, select_loader, device, y_mean, y_std, branch=args.score_branch)
         summary = summarise(current, f"epoch{epoch}")
-        history.append({"epoch": epoch, "train_loss": loss, **summary})
-        logger.info("epoch %d/%d | loss %.5f | val daily KGE %.4f | %d basins",
-                    epoch, epochs, loss, summary["median_kge"], summary["n_basins"])
+        # What the validation period WOULD have said, recorded every epoch but never used
+        # to choose. The gap between the chosen epoch and the best of this column is the
+        # bias the old selection rule carried, and it is now measurable rather than
+        # argued about.
+        peek = summarise(score(model, valid_loader, device, y_mean, y_std,
+                               branch=args.score_branch), f"peek{epoch}")
+        history.append({"epoch": epoch, "train_loss": loss, **summary,
+                        "peek_val_median_kge": peek["median_kge"]})
+        logger.info("epoch %d/%d | loss %.5f | selection KGE %.4f | (val peek %.4f) | %d basins",
+                    epoch, epochs, loss, summary["median_kge"], peek["median_kge"],
+                    summary["n_basins"])
         if stopper.step(summary["median_kge"], epoch):
             best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
             atomic_save(best_state, out_dir / "best_africa_model.pth")
@@ -246,13 +320,19 @@ def main() -> None:
             break
 
     model.load_state_dict(best_state)
-    m1 = score(model, valid_loader, device, y_mean, y_std)
+    m1 = score(model, valid_loader, device, y_mean, y_std, branch=args.score_branch)
     m1_summary = summarise(m1, "M1")
     m1.to_csv(out_dir / "per_basin_M1.csv", index=False)
     logger.info("M1: median KGE %.4f | r %.3f alpha %.3f beta %.3f",
                 m1_summary["median_kge"], m1_summary["median_r"],
                 m1_summary["median_alpha"], m1_summary["median_beta"])
 
+    if args.scratch:
+        # A scratch run has no M0 to pair against: the model it started from was random.
+        # The bookkeeping below exists to report the M0->M1 movement, so it is skipped
+        # rather than faked. Everything above this point has already been written.
+        logger.info("scratch run: no M0, so the paired M0/M1 table is not written")
+        return
     paired = m0.merge(m1, on="station_id", suffixes=("_M0", "_M1"))
     delta = paired["kge_M1"] - paired["kge_M0"]
     from scipy.stats import wilcoxon

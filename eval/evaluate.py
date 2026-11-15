@@ -23,6 +23,8 @@ import torch
 
 from common.config import add_common_args, load_config, resolve
 from common.metrics import StationAccumulator, summarize
+from common.alignment import assert_same_alignment
+from common.tracks import assert_same_track
 from common.utils import get_device, setup_logging
 from data.dataset import build_dataset, load_dataset_config, load_scalers, make_loader, resolve_static_spec
 from data.folds import domain_stations, load_folds
@@ -39,6 +41,7 @@ def evaluate_model(
     y_std: float,
     min_samples: int = 1,
     daily_window: int | None = None,
+    daily_branch: bool = False,
     criterion=None,
     logger=None,
 ) -> dict[str, pd.DataFrame]:
@@ -47,6 +50,12 @@ def evaluate_model(
     Pass ``criterion`` to also accumulate the objective on this split, so the
     validation loss is directly comparable with the training loss instead of
     only sharing an epoch axis with it.
+
+    ``daily_branch`` decides which head the daily metric reads. The default aggregates
+    the hourly output over 24 hours, which is what the transfer objective constrains.
+    An ordinary daily LSTM has no hourly output to aggregate -- its hourly branch never
+    receives a gradient -- so scoring it that way measures noise. Set this for that arm
+    and the metric reads ``outputs["D"]``, the same tensor its loss is computed on.
     """
     model.eval()
     hourly = StationAccumulator()
@@ -78,7 +87,9 @@ def evaluate_model(
                 mask = batch.get("daily_mask")
                 if mask is not None:
                     mask = mask.to(device, non_blocking=True)
-                pred = daily_aggregate_prediction(outputs, daily_window, mask).float().cpu().numpy()
+                pred = (outputs["D"] if daily_branch
+                        else daily_aggregate_prediction(outputs, daily_window, mask)
+                        ).float().cpu().numpy().reshape(-1)
                 daily.update(
                     [s for s, k in zip(stations, keep) if k],
                     pred[keep],
@@ -160,6 +171,13 @@ def main() -> None:
     dyn_size = len(load_dataset_config(cfg.data.root)["dyn_features"])
 
     model = build_model(cfg, dyn_input_size=dyn_size, static_input_size=len(static_names)).to(device)
+    # --checkpoint takes an arbitrary path, so this is the one evaluation entry point
+    # that can read one snapshot's weights and write the numbers under the other's
+    # results. Same refusal as the training entry points, same escape hatch.
+    assert_same_track(args.checkpoint, out_dir, logger=logger,
+                      cache=cfg.data.get("cache_dir"), dataset_root=cfg.data.root,
+                      static_table=cfg.data.get("static_csv"))
+    assert_same_alignment(args.checkpoint, cfg, logger=logger)
     state = torch.load(args.checkpoint, map_location=device, weights_only=True)
     model.load_state_dict(state)
     logger.info("loaded checkpoint %s", args.checkpoint)

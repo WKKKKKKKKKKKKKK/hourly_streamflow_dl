@@ -1,7 +1,7 @@
 #!/bin/bash
 # Phase I Steps 2-3 -- daily-only target transfer + source-degradation check.
 # Needs the matching fold's pretrain output to exist.
-#   sbatch --dependency=afterok:<pretrain_jobid> slurm/20_transfer.sbatch
+#   CONFIG=configs/aligned/phase1_runB_v2.yaml sbatch --dependency=afterok:<pretrain_jobid> slurm/20_transfer_runB.sbatch
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
@@ -24,8 +24,8 @@ set -eo pipefail
 # NOT point at the repo. Use the submit directory, or GMTS_REPO if you submit from
 # elsewhere, and verify it really is the repo before touching anything.
 REPO_ROOT="${GMTS_REPO:-${SLURM_SUBMIT_DIR:-$PWD}}"
-if [[ ! -f "$REPO_ROOT/configs/phase1.yaml" ]]; then
-  echo "REPO_ROOT=$REPO_ROOT is not the global_mtslstm repo (no configs/phase1.yaml)." >&2
+if [[ ! -f "$REPO_ROOT/train/pretrain_source.py" ]]; then
+  echo "REPO_ROOT=$REPO_ROOT is not the repository root (no train/pretrain_source.py)." >&2
   echo "Submit from the repo root, or export GMTS_REPO=/path/to/global_mtslstm." >&2
   exit 2
 fi
@@ -50,7 +50,7 @@ else
   echo "     in ~/.bashrc, or sync afterwards with 'wandb sync $WANDB_DIR/offline-run-*'." >&2
 fi
 
-CONFIG="${CONFIG:-configs/phase1_runB.yaml}"
+CONFIG="${CONFIG:?set CONFIG=configs/...yaml}"
 WANDB_GROUP="${WANDB_GROUP:-phase1B_transfer}"
 # A variant run (e.g. source replay) writes to its own output_root but must start
 # from the SAME pretrained weights, otherwise the comparison measures two
@@ -78,6 +78,32 @@ read -r -a EXTRA_SET_ARR <<< "${EXTRA_SET:-}"
 OUT_ROOT_CFG=$("$PYTHON_BIN" -c "
 from common.config import load_config, resolve
 print(resolve(load_config('$CONFIG', None).output_root))")
+
+# The one cross-track hazard no config file can catch. PRETRAIN_ROOT is an environment
+# variable, so a config-level isolation check never sees it: a December config started
+# from June weights would not fail, it would train and report, and afterwards nothing in
+# the output would say the two snapshots had been mixed. The check therefore lives where
+# the variable is used, needs OUT_ROOT_CFG (hence its position here, after the config is
+# read), and is symmetric -- whichever track the config belongs to, the weights must
+# belong to the same one.
+if [[ -n "${PRETRAIN_ROOT:-}" ]]; then
+  CFG_TRACK=june;  case "$OUT_ROOT_CFG"  in *"outputs/dec_"*) CFG_TRACK=december ;; esac
+  CKPT_TRACK=june; case "$PRETRAIN_ROOT" in *"outputs/dec_"*) CKPT_TRACK=december ;; esac
+  if [[ "$CFG_TRACK" != "$CKPT_TRACK" ]]; then
+    echo "REFUSING: the config writes to a $CFG_TRACK output root," >&2
+    echo "    $OUT_ROOT_CFG" >&2
+    echo "  but PRETRAIN_ROOT names $CKPT_TRACK weights," >&2
+    echo "    $PRETRAIN_ROOT" >&2
+    echo "  Training one snapshot from the other's weights does not fail; it silently" >&2
+    echo "  mixes the tracks. Point PRETRAIN_ROOT at the $CFG_TRACK pretraining, or set" >&2
+    echo "  ALLOW_CROSS_TRACK=1 if the mixing is deliberate." >&2
+    if [[ "${ALLOW_CROSS_TRACK:-0}" != "1" ]]; then
+      exit 4
+    fi
+    echo "  ALLOW_CROSS_TRACK=1 given; proceeding with mixed tracks." >&2
+  fi
+  echo "track check: config=$CFG_TRACK weights=$CKPT_TRACK"
+fi
 if [[ -f "$OUT_ROOT_CFG/fold$FOLD/transfer/DONE" && "${FORCE:-0}" != "1" ]]; then
   echo "fold $FOLD already complete under $OUT_ROOT_CFG -- refusing to overwrite." >&2
   echo "Point the variant at its own output_root, or set FORCE=1 to redo it." >&2
@@ -91,11 +117,16 @@ if [[ -f "$OUT_ROOT_CFG/fold$FOLD/transfer/DONE" && "${FORCE:-0}" != "1" ]]; the
   exit 0
 fi
 
+# SCORE_BRANCH picks the head the epoch is selected on (agg = the 24-h mean of the hourly
+# output, the default; daily = the daily head). Unset leaves train.transfer_target's own
+# default, i.e. every run launched before this line existed.
+SCORE_ARG=(); [[ -n "${SCORE_BRANCH:-}" ]] && SCORE_ARG=(--score-branch "$SCORE_BRANCH")
+
 echo "fold=$FOLD config=$CONFIG out=$OUT_ROOT_CFG pretrained=${PRETRAIN_ROOT:-<config default>}"
-echo "extra_set=${EXTRA_SET:-<none>} node=$(hostname)"
+echo "extra_set=${EXTRA_SET:-<none>} score_branch=${SCORE_BRANCH:-<default>} node=$(hostname)"
 
 "$PYTHON_BIN" -u -m train.transfer_target --config "$CONFIG" \
   --fold "$FOLD" \
   --peek-hourly \
-  "${PRETRAINED_ARG[@]}" \
+  "${PRETRAINED_ARG[@]}" ${SCORE_ARG[@]+"${SCORE_ARG[@]}"} \
   --set "wandb.group=$WANDB_GROUP" ${EXTRA_SET_ARR[@]+"${EXTRA_SET_ARR[@]}"}

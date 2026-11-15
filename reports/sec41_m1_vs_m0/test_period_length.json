@@ -1,0 +1,44 @@
+{
+ "random": {
+  "n_gauges": 8709,
+  "median_days": 2540.0,
+  "median_years": 6.954140999315538,
+  "p10_years": 2.252156057494867,
+  "p90_years": 10.798083504449007
+ },
+ "blocked": {
+  "n_gauges": 8709,
+  "median_days": 2540.0,
+  "median_years": 6.954140999315538,
+  "p10_years": 2.252156057494867,
+  "p90_years": 10.798083504449007
+ },
+ "climate": {
+  "n_gauges": 8709,
+  "median_days": 2540.0,
+  "median_years": 6.954140999315538,
+  "p10_years": 2.252156057494867,
+  "p90_years": 10.798083504449007
+ },
+ "longitudinal": {
+  "n_gauges": 8709,
+  "median_days": 2540.0,
+  "median_years": 6.954140999315538,
+  "p10_years": 2.252156057494867,
+  "p90_years": 10.798083504449007
+ },
+ "continental": {
+  "n_gauges": 8709,
+  "median_days": 2540.0,
+  "median_years": 6.954140999315538,
+  "p10_years": 2.252156057494867,
+  "p90_years": 10.798083504449007
+ },
+ "all_designs_pooled": {
+  "n_rows": 43545,
+  "median_days": 2540.0,
+  "median_years": 6.954140999315538,
+  "p10_years": 2.2499657768651637,
+  "p90_years": 10.798083504449007
+ }
+}

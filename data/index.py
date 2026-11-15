@@ -132,7 +132,7 @@ def station_table(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
 def load_index(index_dir: str | os.PathLike, split: str) -> pd.DataFrame:
     path = Path(index_dir) / f"batches_{split}.csv.gz"
     if not path.exists():
-        raise FileNotFoundError(f"{path} not found -- run scripts/build_index.py first")
+        raise FileNotFoundError(f"{path} not found -- run scripts/prep/build_index.py first")
     return pd.read_csv(path, dtype={"station": str}).fillna({"station": ""})
 
 
@@ -147,7 +147,7 @@ def load_corrected_map(index_dir: str | os.PathLike, split: str) -> dict[str, li
 def load_stations(index_dir: str | os.PathLike) -> pd.DataFrame:
     path = Path(index_dir) / "stations.csv"
     if not path.exists():
-        raise FileNotFoundError(f"{path} not found -- run scripts/build_index.py first")
+        raise FileNotFoundError(f"{path} not found -- run scripts/prep/build_index.py first")
     return pd.read_csv(path, dtype={"station_id": str})
 
 

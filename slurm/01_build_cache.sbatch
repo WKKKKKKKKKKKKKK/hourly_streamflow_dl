@@ -14,12 +14,14 @@
 
 set -eo pipefail
 REPO_ROOT="${GMTS_REPO:-${SLURM_SUBMIT_DIR:-$PWD}}"
-if [[ ! -f "$REPO_ROOT/configs/phase1.yaml" ]]; then
-  echo "REPO_ROOT=$REPO_ROOT is not the global_mtslstm repo" >&2; exit 2
+if [[ ! -f "$REPO_ROOT/train/pretrain_source.py" ]]; then
+  echo "REPO_ROOT=$REPO_ROOT is not the repository root" >&2; exit 2
 fi
 cd "$REPO_ROOT"; mkdir -p logs
 PYTHON_BIN="${PYTHON_BIN:-$(command -v python3)}"
 echo "node=$(hostname) python=$PYTHON_BIN"
 df -h /ibex/user | tail -1
 
-"$PYTHON_BIN" -u -m scripts.build_hourly_cache --stride 24 --skip-memmap
+# Full build (writes forcing.f32, ~55 GiB). SKIP_MEMMAP=1 rebuilds only the sample index.
+SKIP=(); [[ "${SKIP_MEMMAP:-0}" == 1 ]] && SKIP=(--skip-memmap)
+"$PYTHON_BIN" -u -m scripts.prep.build_hourly_cache --stride 24 ${SKIP[@]+"${SKIP[@]}"}

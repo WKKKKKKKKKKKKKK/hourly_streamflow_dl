@@ -31,7 +31,7 @@
 
 set -eo pipefail
 REPO_ROOT="${GMTS_REPO:-${SLURM_SUBMIT_DIR:-$PWD}}"
-[[ -f "$REPO_ROOT/configs/phase1.yaml" ]] || { echo "not the repo: $REPO_ROOT" >&2; exit 2; }
+[[ -f "$REPO_ROOT/train/pretrain_source.py" ]] || { echo "not the repo: $REPO_ROOT" >&2; exit 2; }
 cd "$REPO_ROOT"
 mkdir -p logs
 PYTHON_BIN="${PYTHON_BIN:-$(command -v python3)}"
@@ -86,7 +86,7 @@ fi
 
 # A non-zero exit only means some requests failed; the manifest decides what is left.
 set +e
-"$PYTHON_BIN" -u -m scripts.download_era5_land_africa "${ARGS[@]}" --out-dir "$OUT"
+"$PYTHON_BIN" -u -m scripts.prep.download_era5_land_africa "${ARGS[@]}" --out-dir "$OUT"
 set -e
 
 echo "complete at exit: $(count_done) / $TOTAL"

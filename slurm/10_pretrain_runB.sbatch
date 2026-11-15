@@ -1,7 +1,7 @@
 #!/bin/bash
 # Phase I Step 1 -- source-domain pretraining, one array task per fold.
-#   sbatch slurm/10_pretrain.sbatch                 # all 5 folds
-#   sbatch --array=0 slurm/10_pretrain.sbatch       # just fold 0
+#   CONFIG=configs/aligned/phase1_runB_v2.yaml sbatch slurm/10_pretrain_runB.sbatch   # all 5 folds
+#   CONFIG=... sbatch --array=0 slurm/10_pretrain_runB.sbatch                          # fold 0 only
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
@@ -46,8 +46,8 @@ set -eo pipefail
 # NOT point at the repo. Use the submit directory, or GMTS_REPO if you submit from
 # elsewhere, and verify it really is the repo before touching anything.
 REPO_ROOT="${GMTS_REPO:-${SLURM_SUBMIT_DIR:-$PWD}}"
-if [[ ! -f "$REPO_ROOT/configs/phase1.yaml" ]]; then
-  echo "REPO_ROOT=$REPO_ROOT is not the global_mtslstm repo (no configs/phase1.yaml)." >&2
+if [[ ! -f "$REPO_ROOT/train/pretrain_source.py" ]]; then
+  echo "REPO_ROOT=$REPO_ROOT is not the repository root (no train/pretrain_source.py)." >&2
   echo "Submit from the repo root, or export GMTS_REPO=/path/to/global_mtslstm." >&2
   exit 2
 fi
@@ -78,7 +78,7 @@ nvidia-smi --query-gpu=name,memory.total --format=csv,noheader || true
 # The config was hardcoded here, so CONFIG=... sbatch silently ran run B's own
 # config and would have overwritten outputs/runB_truedaily/fold*/pretrain -- the
 # weights every replay variant loads as its M0. Same guard as the transfer script.
-CONFIG="${CONFIG:-configs/phase1_runB.yaml}"
+CONFIG="${CONFIG:?set CONFIG=configs/...yaml}"
 read -r -a EXTRA_SET_ARR <<< "${EXTRA_SET:-}"
 
 OUT_ROOT_CFG=$("$PYTHON_BIN" -c "

@@ -38,6 +38,8 @@ import torch
 
 from common.config import add_common_args, load_config, resolve
 from common.metrics import summarize
+from common.alignment import assert_same_alignment
+from common.tracks import assert_same_track
 from common.utils import (
     EarlyStopping,
     atomic_save,
@@ -190,6 +192,20 @@ def main() -> None:
     parser = add_common_args(argparse.ArgumentParser(description="Phase I Steps 2-3: daily-only target transfer."))
     parser.add_argument("--fold", type=int, required=True)
     parser.add_argument("--pretrained", default=None, help="Defaults to outputs/fold{N}/pretrain/best_model.pth")
+    # The baseline arm. --scratch loads no checkpoint, so the run measures what the same
+    # architecture achieves on the target fold's daily data alone -- an ordinary daily
+    # LSTM when the config also switches the aggregate term off. Mirrors
+    # train/africa_transfer.py, where the same comparison is already made.
+    parser.add_argument("--scratch", action="store_true",
+                        help="train from random initialisation; no pretrained weights, no M0")
+    # Which head the daily holdout metric reads. "agg" is the 24-hour mean of the hourly
+    # output, which is what the transfer objective constrains and what every run in the
+    # study uses. "daily" is the daily branch's own head, and it is required whenever
+    # agg_loss_weight is 0: that model's hourly branch never receives a gradient, so
+    # selecting on its aggregate picks an epoch by noise. Mirrors africa_transfer.py's
+    # --score-branch.
+    parser.add_argument("--score-branch", default="agg", choices=("agg", "daily"),
+                        help="head the daily holdout metric reads (default: hourly aggregate)")
     parser.add_argument("--out-dir", default=None)
     parser.add_argument(
         "--peek-hourly",
@@ -207,8 +223,26 @@ def main() -> None:
     pretrained = Path(args.pretrained) if args.pretrained else (
         resolve(cfg.output_root) / f"fold{args.fold}" / "pretrain" / "best_model.pth"
     )
-    if not pretrained.exists():
+    if not args.scratch and not pretrained.exists():
         raise FileNotFoundError(f"pretrained checkpoint not found: {pretrained}")
+    # The aligned daily window is for the standalone daily-LSTM baseline only. A pretrained
+    # MTS-LSTM learned a daily branch that ends the day before the hourly window; feeding
+    # it the target day would change the method, not fix a baseline.
+    if cfg.data.get("daily_includes_target_day", False) and not (
+            args.scratch and args.score_branch == "daily"):
+        raise SystemExit("data.daily_includes_target_day is only allowed with --scratch "
+                         "--score-branch daily (the daily-LSTM baseline)")
+    # Both paths are known here and every route arrives here, which is why the
+    # June/December check lives at this line rather than in a SLURM script. A scratch run
+    # loads no checkpoint, so there is no checkpoint track to cross -- but the data,
+    # fold table and output root still must agree, so the check runs without it.
+    assert_same_track(None if args.scratch else pretrained, out_dir, logger=logger,
+                      cache=cfg.data.get("cache_dir"), dataset_root=cfg.data.root,
+                      static_table=cfg.data.get("static_csv"),
+                      fold_table=resolve(cfg.folds.file))
+    # The pretrained weights must have learned the same input layout this run feeds them.
+    if not args.scratch:
+        assert_same_alignment(pretrained, cfg, logger=logger)
 
     device = get_device()
     logger.info("fold %d | device %s | pretrained %s", args.fold, device, pretrained)
@@ -265,7 +299,11 @@ def main() -> None:
 
     # --- model ---------------------------------------------------------------
     model = build_model(cfg, dyn_input_size=dyn_size, static_input_size=len(static_names)).to(device)
-    model.load_state_dict(torch.load(pretrained, map_location=device, weights_only=True))
+    if args.scratch:
+        logger.info("SCRATCH run: no pretrained checkpoint loaded; M0 and the STEP 3 "
+                    "source-degradation check are not meaningful and are skipped")
+    else:
+        model.load_state_dict(torch.load(pretrained, map_location=device, weights_only=True))
     source_state = copy.deepcopy(model.state_dict())
 
     n_trainable, n_frozen = set_trainable(model, list(cfg.transfer.freeze_modules or []))
@@ -304,6 +342,12 @@ def main() -> None:
     # hourly would have picked puts the cost of daily selection at 0.005 median KGE
     # against a total gain of 0.062. Keeping the two keys apart is what let that be
     # measured, and it lets one arm change the objective alone.
+    if (float(cfg.transfer.agg_loss_weight) == 0.0 and args.score_branch != "daily"
+            and not bool(cfg.get_path("transfer.allow_agg_selection", False))):
+        raise SystemExit(
+            "agg_loss_weight is 0, so the hourly branch is never supervised and its "
+            "24-hour mean is noise -- selecting an epoch on it picks at random. Pass "
+            "--score-branch daily, which reads the head this objective actually trains.")
     select_on = str(cfg.get_path("transfer.select_on", "daily")).lower()
     if select_on not in ("daily", "hourly"):
         raise ValueError(f"transfer.select_on must be 'daily' or 'hourly', got {select_on!r}")
@@ -359,12 +403,17 @@ def main() -> None:
     )
 
     # --- M0: the pretrained model on the target domain, zero-shot -----------
-    logger.info("evaluating M0 (zero-shot M_src on the target validation period) ...")
     m0_loader = make_loader(target_test_ds, num_workers=num_workers, pin_memory=pin_memory)
-    m0 = evaluate_model(model, m0_loader, device, scalers["y_mean"], scalers["y_std"], min_samples, logger=logger)
-    m0_summary = write_results(m0, out_dir, tag=f"fold{args.fold}_M0_target_hourly")["hourly"]
-    logger.info("M0 target hourly: median KGE %.4f | median NSE %.4f",
-                m0_summary["median_kge"], m0_summary["median_nse"])
+    if args.scratch:
+        # Scoring a randomly initialised model costs ~3 min here and ~24 in STEP 3, and
+        # reports nothing: there is no source model to be zero-shot from.
+        m0_summary = None
+    else:
+        logger.info("evaluating M0 (zero-shot M_src on the target validation period) ...")
+        m0 = evaluate_model(model, m0_loader, device, scalers["y_mean"], scalers["y_std"], min_samples, logger=logger)
+        m0_summary = write_results(m0, out_dir, tag=f"fold{args.fold}_M0_target_hourly")["hourly"]
+        logger.info("M0 target hourly: median KGE %.4f | median NSE %.4f",
+                    m0_summary["median_kge"], m0_summary["median_nse"])
 
     # --- fine-tune ------------------------------------------------------------
     best_state = copy.deepcopy(model.state_dict())
@@ -388,6 +437,7 @@ def main() -> None:
         holdout = evaluate_model(
             model, holdout_loader, device, scalers["y_mean"], scalers["y_std"],
             min_samples=min_samples, daily_window=DAILY_WINDOW,
+            daily_branch=(args.score_branch == "daily"),
         )
         daily_summary = summarize(holdout["daily"], "target_holdout_daily")
         hourly_on_holdout = summarize(holdout["hourly"], "target_holdout_hourly")
@@ -444,31 +494,36 @@ def main() -> None:
                 m1_summary["median_kge"], m1_summary["median_nse"])
 
     # --- Step 3: no degradation on the source domain -----------------------
-    logger.info("evaluating Step 3 (source-domain degradation) ...")
-    source_test_ds = build_eval_set(cfg, source_stations, "validation", logger=logger)
-    source_loader = make_loader(source_test_ds, num_workers=num_workers, pin_memory=pin_memory)
+    # A scratch run has no source model to degrade from, and this pass scores 7,000+
+    # stations twice: 24 minutes per fold comparing random weights with themselves.
+    before_summary = after_summary = None
+    delta_kge = float("nan")
+    if not args.scratch:
+        logger.info("evaluating Step 3 (source-domain degradation) ...")
+        source_test_ds = build_eval_set(cfg, source_stations, "validation", logger=logger)
+        source_loader = make_loader(source_test_ds, num_workers=num_workers, pin_memory=pin_memory)
 
-    after = evaluate_model(model, source_loader, device, scalers["y_mean"], scalers["y_std"], min_samples, logger=logger)
-    after_summary = write_results(after, out_dir, tag=f"fold{args.fold}_M1_source_hourly")["hourly"]
+        after = evaluate_model(model, source_loader, device, scalers["y_mean"], scalers["y_std"], min_samples, logger=logger)
+        after_summary = write_results(after, out_dir, tag=f"fold{args.fold}_M1_source_hourly")["hourly"]
 
-    model.load_state_dict(source_state)
-    before = evaluate_model(model, source_loader, device, scalers["y_mean"], scalers["y_std"], min_samples, logger=logger)
-    before_summary = write_results(before, out_dir, tag=f"fold{args.fold}_M0_source_hourly")["hourly"]
+        model.load_state_dict(source_state)
+        before = evaluate_model(model, source_loader, device, scalers["y_mean"], scalers["y_std"], min_samples, logger=logger)
+        before_summary = write_results(before, out_dir, tag=f"fold{args.fold}_M0_source_hourly")["hourly"]
 
-    # Paired per-station change is the number that matters, not the two medians.
-    merged = before["hourly"][["station_id", "kge", "nse", "score_status"]].merge(
-        after["hourly"][["station_id", "kge", "nse", "score_status"]],
-        on="station_id", suffixes=("_before", "_after"),
-    )
-    both_ok = merged["score_status_before"].eq("ok") & merged["score_status_after"].eq("ok")
-    merged["delta_kge"] = merged["kge_after"] - merged["kge_before"]
-    merged["delta_nse"] = merged["nse_after"] - merged["nse_before"]
-    merged.to_csv(out_dir / f"source_degradation_fold{args.fold}.csv", index=False)
-    delta_kge = float(merged.loc[both_ok, "delta_kge"].median())
-    logger.info(
-        "STEP 3 source domain: median KGE %.4f -> %.4f (paired median delta %+.4f over %d stations)",
-        before_summary["median_kge"], after_summary["median_kge"], delta_kge, int(both_ok.sum()),
-    )
+        # Paired per-station change is the number that matters, not the two medians.
+        merged = before["hourly"][["station_id", "kge", "nse", "score_status"]].merge(
+            after["hourly"][["station_id", "kge", "nse", "score_status"]],
+            on="station_id", suffixes=("_before", "_after"),
+        )
+        both_ok = merged["score_status_before"].eq("ok") & merged["score_status_after"].eq("ok")
+        merged["delta_kge"] = merged["kge_after"] - merged["kge_before"]
+        merged["delta_nse"] = merged["nse_after"] - merged["nse_before"]
+        merged.to_csv(out_dir / f"source_degradation_fold{args.fold}.csv", index=False)
+        delta_kge = float(merged.loc[both_ok, "delta_kge"].median())
+        logger.info(
+            "STEP 3 source domain: median KGE %.4f -> %.4f (paired median delta %+.4f over %d stations)",
+            before_summary["median_kge"], after_summary["median_kge"], delta_kge, int(both_ok.sum()),
+        )
 
     summary = {
         "fold": args.fold,
@@ -478,7 +533,8 @@ def main() -> None:
         "n_source_stations": len(source_stations),
         "step1_M0_target_hourly": m0_summary,
         "step2_M1_target_hourly": m1_summary,
-        "step2_gain_median_kge": m1_summary["median_kge"] - m0_summary["median_kge"],
+        "step2_gain_median_kge": (None if m0_summary is None
+                                  else m1_summary["median_kge"] - m0_summary["median_kge"]),
         "step3_source_before": before_summary,
         "step3_source_after": after_summary,
         "step3_paired_median_delta_kge": delta_kge,
@@ -496,7 +552,7 @@ def main() -> None:
         json.dump(
             {
                 "fold": args.fold,
-                "pretrained_from": str(pretrained),
+                "pretrained_from": "scratch (no checkpoint loaded)" if args.scratch else str(pretrained),
                 "best_epoch": summary["best_epoch"],
                 "best_holdout_daily_kge": summary["best_holdout_daily_kge"],
                 "n_source_stations": summary["n_source_stations"],
@@ -508,14 +564,22 @@ def main() -> None:
             default=str,
         )
 
-    logger.info("STEP 2 gain on target hourly KGE: %+.4f (M0 %.4f -> M1 %.4f)",
-                summary["step2_gain_median_kge"], m0_summary["median_kge"], m1_summary["median_kge"])
-    wandb_log(run, {
-        "final/M0_target_hourly_kge": m0_summary["median_kge"],
-        "final/M1_target_hourly_kge": m1_summary["median_kge"],
-        "final/target_kge_gain": summary["step2_gain_median_kge"],
-        "final/source_paired_delta_kge": delta_kge,
-    })
+    # A scratch run has no M0 and no source pass, so these two are None. Dereferencing
+    # them cost a finished 2.7 h fold its DONE marker once; the weights and summary had
+    # already been written, but the job exited 1 and looked like a failure.
+    if m0_summary is None:
+        logger.info("M1 target hourly: %.4f (no M0: scratch run)", m1_summary["median_kge"])
+        wandb_log(run, {"final/M1_target_hourly_kge": m1_summary["median_kge"]})
+    else:
+        logger.info("STEP 2 gain on target hourly KGE: %+.4f (M0 %.4f -> M1 %.4f)",
+                    summary["step2_gain_median_kge"], m0_summary["median_kge"],
+                    m1_summary["median_kge"])
+        wandb_log(run, {
+            "final/M0_target_hourly_kge": m0_summary["median_kge"],
+            "final/M1_target_hourly_kge": m1_summary["median_kge"],
+            "final/target_kge_gain": summary["step2_gain_median_kge"],
+            "final/source_paired_delta_kge": delta_kge,
+        })
     wandb_finish(run)
     (out_dir / "DONE").write_text("ok\n", encoding="utf-8")
 

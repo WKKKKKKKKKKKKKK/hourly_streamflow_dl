@@ -1,0 +1,28 @@
+{
+ "training": {
+  "n_hourly_gauges": 9181,
+  "n": 9174,
+  "median": 0.787,
+  "q1": 0.312,
+  "q3": 1.496,
+  "max": 14.108,
+  "share_below_training_median": 0.499890996293874
+ },
+ "africa_scored": {
+  "n_scored_basins": 282,
+  "n": 281,
+  "median": 0.027,
+  "q1": 0.005,
+  "q3": 0.104,
+  "max": 0.368,
+  "share_below_training_median": 1.0
+ },
+ "africa_all_294": {
+  "n": 293,
+  "median": 0.036,
+  "q1": 0.005,
+  "q3": 0.105,
+  "max": 0.368,
+  "share_below_training_median": 1.0
+ }
+}

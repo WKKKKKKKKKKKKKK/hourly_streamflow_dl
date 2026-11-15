@@ -1,0 +1,104 @@
+# RUN-TO-RUN VARIABILITY of the random design, all folds (added 2026-10-23).
+# Identical to configs/aligned/phase1_runB_v2.yaml except train.seed and transfer.seed (44) and
+# output_root. folds.seed is untouched, so the fold assignment is the same. Together with the
+# original run (seed 42) and the continental runs, every design has three seeds. Used only to
+# measure variability, never as a main result.
+# FIGURE-ALIGNED re-run (added 2026-10-19). Identical to configs/phase1_runB_v2.yaml except three keys:
+#   data.window_alignment: figure  -- both branches end at the target hour, as in the
+#     manuscript's architecture figure (see data/hourly_windows.py window_bounds)
+#   output_root: outputs/al_v2_runB  (the original outputs/v2_runB is untouched)
+#   wandb.project: global_mtslstm_aligned  (kept out of the paper's W&B project)
+# v2 = the frozen configuration plus the search conclusions. Against configs/phase1_runB.yaml:
+#   lookback_hourly 336 (was 72) -- the one fold-1 search result that cleared
+#     between-fold noise (sigma 0.017). In the search's only strictly paired triple,
+#     M1 is 0.585 / 0.601 / 0.632 at H = 72 / 168 / 336, so 336 is +0.047 over 72 and
+#     168 only +0.016; a second paired line at a different batch size has 168 ahead of
+#     336 by 0.005. Both beat 72; the order between them is NOT resolved, and an
+#     earlier version of this comment claimed 0.05 for both. Source-domain forgetting
+#     eases at the same time.
+#   initial_forget_bias 3 -- part of Gauch et al.'s published method, not a tuning knob.
+#     The two strictly paired comparisons of its own effect disagree in sign
+#     (+0.009 / -0.027, about 0.5 sigma), so it is adopted for methodological fidelity
+#     rather than because it was shown to help.
+data:
+  root: /ibex/project/c2266/abbaa0a/data/input_data/hourly_q_dl/6datasets_H_8760_512_temporal_local_19800101_20251231_0.7_0.3_False_ts_func2_1000_5.0_False_10000_s_func2_1095_10000_3_42_penman_MSWEP_V316_test_Past_hourly_10_hourly_9181_42
+  index_dir: index
+  source: hourly_cache
+  cache_dir: /ibex/user/kongw0a/hourly_cache
+  stride: 24
+  lookback_daily: 365
+  window_alignment: figure
+  chunk_size: 512
+  lookback_hourly: 336
+  include_corrected: true
+  static_exclude:
+  - pedigree_of_HDI_2015
+  - pedigree_of_GDP_per_capita_2015
+  - GDP_5arcmin_2015
+  - GDP_30arcsec_2015
+  - HDI_2015
+  - GDP_percapita_2015
+  - gpw_v4_rev11_2000
+  - gpw_v4_rev11_2005
+  - gpw_v4_rev11_2010
+  - gpw_v4_rev11_2015
+  - gpw_v4_rev11_2020
+  - globpop_density_30arc_2022
+  - globpop_density_30arc_2020
+  - globpop_density_30arc_2010
+  - globpop_density_30arc_2000
+  - globpop_density_30arc_1990
+  - elevation_SRTM_v2.1_GTOPO30
+  onehot_static: {}
+folds:
+  file: folds/folds_random.csv
+  n_folds: 5
+  seed: 42
+model:
+  hidden_size_daily: 128
+  hidden_size_hourly: 128
+  num_layers: 1
+  dropout: 0.4
+  head_dropout: true
+  initial_forget_bias: 3
+  frequency_factor: 24
+  reg_window: 24
+train:
+  epochs: 30
+  batches_per_epoch: 20000
+  val_max_stations: 0
+  val_batches_per_station: 1
+  lr: 0.0005
+  lr_schedule: 1:5e-4,12:1e-4,22:5e-5
+  loss: nse_basin
+  reg_lambda: 1.0
+  early_stopping: true
+  min_epochs: 18  # no early stop before epoch 18; changes none of the original runs (see train/pretrain_source.py)
+  patience: 6
+  num_workers: 6
+  pin_memory: true
+  seed: 44  # run-to-run variability; folds.seed stays 42 so the folds are identical
+  grad_clip: 1.0
+transfer:
+  epochs: 12
+  batches_per_epoch: 4000
+  lr: 0.0005
+  weight_decay: 1.0e-05
+  agg_loss_weight: 0.5
+  freeze_modules:
+  - lstm_hourly
+  min_daily_hours: 18
+  holdout_batches_per_station: 2
+  patience: 4
+  num_workers: 6
+  seed: 44  # run-to-run variability; folds.seed stays 42 so the folds are identical
+  grad_clip: 1.0
+eval:
+  max_batches_per_station: 12
+  min_samples_per_station: 100
+wandb:
+  project: global_mtslstm_aligned
+  entity: null
+  mode: online
+  group: null
+output_root: outputs/var_al_random_s44

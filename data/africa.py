@@ -16,7 +16,7 @@ last 24 hourly positions cover 00:00-23:00 of D and the mean of the model's last
 24 hourly predictions is its prediction for that day. That is the same
 aggregation Step 2 supervises.
 
-``scripts/verify_africa_inputs.py`` checks this construction against the prepared
+a check script of the original development repository verified this construction against the prepared
 batches for stations that DO exist in them, so the packaging is validated without
 any African data.
 """
@@ -34,6 +34,7 @@ import xarray as xr
 from torch.utils.data import Dataset
 
 from data.dataset import OneHotSpec, load_lookback_offsets, load_scalers
+from data.hourly_windows import WINDOW_ALIGNMENTS, window_bounds
 
 GSCAD = Path("/ibex/project/c2266/abbaa0a/data/gscad_database")
 DAILY_STATIC = GSCAD / "processed/20250630/daily/dataframes/static.csv"
@@ -337,7 +338,7 @@ class AfricaWindowDataset(Dataset):
         D = daily[day_of(t) - lookback_daily : day_of(t)]   365 whole days before it
 
     Daily means are taken over ``h // 24`` blocks (00:00-23:00), the same blocking
-    ``scripts.build_hourly_cache`` used, so the daily branch means the same thing here
+    ``scripts.prep.build_hourly_cache`` used, so the daily branch means the same thing here
     as it did in training.
     """
 
@@ -355,8 +356,11 @@ class AfricaWindowDataset(Dataset):
         logger=None,
         split: str | None = None,
         train_frac: float = 0.7,
+        select_frac: float = 0.0,
         scalers: dict | None = None,
         with_daily: bool = False,
+        daily_includes_target_day: bool = False,
+        window_alignment: str = "lagged",
     ):
         """``split`` / ``with_daily`` turn this into a TRAINING set for the transfer step.
 
@@ -374,6 +378,17 @@ class AfricaWindowDataset(Dataset):
         self.k_h = int(lookback_hourly)
         self.k_d = int(lookback_daily)
         self.chunk_size = int(chunk_size)
+        # See data.hourly_windows.HourlyWindowDataset: True makes the daily branch end
+        # with the observed day itself rather than the day before. Default False is the
+        # layout of every result recorded before 2026-10-18.
+        self.daily_shift = 1 if daily_includes_target_day else 0
+        # "lagged" or "figure"; see data.hourly_windows.window_bounds for both layouts.
+        if window_alignment not in WINDOW_ALIGNMENTS:
+            raise ValueError(f"window_alignment must be one of {WINDOW_ALIGNMENTS}")
+        if window_alignment == "figure" and daily_includes_target_day:
+            raise ValueError("daily_includes_target_day is the lagged layout's baseline "
+                             "patch; the figure layout already ends the daily branch on day d")
+        self.window_alignment = window_alignment
 
         # Block into whole 00:00-23:00 days, the same blocking build_hourly_cache used.
         # The series need not start at 00:00 -- the rescaling step drops the leading
@@ -424,6 +439,38 @@ class AfricaWindowDataset(Dataset):
             np.isfinite(self.daily[b, e - self.k_d : e]).all() for b, e in zip(basin, day_end)
         ])
         keep = h_ok & d_ok
+        if self.daily_shift:
+            # The shifted window must not change which samples exist: the per-basin
+            # 70/30 split below is taken by proportion, so one extra drop would move the
+            # split boundary and the baseline would no longer be scored on M1's days.
+            shifted_ok = np.array([
+                e + 1 <= self.daily.shape[1]
+                and np.isfinite(self.daily[b, e + 1 - self.k_d : e + 1]).all()
+                for b, e in zip(basin, day_end)
+            ])
+            lost = int((keep & ~shifted_ok).sum())
+            if lost:
+                raise ValueError(
+                    f"daily_includes_target_day would drop {lost} samples that the default "
+                    "layout keeps, which changes the split; refusing rather than scoring on "
+                    "different days")
+        if self.window_alignment == "figure":
+            # Same rule as the shift above: the figure layout must score exactly the days
+            # the lagged layout scores, so old and new runs stay paired basin-day by
+            # basin-day. Refuse rather than silently move the 70/30 boundary.
+            fig_ok = []
+            for b, t in zip(basin, target):
+                h_lo, h_hi, e = window_bounds(int(t), self.k_h, "figure", day0=self.day0)
+                fig_ok.append(
+                    h_lo >= 0 and e <= self.daily.shape[1] and e >= self.k_d
+                    and np.isfinite(forcing[b, h_lo:h_hi, :3]).all()
+                    and np.isfinite(self.daily[b, e - self.k_d : e]).all())
+            lost = int((keep & ~np.asarray(fig_ok)).sum())
+            if lost:
+                raise ValueError(
+                    f"the figure layout would drop {lost} samples that the lagged layout "
+                    "keeps, which changes the split; refusing rather than scoring on "
+                    "different days")
         dropped = int((~keep).sum())
         self.observed = observed
         self.observed_dates = observed_dates
@@ -438,15 +485,37 @@ class AfricaWindowDataset(Dataset):
         # Split each basin's OWN record in time, the same 70/30 convention the global
         # experiment uses. Splitting globally by date would give water-rich basins a
         # different train/test boundary than sparse ones.
+        # A third split, taken from the TAIL of the training portion, exists so that the
+        # epoch can be chosen without reading the validation period. Choosing the epoch on
+        # the validation period and then reporting that same period is selection on the
+        # evaluation set: measured over the five African folds it was worth +0.028 KGE
+        # against a fixed epoch and +0.069 against the last, on per-epoch scores whose
+        # own spread was 0.186. The tail rather than a random sample, because it is the
+        # slice closest in time to the period the model will actually be judged on.
         if split is not None:
-            if split not in {"training", "validation"}:
-                raise ValueError(f"split must be training|validation, got {split!r}")
+            if split not in {"training", "selection", "validation"}:
+                raise ValueError(
+                    f"split must be training|selection|validation, got {split!r}")
+            if not 0.0 <= select_frac < train_frac:
+                raise ValueError(
+                    f"select_frac must satisfy 0 <= select_frac < train_frac, got "
+                    f"{select_frac} against train_frac {train_frac}")
+            if split == "selection" and select_frac == 0:
+                raise ValueError(
+                    "split='selection' needs select_frac > 0; with select_frac=0 there is "
+                    "no slice reserved for choosing the epoch")
             keep_split = np.zeros(len(pairs), dtype=bool)
             for b in np.unique(pairs[:, 0]):
                 rows = np.flatnonzero(pairs[:, 0] == b)
                 order = rows[np.argsort(pairs[rows, 2])]
                 cut = int(len(order) * train_frac)
-                chosen = order[:cut] if split == "training" else order[cut:]
+                fit_cut = int(len(order) * (train_frac - select_frac))
+                if split == "training":
+                    chosen = order[:fit_cut]
+                elif split == "selection":
+                    chosen = order[fit_cut:cut]
+                else:
+                    chosen = order[cut:]
                 keep_split[chosen] = True
             pairs = pairs[keep_split]
             if len(pairs) == 0:
@@ -483,8 +552,9 @@ class AfricaWindowDataset(Dataset):
         x_h = np.empty((n, self.k_h, 3), dtype=np.float32)
         x_d = np.empty((n, self.k_d, 3), dtype=np.float32)
         for i, (b, t) in enumerate(zip(basin, target)):
-            x_h[i] = self.forcing[b, t - self.k_h : t, :3]
-            end = (t - self.day0) // 24
+            h_lo, h_hi, end = window_bounds(int(t), self.k_h, self.window_alignment,
+                                            self.daily_shift, day0=self.day0)
+            x_h[i] = self.forcing[b, h_lo:h_hi, :3]
             x_d[i] = self.daily[b, end - self.k_d : end]
 
         out = {

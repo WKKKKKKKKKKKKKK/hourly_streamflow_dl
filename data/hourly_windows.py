@@ -69,7 +69,7 @@ def load_cache(
     logger=None,
     index_name: str | None = None,
 ) -> dict:
-    """Open the memmaps and the sample index written by scripts.build_hourly_cache.
+    """Open the memmaps and the sample index written by scripts.prep.build_hourly_cache.
 
     ``index_name`` swaps in a different sample index over the same memmaps -- used
     to score an all-hours evaluation set (samples_evalhours.npz) against a model
@@ -86,7 +86,7 @@ def load_cache(
     daily_path = cache_dir / "daily.f32"
     if not daily_path.exists():
         raise FileNotFoundError(
-            f"{daily_path} missing -- rerun scripts.build_hourly_cache (it writes the daily "
+            f"{daily_path} missing -- rerun scripts.prep.build_hourly_cache (it writes the daily "
             "cache during the scan phase; --skip-memmap reuses forcing.f32)"
         )
     # 1.7 GiB: read it into RAM outright, it is touched for every sample.
@@ -116,6 +116,35 @@ def load_cache(
     return cache
 
 
+WINDOW_ALIGNMENTS = ("lagged", "figure")
+
+
+def window_bounds(t: int, k_h: int, alignment: str = "lagged", daily_shift: int = 0,
+                  day0: int = 0) -> tuple[int, int, int]:
+    """Hourly slice ``[h_lo, h_hi)`` and the exclusive end of the daily slice, for target hour t.
+
+    ``"lagged"`` is the layout of every run recorded before 2026-10-18: hourly
+    ``x[t-k_h : t]`` (target hour excluded) and daily days ending with the day BEFORE the
+    one containing t. For a 23:00 target that leaves the daily branch a day behind the
+    hourly one and the hand-off ~23 h early -- an off-by-one against the design, which
+    the 100-station reference and Gauch et al. both align.
+
+    ``"figure"`` is the design as drawn in the manuscript's architecture figure: both
+    branches end at the target hour. Hourly ``x[t-k_h+1 : t+1]``; daily ends with the last
+    COMPLETE day at or before t, i.e. day d itself for a 23:00 target and day d-1 for any
+    earlier hour, so no forcing after t is ever read. With k_h = 14 x 24 and a 23:00
+    target the hand-off state (after daily step 365-14) ends exactly where the hourly
+    window begins.
+
+    ``day0`` is the index of the first 00:00 in the series (non-zero for Africa).
+    """
+    if alignment == "figure":
+        return t - k_h + 1, t + 1, (t - day0 + 1) // DAILY_WINDOW
+    if alignment != "lagged":
+        raise ValueError(f"window alignment must be one of {WINDOW_ALIGNMENTS}, got {alignment!r}")
+    return t - k_h, t, (t - day0) // DAILY_WINDOW + daily_shift
+
+
 class HourlyWindowDataset(Dataset):
     """One item is a chunk of samples, so the loader convention matches the rest."""
 
@@ -134,9 +163,23 @@ class HourlyWindowDataset(Dataset):
         rng_seed: int = 0,
         sample_mask: np.ndarray | None = None,
         logger=None,
+        daily_includes_target_day: bool = False,
+        window_alignment: str = "lagged",
     ):
         if split not in {"training", "validation"}:
             raise ValueError(f"split must be training|validation, got {split!r}")
+        if window_alignment not in WINDOW_ALIGNMENTS:
+            raise ValueError(f"window_alignment must be one of {WINDOW_ALIGNMENTS}")
+        if window_alignment == "figure" and daily_includes_target_day:
+            raise ValueError("daily_includes_target_day is the lagged layout's baseline "
+                             "patch; the figure layout already ends the daily branch on day d")
+        self.window_alignment = window_alignment
+        # False (the default, and every result recorded before 2026-10-18): the daily
+        # branch ends with day d-1, as MTS-LSTM intends -- the hourly branch covers day d.
+        # True: the daily branch ends with day d itself. Only meaningful for a standalone
+        # daily LSTM read on its daily head, which otherwise never sees the forcing of the
+        # day it predicts. The sample set is identical either way.
+        self.daily_shift = 1 if daily_includes_target_day else 0
         self.cache = cache
         self.forcing = cache["forcing"]
         self.daily = cache["daily"]
@@ -195,10 +238,12 @@ class HourlyWindowDataset(Dataset):
         y = np.empty(n, dtype=np.float32)
 
         for i, (k, t) in enumerate(zip(ks, ts)):
-            # H branch: x[t-168 : t], excluding t, exactly as the reference slices it.
-            x_h[i] = self.forcing[k, t - k_h : t, :3]
-            # D branch: the 365 whole days ending with the day that contains t-1.
-            day_end = t // DAILY_WINDOW
+            # Slice bounds come from window_bounds(), which documents both layouts. Under
+            # "lagged": H = x[t-k_h : t], D = whole days ending the day before t's (or t's
+            # own day with daily_includes_target_day). Under "figure": both end at t.
+            h_lo, h_hi, day_end = window_bounds(t, k_h, self.window_alignment,
+                                                self.daily_shift)
+            x_h[i] = self.forcing[k, h_lo:h_hi, :3]
             x_d[i] = self.daily[k, day_end - k_d : day_end]
             y[i] = self.forcing[k, t, 3]
 
@@ -236,9 +281,21 @@ class HourlyWindowDataset(Dataset):
         if self.with_daily:
             # Targets for the daily-only transfer: the mean of the 24 hourly
             # observations covering the same calendar day as the last 24 hourly
-            # predictions. Every sample sits at 23:00 and its window was checked
-            # finite, so the day is complete -- the mask is all-ones and only kept
-            # so the loss signature matches the prepared-batch path.
+            # predictions. The mask is all-ones, so the PREDICTION is averaged over
+            # all 24 slots while the TARGET is averaged over the finite ones. Those
+            # coincide for 93.7% of valid samples but not for all: valid_targets()
+            # checks the three forcing columns over the lookback and q_mm at the
+            # target hour only, NOT q_mm over the preceding 23 hours, so a day can
+            # carry gaps. Measured over 60k samples: 2.7% have 18-23 finite hours
+            # (the rest of the incomplete ones fall below min_daily_hours and are
+            # dropped), with a median of 2 missing hours and a median longest gap of
+            # 1 hour. Those partial days sit at 0.984 of their station's 30-day
+            # median flow against 0.970 for complete days, i.e. no detectable
+            # association between missingness and flow level, so averaging the
+            # prediction over the full day is comparing two estimates of the same
+            # daily mean rather than two different quantities. Left as is
+            # deliberately; masking the prediction instead would trade an unbiased
+            # full-day prediction for one degraded to match a telemetry artefact.
             y_daily = np.empty(n, dtype=np.float32)
             ok = np.ones(n, dtype=bool)
             for i, (k, t) in enumerate(zip(ks, ts)):
@@ -265,8 +322,12 @@ def build_static_matrix(cache: dict, scalers: dict, cfg, logger=None) -> tuple[n
     static_keep, onehot_specs, out_names = resolve_static_spec(
         cfg.data.root, cfg.data.get("static_exclude"), cfg.data.get("onehot_static")
     )
+    # The June main experiment takes the 20250630 table (the module default). The
+    # December track sets data.static_csv to its own snapshot, whose area and
+    # elevation columns differ for about a third of the gauges.
+    static_path = Path(cfg.data.get("static_csv") or HOURLY_STATIC)
     full, _ = build_from_table(
-        cache["stations"], names_all, scalers, static_path=HOURLY_STATIC, logger=logger
+        cache["stations"], names_all, scalers, static_path=static_path, logger=logger
     )
     static = apply_onehot(full, static_keep, onehot_specs)
     if logger:

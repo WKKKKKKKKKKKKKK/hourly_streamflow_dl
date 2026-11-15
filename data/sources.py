@@ -99,6 +99,8 @@ def _cache_bundle(cfg, stations, with_daily, logger):
         lookback_daily=int(cfg.data.get("lookback_daily", 365)),
         chunk_size=int(cfg.data.get("chunk_size", 512)),
         min_daily_hours=int(cfg.get_path("transfer.min_daily_hours", 18)),
+        daily_includes_target_day=bool(cfg.data.get("daily_includes_target_day", False)),
+        window_alignment=str(cfg.data.get("window_alignment", "lagged")),
     )
 
     train = HourlyWindowDataset(stations=stations, split="training",
@@ -188,4 +190,6 @@ def build_eval_set(cfg, stations: set[str], split: str, with_daily: bool = False
         with_daily=with_daily,
         min_daily_hours=int(cfg.get_path("transfer.min_daily_hours", 18)),
         sample_mask=mask, logger=logger,
+        daily_includes_target_day=bool(cfg.data.get("daily_includes_target_day", False)),
+        window_alignment=str(cfg.data.get("window_alignment", "lagged")),
     )

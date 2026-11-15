@@ -17,7 +17,7 @@
 #SBATCH -J gmts_search -o logs/search_%j.out -e logs/search_%j.err
 set -eo pipefail
 REPO_ROOT="${GMTS_REPO:-${SLURM_SUBMIT_DIR:-$PWD}}"
-[[ -f "$REPO_ROOT/configs/phase1.yaml" ]] || { echo "not the repo: $REPO_ROOT" >&2; exit 2; }
+[[ -f "$REPO_ROOT/train/pretrain_source.py" ]] || { echo "not the repo: $REPO_ROOT" >&2; exit 2; }
 cd "$REPO_ROOT"; mkdir -p logs
 source "${CONDA_ENV_SETUP:-/dev/null}" 2>/dev/null || true
 PYTHON_BIN="${PYTHON_BIN:-$(command -v python3)}"

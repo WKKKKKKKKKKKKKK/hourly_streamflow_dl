@@ -1,0 +1,6 @@
+design,lr,root,n,M1
+random,5e-4,al_v2_runB,8709,0.6336457343678992
+random,2e-4,al_v2_lrsweep_daily_lr2e4,8709,0.6446602850213213
+random,1e-4,al_v2_lrsweep_daily_lr1e4,8709,0.6431136911994662
+blocked,5e-4,al_v2_blocked,8709,0.6306365187323372
+blocked,2e-4,al_v2lr2_blocked,8709,0.6329230517721942

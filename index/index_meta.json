@@ -1,0 +1,9 @@
+{
+  "root": "/ibex/project/c2266/abbaa0a/data/input_data/hourly_q_dl/6datasets_H_8760_512_temporal_local_19800101_20251231_0.7_0.3_False_ts_func2_1000_5.0_False_10000_s_func2_1095_10000_3_42_penman_MSWEP_V316_test_Past_hourly_10_hourly_9181_42",
+  "batch_rows": 512,
+  "splits": {
+    "training": 1635587,
+    "validation": 748755
+  },
+  "n_stations": 9062
+}

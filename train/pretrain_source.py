@@ -172,6 +172,13 @@ def main() -> None:
     optimizer = torch.optim.Adam(model.parameters(), lr=float(cfg.train.lr))
     lr_schedule = parse_lr_schedule(cfg.train.get("lr_schedule"))
     stopper = EarlyStopping(patience=int(cfg.train.patience), mode="max")
+    # No early stop before this epoch (0 = no floor, the behaviour of every run recorded
+    # before 2026-10-19). Added because the aligned random fold 3 stopped at epoch 11 --
+    # its metric plateaued for six epochs right before the epoch-12 learning-rate drop
+    # that lifts every curve -- and so never trained past the first schedule step. 18 is
+    # the largest floor that changes none of the 24 v2 pretrainings (earliest stop 20) or
+    # the search's (earliest stop 18). The best epoch is still chosen over all epochs.
+    min_epochs = int(cfg.train.get("min_epochs", 0))
 
     run = init_wandb(
         cfg,
@@ -270,7 +277,10 @@ def main() -> None:
         )
         pd.DataFrame(history).to_csv(out_dir / "training_history.csv", index=False)
 
-        if bool(cfg.train.early_stopping) and stopper.should_stop:
+        # The counter, not should_stop: should_stop is never cleared by a later
+        # improvement, which only matters once a floor lets training run past it.
+        if (bool(cfg.train.early_stopping) and stopper.counter >= stopper.patience
+                and epoch >= min_epochs):
             logger.info("early stopping at epoch %d (best epoch %d)", epoch, stopper.best_epoch)
             break
 

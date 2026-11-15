@@ -73,7 +73,7 @@ def make_folds(
 def load_folds(path: str | os.PathLike) -> pd.DataFrame:
     path = Path(path)
     if not path.exists():
-        raise FileNotFoundError(f"{path} not found -- run scripts/make_folds.py first")
+        raise FileNotFoundError(f"{path} not found -- run scripts/prep/make_folds.py first")
     return pd.read_csv(path, dtype={"station_id": str})
 
 

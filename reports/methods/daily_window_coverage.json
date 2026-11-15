@@ -1,0 +1,104 @@
+{
+ "n_samples_in_cache": 73808280,
+ "min_daily_hours": 18,
+ "windows_20k": {
+  "all_samples": {
+   "seed": 0,
+   "n": 20000,
+   "share_24": 0.93825,
+   "share_18_to_23": 0.02935,
+   "share_below_18": 0.0324,
+   "share_18_to_23_of_retained_targets": 0.030332782141380736,
+   "by_archive": {
+    "BOMAustralia": {
+     "n": 2506,
+     "median_hours": 24.0,
+     "share_below_18": 0.21787709497206703
+    },
+    "CAMELSH": {
+     "n": 11557,
+     "median_hours": 24.0,
+     "share_below_18": 0.008220126330362551
+    },
+    "Germany": {
+     "n": 1584,
+     "median_hours": 24.0,
+     "share_below_18": 0.0
+    },
+    "Japan": {
+     "n": 1708,
+     "median_hours": 24.0,
+     "share_below_18": 0.004098360655737705
+    },
+    "LamaHCE": {
+     "n": 2527,
+     "median_hours": 24.0,
+     "share_below_18": 0.0
+    },
+    "LamaHIce": {
+     "n": 118,
+     "median_hours": 24.0,
+     "share_below_18": 0.0
+    }
+   }
+  },
+  "training_period": {
+   "seed": 0,
+   "n": 20000,
+   "share_24": 0.92845,
+   "share_18_to_23": 0.0327,
+   "share_below_18": 0.03885,
+   "share_18_to_23_of_retained_targets": 0.034021744784893095,
+   "by_archive": {
+    "BOMAustralia": {
+     "n": 2503,
+     "median_hours": 24.0,
+     "share_below_18": 0.2852576907710747
+    },
+    "CAMELSH": {
+     "n": 11561,
+     "median_hours": 24.0,
+     "share_below_18": 0.004930369345212352
+    },
+    "Germany": {
+     "n": 1590,
+     "median_hours": 24.0,
+     "share_below_18": 0.0
+    },
+    "Japan": {
+     "n": 1703,
+     "median_hours": 24.0,
+     "share_below_18": 0.002935995302407516
+    },
+    "LamaHCE": {
+     "n": 2527,
+     "median_hours": 24.0,
+     "share_below_18": 0.0003957261574990107
+    },
+    "LamaHIce": {
+     "n": 116,
+     "median_hours": 24.0,
+     "share_below_18": 0.0
+    }
+   }
+  }
+ },
+ "targets_60k": {
+  "all_samples": {
+   "seed": 1,
+   "n": 60000,
+   "share_24": 0.93755,
+   "share_18_to_23": 0.030733333333333335,
+   "share_below_18": 0.031716666666666664,
+   "share_18_to_23_of_retained_targets": 0.031740020999363135
+  },
+  "training_period": {
+   "seed": 1,
+   "n": 60000,
+   "share_24": 0.9268333333333333,
+   "share_18_to_23": 0.03308333333333333,
+   "share_below_18": 0.04008333333333333,
+   "share_18_to_23_of_retained_targets": 0.03446479729143155
+  }
+ }
+}
