@@ -1,4 +1,4 @@
-# Daily-supervised fine-tuning of an hourly MTS-LSTM: code for the manuscript
+# Daily-supervised fine-tuning of an hourly MTS-LSTM
 
 Code, configurations and fold definitions behind *Can Daily Observations Improve Hourly
 Streamflow Prediction?* (HESS submission). An MTS-LSTM (Gauch et al., 2021) is pretrained on
