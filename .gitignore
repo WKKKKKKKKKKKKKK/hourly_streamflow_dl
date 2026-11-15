@@ -5,10 +5,8 @@ wandb/
 __pycache__/
 *.pyc
 
-# Not distributed: these files hold metadata, results or figures of gauges from restricted
-# archives (ADHI, GRDC and other non-public networks). Build them locally (README, "Data").
-africa/africa_basins.csv
-africa/africa_basins.gpkg
-reports/label_availability/
-reports/figures/fig17_label_availability.png
-reports/sec43_daily_scale/
+# Not distributed: the inventory of every daily-only gauge in the archive (station ids,
+# coordinates and record lengths, including non-public national networks). The paper needs
+# only its counts (label_availability.json); the file is written locally by
+# scripts/figures/label_availability.py.
+reports/label_availability/daily_only_gauges.csv

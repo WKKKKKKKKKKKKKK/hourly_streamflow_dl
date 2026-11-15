@@ -1,0 +1,8 @@
+15:52:28 INFO archive holds 37,972 daily gauges, 9,856 of them hourly-backed
+15:52:28 INFO archive          daily 37,972  hourly-backed  9,856  DAILY-ONLY 28,116  ratio 3.85x
+15:52:28 INFO record           daily 30,731  hourly-backed  9,806  DAILY-ONLY 20,925  ratio 3.13x
+15:52:28 INFO record_and_area  daily 27,992  hourly-backed  9,172  DAILY-ONLY 18,820  ratio 3.05x
+15:52:28 INFO public_release   daily 25,075  hourly-backed  8,744  DAILY-ONLY 16,331  ratio 2.87x
+15:52:28 INFO 30 of 36 daily networks contain no hourly gauge at all (19,325 gauges)
+15:52:29 INFO hourly gauges plotted: 9,755 across 7 networks
+15:52:30 INFO wrote reports/label_availability/label_availability.json and reports/figures/fig17_label_availability.png

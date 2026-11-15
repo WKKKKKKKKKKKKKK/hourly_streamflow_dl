@@ -1,0 +1,72 @@
+{
+  "filters": {
+    "min_days": 1095,
+    "max_area_km2": 10000,
+    "window": [
+      "1980-01-01",
+      "2025-12-31"
+    ]
+  },
+  "steps": {
+    "archive": {
+      "n_daily": 37972,
+      "n_hourly_backed": 9856,
+      "n_daily_only": 28116,
+      "ratio_daily_over_hourly": 3.8526785714285716
+    },
+    "record": {
+      "n_daily": 30731,
+      "n_hourly_backed": 9806,
+      "n_daily_only": 20925,
+      "ratio_daily_over_hourly": 3.1338976137058943
+    },
+    "record_and_area": {
+      "n_daily": 27992,
+      "n_hourly_backed": 9172,
+      "n_daily_only": 18820,
+      "ratio_daily_over_hourly": 3.051897078063672
+    },
+    "public_release": {
+      "n_daily": 25075,
+      "n_hourly_backed": 8744,
+      "n_daily_only": 16331,
+      "ratio_daily_over_hourly": 2.8676806953339433
+    }
+  },
+  "daily_only_missing_area": 38,
+  "networks_total": 36,
+  "networks_without_any_hourly": 30,
+  "gauges_in_those_networks": 19325,
+  "barren_networks": {
+    "HYSETS": 2421,
+    "GRDC": 2222,
+    "GRDCCaravan": 1923,
+    "Germany": 1582,
+    "France": 1384,
+    "Poland": 1079,
+    "Denmark": 994,
+    "CAMELS_BR": 897,
+    "Spain": 889,
+    "CAMELS_GB": 671,
+    "CAMELS_CL": 516,
+    "CAMELS_IND": 472,
+    "SouthKorea": 391,
+    "CAMELS_NZ": 369,
+    "CAMELS_COL": 347,
+    "CAMELS_CH": 331,
+    "CAMELS_FI": 320,
+    "Croatia": 311,
+    "Ireland": 309,
+    "Italy": 294,
+    "Sweden": 274,
+    "Portugal": 263,
+    "restricted_ADHI": 246,
+    "Belgium": 188,
+    "Norway": 178,
+    "Slovenia": 117,
+    "Arcticnet": 106,
+    "CCAM": 102,
+    "Thailand": 73,
+    "CAMELS_LUX": 56
+  }
+}

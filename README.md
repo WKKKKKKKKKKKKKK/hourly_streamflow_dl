@@ -56,13 +56,12 @@ Training logs to Weights & Biases; set `wandb.mode: offline` in a config to run 
 | ERA5-Land daily runoff of the African catchments | `/ibex/user/kongw0a/era5_land_africa/era5_land_africa_daily_runoff.nc` | download, basin average (below) |
 
 **Not distributed.** Several inputs come from archives with restricted access (ADHI, GRDC
-and other non-public national networks). No discharge series is part of this repository, and
-neither is anything that lists, locates or scores gauges of those archives: the African
-catchment table and polygons (`africa/africa_basins.{csv,gpkg}`, built by
-`scripts/prep/build_africa_basins.py`), the gauge inventory of Fig. 1
-(`reports/label_availability/`, `reports/figures/fig17_label_availability.png`) and the
-outputs of Appendix D (`reports/sec43_daily_scale/`). They are listed in `.gitignore` and are
-written locally by the scripts named here once the archives are available.
+and other national networks). No discharge series of any gauge is part of this repository:
+it holds code, gauge metadata and results. One file is also left out because the paper does
+not need it: the inventory of every daily-only gauge in the archive
+(`reports/label_availability/daily_only_gauges.csv`), which lists gauges of non-public
+networks unrelated to this study; it is written locally by
+`scripts/figures/label_availability.py`.
 
 **Missing normalisation file.** The prepared-dataset directory named in `data.root` was removed
 from the project space by the data provider (replaced by a newer dataset on 2026-11-07). Its
