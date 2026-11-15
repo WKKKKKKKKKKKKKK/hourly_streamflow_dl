@@ -1,11 +1,10 @@
-"""Length of the test period of the target gauges, for the sentence in Results 3.1
-("the median duration of the test period was approximately N years").
+"""Length of the test period of the target gauges (median over gauges, in years).
 
-Reads the full-series evaluation of the five designs (seed 42, the runs that sec41_figures
-uses for fig4/fig13; the test period of a gauge does not depend on the seed) and counts,
+Reads the full-series evaluation of the five designs (seed 42, the runs that m1_vs_m0_figures
+uses for its whole-hydrograph figures; the test period of a gauge does not depend on the seed) and counts,
 per gauge, the days that were evaluated (n_days in full_series.csv: days on which both M0
-and M1 have a prediction). Only the scored gauges of the paper are kept (score_status ok and
-obs_std >= 1e-3, the same filter as sec41_figures.hourly: 8,709 per design). Writes reports/sec41_m1_vs_m0/test_period_length.json.
+and M1 have a prediction). Only the scored gauges are kept (score_status ok and
+obs_std >= 1e-3, the same filter as m1_vs_m0_figures.hourly: 8,709 per design). Writes reports/m1_vs_m0/test_period_length.json.
 
     python -m scripts.numbers.test_period_length
 """
@@ -14,9 +13,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from scripts.figures.sec41_figures import DESIGNS, paired
+from scripts.figures.m1_vs_m0_figures import DESIGNS, paired
 
-OUT = Path("reports/sec41_m1_vs_m0/test_period_length.json")
+OUT = Path("reports/m1_vs_m0/test_period_length.json")
 
 
 def main() -> None:

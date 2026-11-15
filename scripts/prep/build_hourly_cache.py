@@ -229,7 +229,7 @@ def main() -> None:
     # Refuse when the directory already holds a cache built from a different .nc.
     if meta_path.exists():
         prior = json.loads(meta_path.read_text())
-        # A cache that has had a discharge QC pass applied (not used for the paper) holds edits that
+        # A cache that has had a discharge QC pass applied (not used by the runs here) holds edits that
         # exist nowhere else; rewriting the memmap from the .nc silently discards them.
         # This happened once: the job was cancelled seconds in, but open_memmap(mode="w+")
         # had already zero-filled the file, and zeros read as valid observations.

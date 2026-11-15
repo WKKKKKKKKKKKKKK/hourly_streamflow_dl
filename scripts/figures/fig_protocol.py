@@ -1,8 +1,8 @@
-"""Protocol schematic for the manuscript: what is trained on what, and what is measured.
+"""Protocol schematic: what is trained on what, and what is measured.
 
-A journal figure, not a slide: 180 mm double-column width, thin strokes, one grey ramp
+A print figure, not a slide: 180 mm width, thin strokes, one grey ramp
 that survives greyscale printing, and no results numbers -- those belong to the results
-figures and the caption, and a schematic that carries them goes stale the moment a run
+figures, and a schematic that carries them goes stale the moment a run
 is repeated.
 
 Panel (a) is the fold structure, which is the part prose states badly: every gauge is a
@@ -13,24 +13,6 @@ is a measurement of what that costs rather than a check that passes by construct
 
     python -m scripts.figures.fig_protocol
 
-Suggested caption:
-    Phase I protocol. (a) Spatial cross-validation. The gauges are partitioned once,
-    stratified by data source and record length, and each run holds out a different
-    group (shaded), whose hourly record is withheld; every gauge is therefore a target
-    exactly once and the reported metrics cover the whole network. Five groups are
-    drawn here: four of the five designs use five, and the continental design uses
-    four, one per landmass. (b) For each fold the model is pretrained on the source domain
-    with hourly supervision (M0), fine-tuned on the target domain using 24-hour aggregates
-    only with the hourly branch frozen (M1), and the fine-tuned model is then re-scored
-    on the source domain to measure what the fine-tune cost it. Source replay (dashed)
-    optionally returns source batches, with their hourly targets, to the fine-tuning
-    step. Step 3 re-runs the hourly evaluation on the source domain and reports the
-    paired per-gauge change from M0 to M1. The fine-tuned model is read twice on the
-    target's test period: an hourly
-    KGE, which no daily baseline can produce, and a daily KGE computed from the same
-    hourly output aggregated to days, which is the only scale on which an ordinary
-    daily LSTM trained on the target's own daily record can be compared. Target hourly observations enter
-    neither training, early stopping, nor any hyperparameter choice.
 """
 
 from __future__ import annotations
@@ -43,12 +25,12 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrowPatch, Rectangle
 
-OUT = Path("reports/figures/fig25_protocol.png")
+OUT = Path("reports/figures/protocol.png")
 
-# HESS/Copernicus: one sans-serif family, Arial or Helvetica. Neither is installed here;
+# One sans-serif family, Arial or Helvetica. Neither is installed here;
 # Nimbus Sans is URW's metrically identical Helvetica clone and Liberation Sans is the
-# Arial equivalent, so either satisfies the requirement and the PDF is metric-correct.
-# fonttype 42 embeds TrueType outlines -- the default (Type 3) is a routine desk reject.
+# Arial equivalent, so either serves and the PDF is metric-correct.
+# fonttype 42 embeds TrueType outlines instead of the default Type 3 fonts.
 plt.rcParams.update({
     "font.family": "sans-serif",
     "font.sans-serif": ["Nimbus Sans", "Helvetica", "Liberation Sans", "Arial",
@@ -65,8 +47,7 @@ plt.rcParams.update({
     "mathtext.default": "it",
 })
 
-# A single grey ramp plus black: prints identically in colour and in greyscale, which is
-# what most journals still reproduce a schematic in.
+# A single grey ramp plus black: prints identically in colour and in greyscale.
 FILL_SOURCE, FILL_TARGET, FILL_BOX = "#e8ecf0", "#9aa7b2", "#ffffff"
 LINE, TEXT, MUTED = "#222222", "#111111", "#555555"
 BASE = 7.6          # pt; every other size is stated relative to this
@@ -190,7 +171,7 @@ def panel_b(ax):
     rep_y = 0.826
     elbow(ax, [(0.045, dy + dh / 2), (0.016, dy + dh / 2), (0.016, rep_y),
                (0.640, rep_y), (0.640, py + ph)], ls=(0, (2.6, 2.0)), lw=0.8)
-    # The key for the dashed route goes in the figure, which is what Copernicus asks for;
+    # The key for the dashed route goes in the figure;
     # the band beside the route is too narrow for the sentence, so it sits below instead.
     ax.plot([0.048, 0.098], [0.012, 0.012], color=LINE, linewidth=0.8,
             linestyle=(0, (2.6, 2.0)))

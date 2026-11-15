@@ -1,25 +1,25 @@
-"""Figures and numbers of Results Sect. 3 (daily fine-tuning, M1 against M0).
+"""Figures and summary numbers of daily fine-tuning, M1 against M0.
 
-Writes into reports/sec41_m1_vs_m0/:
+Writes into reports/m1_vs_m0/:
 
-  fig11_distance_and_dissimilarity  Fig. 5: (a) median hourly KGE of M0 and M1 against the
+  distance_and_dissimilarity  (a) median hourly KGE of M0 and M1 against the
                           median distance to the nearest trainable gauge, five CV designs,
                           capped bars spanning the three seeds; (b, c) the same against
                           quintiles of the dissimilarity index on climate and on all
                           continuous static attributes
-  fig9_gain_robustness_cells  Fig. 6: per 4 degree grid cell, whether the gain M1 - M0 is
+  gain_robustness_cells   per 4 degree grid cell, whether the gain M1 - M0 is
                           robust over the three seeds
-  fig13_amount_not_timing Fig. 7: shares of the KGE gain carried by r, alpha and beta, and the
+  amount_not_timing       shares of the KGE gain carried by r, alpha and beta, and the
                           reduction of three flood-peak errors
-  fig7a_hydrographs_main  Fig. 8: one gauge per design (scripts/figures/fig_hydrograph_examples.py)
-  numbers.json            every number the text quotes from these analyses (see REPRODUCE.md)
+  hydrographs             one gauge per design (scripts/figures/fig_hydrograph_examples.py)
+  numbers.json            summary numbers of these analyses (see REPRODUCE.md)
 
-Hourly KGE in fig11 and fig9 is the transfer-stage score of each target gauge
-(per_station_hourly_*_target_hourly.csv); fig13 and fig7a use the continuous hourly series of
+Hourly KGE in distance_and_dissimilarity and gain_robustness_cells is the transfer-stage score of each target gauge
+(per_station_hourly_*_target_hourly.csv); amount_not_timing and hydrographs use the continuous hourly series of
 every test day (scripts/analysis/full_series_eval.py). Every statistic is computed per seed
 and then the median over the three seeds is taken.
 
-    python -m scripts.figures.sec41_figures
+    python -m scripts.figures.m1_vs_m0_figures
 """
 
 from __future__ import annotations
@@ -35,9 +35,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker
 
-# One font for every figure of the section, embedded as TrueType (Type 42) as journals ask;
+# One font for every figure of the section, embedded as TrueType (Type 42);
 # the same settings the map scripts use, applied here so that figures drawn before those
-# scripts are imported (fig1) do not fall back to DejaVu Sans and Type 3 fonts.
+# scripts are imported do not fall back to DejaVu Sans and Type 3 fonts.
 plt.rcParams.update({
     "font.family": "sans-serif",
     "font.sans-serif": ["Nimbus Sans", "Helvetica", "Liberation Sans", "Arial", "DejaVu Sans"],
@@ -53,12 +53,12 @@ from matplotlib.colors import BoundaryNorm, ListedColormap
 import scripts.figures.plot_style as _gm
 from scripts.figures.plot_style import fs
 
-# Final HESS layout: text width 177 mm (two columns of 85 mm, copernicus.cls). Figures are
+# Print layout: width 177 mm (two columns of 85 mm). Figures are
 # drawn at that width so they print at 100 %, with fonts sized for it (fs(x) = x pt).
 _gm.FONT_SCALE = 1.0
 W = 17.7 / 2.54   # full width, inches
 
-OUT = Path("reports/sec41_m1_vs_m0")
+OUT = Path("reports/m1_vs_m0")
 GREY, BLUE = "#8d99a6", "#2a78d6"
 DESIGNS = [  # key, label, output root, median separation (km) from cv_designs.json
     ("random", "Random", "al_v2_runB"),
@@ -95,7 +95,7 @@ def save(fig, name: str) -> None:
     print("wrote", OUT / f"{name}.png")
 
 
-# ---------------------------------------------------------------- Fig. 5a: CV designs
+# ---------------------------------------------------------------- KGE against distance: CV designs
 def ladder_data(numbers: dict | None = None):
     """Per design: separation (km) and M0/M1/gain of each of the three seeds."""
     sep = {k: v["separation_km"]["median"] for k, v in
@@ -179,13 +179,13 @@ def full_series_levels(tables, numbers) -> None:
                                            "M1_per_seed": [p[1] for p in per_seed]}
 
 
-# ---------------------------------------------------------------- fig7a hydrographs
-def fig7_hydrographs(numbers) -> None:
-    """Fig. 8, and the numbers its text quotes: which gauge, the share of gauges eligible
+# ---------------------------------------------------------------- hydrographs
+def plot_hydrographs(numbers) -> None:
+    """Hydrograph examples, and their numbers: which gauge, the share of gauges eligible
     (positive M1 KGE among those with >= 3 peaks), and each model's whole-period metrics."""
     import scripts.figures.fig_hydrograph_examples as m
     picks = m.collect_picks("main")
-    m.plot(picks, str(OUT / "fig7a_hydrographs_main.png"))
+    m.plot(picks, str(OUT / "hydrographs.png"))
     numbers["hydrograph_examples"] = {
         label: {"station_id": p.station_id, "fold": int(p.fold), "gain_quantile": float(p.q),
                 "share_of_gauges_eligible": float(p.kept),
@@ -258,7 +258,7 @@ def draw_cells(ax, agg, cls, title, note):
     ax.text(0.015, 0.03, note, transform=ax.transAxes, ha="left", va="bottom", fontsize=fs(6.8), color="#555555")
 
 
-CELL = 4.0       # degrees; grid cells for the regional version of fig9
+CELL = 4.0       # degrees; grid cells for the gain-robustness map
 MIN_CELL = 5     # gauges per cell
 
 
@@ -274,12 +274,12 @@ def cell_gains(g: pd.DataFrame, coords: pd.DataFrame) -> pd.DataFrame:
     return agg
 
 
-def fig9_gain_robustness(numbers) -> None:
-    """Fig. 6: per grid cell, the class of the gain over the three seeds (CLASSES)."""
+def gain_robustness(numbers) -> None:
+    """Gain robustness: per grid cell, the class of the gain over the three seeds (CLASSES)."""
     coords = pd.read_csv("folds/folds_blocked.csv").set_index("station_id")[["lat", "long"]]
     ready = [(k, lab) for k, lab, _ in DESIGNS if seed_gains(k) is not None]
     if not ready:
-        print("fig9: no design has all three seeds yet")
+        print("gain_robustness_cells: no design has all three seeds yet")
         return
     numbers["gain_robustness_cells"] = {}
     n = len(ready)
@@ -331,12 +331,12 @@ def fig9_gain_robustness(numbers) -> None:
         ax.spines[side].set_visible(False)
     fig.legend([plt.Rectangle((0, 0), 1, 1, color=c) for _, c in CLASSES], [c for c, _ in CLASSES],
                fontsize=fs(7.8), frameon=False, loc="upper center", bbox_to_anchor=(0.5, 0.055), ncol=len(CLASSES))
-    save(fig, "fig9_gain_robustness_cells")
+    save(fig, "gain_robustness_cells")
 
 
 
 
-# Plain journal style: full frame, inward ticks, no grid or shading, open M0 and filled M1
+# Plain print style: full frame, inward ticks, no grid or shading, open M0 and filled M1
 # markers, and the seed range as capped error bars.
 M0_INK = "#5f6b77"
 
@@ -358,7 +358,7 @@ def plot_pair(ax, x, m0, m1) -> None:
             label="$M_1$  after daily-only fine-tuning")
 
 
-def draw_ladder_journal(ax, xs, lv) -> None:
+def draw_ladder(ax, xs, lv) -> None:
     keys = [k for k, _, _ in DESIGNS]
     med = {t: np.array([np.median(lv[k][t]) for k in keys]) for t in ("M0", "M1")}
     for tag, c in (("M0", M0_INK), ("M1", BLUE)):
@@ -387,7 +387,7 @@ def draw_ladder_journal(ax, xs, lv) -> None:
     frame(ax)
 
 
-def draw_dissim_journal(ax, t: pd.DataFrame, col: str, title: str, numbers: dict | None = None) -> None:
+def draw_dissim(ax, t: pd.DataFrame, col: str, title: str, numbers: dict | None = None) -> None:
     """Quintiles of the dissimilarity index pooled over the five designs (8,709 gauges x 5): per
     fifth of the gauges, the median index (x tick label) and the median M0, M1 and gain."""
     t = t.assign(bin=pd.qcut(t[col], 5, labels=False))
@@ -416,8 +416,8 @@ def draw_dissim_journal(ax, t: pd.DataFrame, col: str, title: str, numbers: dict
     ax.tick_params(axis="x", which="both", top=False)   # categorical axis: no ticks along the top
 
 
-def fig11_distance_and_dissimilarity(numbers) -> None:
-    """Fig. 5: (a) designs against geographic distance, (b, c) quintiles of the dissimilarity
+def distance_and_dissimilarity(numbers) -> None:
+    """(a) designs against geographic distance, (b, c) quintiles of the dissimilarity
     index (scripts/analysis/dissimilarity_index.py) on climate and on all continuous attributes."""
     numbers["ladder"] = {}
     xs, lv = ladder_data(numbers)
@@ -425,17 +425,17 @@ def fig11_distance_and_dissimilarity(numbers) -> None:
     fig = plt.figure(figsize=(W, W * 0.92))
     gs = fig.add_gridspec(2, 2, height_ratios=[1.15, 1], hspace=0.38, wspace=0.10)
     ax = fig.add_subplot(gs[0, :])
-    draw_ladder_journal(ax, xs, lv)
+    draw_ladder(ax, xs, lv)
     ax.set_ylabel("Median hourly KGE", fontsize=fs(8.5))
     ax.set_title("(a)  Cross-validation designs", loc="left", fontsize=fs(8.5), weight="bold")
     b = fig.add_subplot(gs[1, 0])
     c = fig.add_subplot(gs[1, 1], sharey=b)
-    draw_dissim_journal(b, t, "DI_clim", "(b)  Dissimilarity, climate attributes", numbers)
-    draw_dissim_journal(c, t, "DI_all", "(c)  Dissimilarity, all continuous attributes", numbers)
+    draw_dissim(b, t, "DI_clim", "(b)  Dissimilarity, climate attributes", numbers)
+    draw_dissim(c, t, "DI_all", "(c)  Dissimilarity, all continuous attributes", numbers)
     b.set_ylabel("Median hourly KGE", fontsize=fs(8))
     b.set_ylim(-0.25, 0.8)
     plt.setp(c.get_yticklabels(), visible=False)
-    save(fig, "fig11_distance_and_dissimilarity")
+    save(fig, "distance_and_dissimilarity")
 
 
 def kge_gain_parts(df: pd.DataFrame) -> pd.DataFrame:
@@ -486,7 +486,7 @@ def error_reduction(tables, key, col, absolute=False) -> list[float]:
     return out
 
 
-def fig13_amount_not_timing(tables, numbers) -> None:
+def amount_not_timing(tables, numbers) -> None:
     """What daily fine-tuning corrects: how much water and how strongly it varies, not when it peaks.
 
     (a) Shares of the KGE gain carried by r, alpha and beta (gain_shares). (b) Reduction of three
@@ -546,18 +546,18 @@ def fig13_amount_not_timing(tables, numbers) -> None:
                 "volume: $\\beta$ (a), high-flow volume bias |FHV| (b)"],
                fontsize=fs(6.8), frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.04), ncol=3,
                columnspacing=1.2, handlelength=1.2)
-    save(fig, "fig13_amount_not_timing")
+    save(fig, "amount_not_timing")
 
 
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     numbers: dict = {}
-    fig11_distance_and_dissimilarity(numbers)
-    fig9_gain_robustness(numbers)
+    distance_and_dissimilarity(numbers)
+    gain_robustness(numbers)
     tables = full_tables()
     full_series_levels(tables, numbers)
-    fig13_amount_not_timing(tables, numbers)
-    fig7_hydrographs(numbers)
+    amount_not_timing(tables, numbers)
+    plot_hydrographs(numbers)
     (OUT / "numbers.json").write_text(json.dumps(numbers, indent=1, default=float))
     print("wrote", OUT / "numbers.json")
 

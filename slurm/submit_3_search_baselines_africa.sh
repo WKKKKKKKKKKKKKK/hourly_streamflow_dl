@@ -1,6 +1,6 @@
 #!/bin/bash
-# Stage 3: the architecture search (Table B1), the daily-LSTM baselines and the African arms
-# (Appendix D). Every line reproduces a recorded launch.
+# Stage 3: the architecture search, the daily-LSTM baselines and the African arms.
+# Every line reproduces a recorded launch.
 #
 #   bash slurm/submit_3_search_baselines_africa.sh            # dry run
 #   SUBMIT=1 bash slurm/submit_3_search_baselines_africa.sh   # submit (after stage 1 for Africa)
@@ -28,14 +28,14 @@ for cfg in configs/aligned/search/*.yaml; do
   done
 done
 
-# ---- daily LSTM trained from scratch on the target gauges' daily observations (Fig. D1)
+# ---- daily LSTM trained from scratch on the target gauges' daily observations
 for d in random blocked climate longitudinal continental; do
   arr=0-4; [[ $d == continental ]] && arr=0-3
   sub --export=ALL,CONFIG=configs/phase1_dailylstm_aligned_$d.yaml -J dLSTM --array=$arr --time=08:00:00 \
       slurm/71_train_daily_lstm.sbatch >/dev/null
 done
 
-# ---- Africa (Appendix D): five temporal folds per arm, each its own job.
+# ---- Africa: five temporal folds per arm, each its own job.
 #   m1b          M1 fine-tuned from each of the five random-design pretrained models
 #   daily_lstm   daily LSTM from scratch
 #   scratch_agg  the M1 architecture and objective from scratch (enters the common basin set)

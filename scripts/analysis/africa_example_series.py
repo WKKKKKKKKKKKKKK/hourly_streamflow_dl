@@ -1,4 +1,4 @@
-"""Daily series of every African catchment, and hourly ones of a few, for the Sect. 4.3 flood examples.
+"""Daily series of every African catchment, and hourly ones of a few, for the African flood examples.
 
 The scored African tables keep one KGE per basin and member, not the series. This re-runs
 the five members of M1 (outputs/al_v2_africa_m1b_fold*) and of the daily LSTM

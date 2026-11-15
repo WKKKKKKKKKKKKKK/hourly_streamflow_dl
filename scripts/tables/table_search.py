@@ -1,4 +1,4 @@
-"""Table B1: the fold-1 architecture search (random design), as LaTeX.
+"""Table of the fold-1 architecture search (random design), as LaTeX.
 
 The search exists to answer "were the frozen hyperparameters defensible?", not to pick a
 winner: adopting a winner would have meant re-running every comparison. The table is therefore laid out by

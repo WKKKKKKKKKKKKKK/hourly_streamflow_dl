@@ -1,6 +1,6 @@
-"""Baseline for Sect. 4.1: correct M0 with the target gauge's daily observations, no training.
+"""Post-processing baseline for M1: correct M0 with the target gauge's daily observations, no training.
 
-Most of M1's hourly KGE gain is variability (alpha) and volume (beta). A reviewer's first
+Most of M1's hourly KGE gain is variability (alpha) and volume (beta). The obvious
 question is whether a post-processing of M0 with the same daily observations gets as far. This
 fits, per target gauge, a correction of M0's DAILY means against the observed daily means of the
 gauge's training period -- the same daily data and period M1 is fine-tuned on (a day counts when
@@ -33,7 +33,7 @@ gain nothing over M1; if it learned something else, correcting M1 adds to it.
 
     python -m scripts.analysis.correction_baseline --config configs/aligned/phase1_runB_blocked_v2.yaml --folds 0
     # -> <output_root>/correction_baseline_v3/correction_fold{k}.csv (v2, without the corrected M1,
-    #    is kept in correction_baseline_v2/ (earlier versions, not used by the paper; v1 in correction_baseline/)
+    #    is kept in correction_baseline_v2/ (earlier versions, not used here; v1 in correction_baseline/)
 """
 
 from __future__ import annotations

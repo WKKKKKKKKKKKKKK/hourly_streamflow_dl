@@ -1,16 +1,16 @@
 #!/bin/bash
 # Stage 1: the seed-42 runs of every CV design, and every fine-tuning variant that starts from
-# them. These are the launches recorded for the paper's runs (outputs/al_*), one per line.
+# them. These are the recorded launches of the runs under outputs/al_*, one per line.
 #
 #   bash slurm/submit_1_main_runs.sh            # dry run: print the plan
 #   SUBMIT=1 bash slurm/submit_1_main_runs.sh   # submit
 #
 # Pretraining: one array task per fold, chained as 5 x 4 h chunks (each chunk resumes from the
 # last checkpoint; the gpu4 partition ends at 4 h). Fine-tuning waits for the last chunk.
-#   base runs        M0 and M1 of the five designs                 (Fig. 5-8, Table B4)
-#   replay           M1 with source replay, ratio 0.25             (Fig. C1)
-#   learning rate    Step-2 learning rate 2e-4 and 1e-4            (Table B2)
-#   objective        weights of the two terms of L2, random design (Table B3)
+#   base runs        M0 and M1 of the five designs
+#   replay           M1 with source replay, ratio 0.25
+#   learning rate    Step-2 learning rate 2e-4 and 1e-4
+#   objective        weights of the two terms of L2, random design
 set -euo pipefail
 cd "$(dirname "$0")/.."
 [[ -f train/pretrain_source.py ]] || { echo "run from the repository root" >&2; exit 2; }

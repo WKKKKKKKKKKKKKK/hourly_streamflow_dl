@@ -1,18 +1,13 @@
 # Daily-supervised fine-tuning of an hourly MTS-LSTM
 
-Code, configurations and fold definitions behind *Can Daily Observations Improve Hourly
-Streamflow Prediction?* (HESS submission). An MTS-LSTM (Gauch et al., 2021) is pretrained on
-hourly discharge of source gauges (M0) and fine-tuned at held-out target gauges with their daily
-means only, the hourly LSTM frozen (M1). Five cross-validation designs (random, blocked,
-climate zone, longitudinal, continental), three seeds each, plus 294 African catchments that have
-daily records only.
+An MTS-LSTM (Gauch et al., 2021) is pretrained on hourly discharge of source gauges (M0) and
+fine-tuned at held-out target gauges with their daily means only, the hourly LSTM frozen (M1).
+Five cross-validation designs (random, blocked, climate zone, longitudinal, continental), three
+seeds each, plus 294 African catchments that have daily records only.
 
-This repository contains only what the manuscript uses: the model and training code, the
-configurations of the runs that enter a figure, table or number, the jobs that ran them, and one
-script per figure, table or group of quoted numbers. It was extracted on 2026-11-15 from the
-development repository `~/global_mtslstm_aligned`, which is unchanged.
-[REPRODUCE.md](REPRODUCE.md) maps every item of the manuscript to the command and the file that
-produce it.
+The repository holds the model and training code, the configurations of the finished runs, the
+jobs that ran them, and one script per figure, table or group of summary numbers.
+[REPRODUCE.md](REPRODUCE.md) lists every output with the command and the file that produce it.
 
 ## Layout
 
@@ -25,11 +20,11 @@ africa/                              the 294 African catchments (attributes, pol
 slurm/                               job scripts and the four submission stages
 scripts/prep/                        building the inputs: hourly cache, folds, African forcing
 scripts/analysis/                    evaluation of trained models and intermediate analyses
-scripts/figures/                     manuscript figures and the numbers quoted from them
-scripts/tables/                      appendix tables
-scripts/numbers/                     quoted numbers that belong to no figure
-make_paper.sh                        every figure, table and number, in order (CPU only)
-reports/                             what make_paper.sh writes (regenerated and verified, see below)
+scripts/figures/                     figures and their summary numbers
+scripts/tables/                      tables (LaTeX / CSV)
+scripts/numbers/                     summary numbers that belong to no figure
+make_reports.sh                      every figure, table and number, in order (CPU only)
+reports/                             what make_reports.sh writes
 outputs -> /ibex/user/kongw0a/global_mtslstm_outputs_aligned   the finished runs (symlink)
 ```
 
@@ -50,17 +45,17 @@ Training logs to Weights & Biases; set `wandb.mode: offline` in a config to run 
 | static attributes | `/ibex/project/c2266/abbaa0a/data/gscad_database/processed/20250630/hourly/dataframes/static.csv` | data provider |
 | dataset `config.json` and `scalers.json` (normalisation) | `data.root` of every config: `.../hourly_q_dl/6datasets_H_8760_..._9181_42` | data provider; **no longer on ibex** (see below) |
 | hourly cache: memmap of 6sources.nc, sample index, per-gauge 70/30 temporal split | `/ibex/user/kongw0a/hourly_cache` | `scripts/prep/build_hourly_cache.py` |
-| daily archive (Fig. 1 only) | `.../gscad_database/processed/20250630/daily/dataframes/daily_q.nc` | data provider |
+| daily archive (label_availability only) | `.../gscad_database/processed/20250630/daily/dataframes/daily_q.nc` | data provider |
 | African daily discharge and the daily training products for the 294 catchments | `/ibex/project/c2266/abbaa0a/data/input_data/hydrodeepai/` | data provider |
 | African hourly forcing: ERA5-Land, rescaled to the daily training products | `/ibex/user/kongw0a/era5_land_africa_forcing/era5_land_africa_hourly_forcing_penman.nc` | download, basin average, rescale (below) |
 | ERA5-Land daily runoff of the African catchments | `/ibex/user/kongw0a/era5_land_africa/era5_land_africa_daily_runoff.nc` | download, basin average (below) |
 
 **Not distributed.** Several inputs come from archives with restricted access (ADHI, GRDC
 and other national networks). No discharge series of any gauge is part of this repository:
-it holds code, gauge metadata and results. One file is also left out because the paper does
-not need it: the inventory of every daily-only gauge in the archive
+it holds code, gauge metadata and results. One file is also left out because no analysis
+here needs it: the inventory of every daily-only gauge in the archive
 (`reports/label_availability/daily_only_gauges.csv`), which lists gauges of non-public
-networks unrelated to this study; it is written locally by
+networks unrelated to these runs; it is written locally by
 `scripts/figures/label_availability.py`.
 
 **Missing normalisation file.** The prepared-dataset directory named in `data.root` was removed
@@ -99,42 +94,26 @@ SUBMIT=1 bash slurm/submit_1_main_runs.sh               # seed 42: 5 designs (M0
 SUBMIT=1 bash slurm/submit_2_seed_runs.sh               # seeds 43, 44 of every design, and their replay arms
 SUBMIT=1 bash slurm/submit_3_search_baselines_africa.sh # architecture search, daily LSTMs, African arms
 SUBMIT=1 bash slurm/submit_4_evaluation.sh              # daily scores, whole hydrographs, quantile mapping, Africa ensemble
-bash make_paper.sh all                                   # (CPU) intermediate analyses, then step 5
+bash make_reports.sh all                                 # (CPU) intermediate analyses, then step 5
 sbatch slurm/94_africa_examples.sbatch                   # African example series (needs the four-way table)
 ```
 
-Pretraining a fold takes a median of 7.6 h on one GPU (chained 4 h chunks that resume from the
-last checkpoint); the five designs take about 175 GPU-hours per seed.
+Pretraining a fold takes a median of about 7.7 h on one GPU (chained 4 h chunks that resume
+from the last checkpoint); the five designs take about 174 GPU-hours per seed
+(`scripts/numbers/pretrain_compute.py`).
 
-**5. Figures, tables, numbers** (CPU, minutes): `bash make_paper.sh` writes everything into
+**5. Figures, tables, numbers** (CPU, minutes): `bash make_reports.sh` writes everything into
 `reports/` from the finished runs under `outputs/`.
 
 ## Verification
 
-On 2026-11-15 the original scripts of the development repository and the scripts here were run
-on the same finished runs. All twelve figures are pixel-identical; every table and number file
-is identical (the search table differs in its first, comment line). The CV-design distances,
-the dissimilarity index (with the recomputed scalers, see Data) and the two African summary
-tables were also rebuilt and are identical to the files the figures were drawn from. Differences
-from the original scripts, all intended:
-
-* `fig_architecture.py` built the model with 4 dynamic inputs instead of 3 and therefore printed
-  114,690 trainable and 81,408 frozen parameters in the legend of the architecture figure. Every
-  trained checkpoint has 28 inputs (3 forcings + 25 statics): 195,074 parameters, 114,178
-  trainable, 80,896 frozen, as the manuscript text states. Fixed here; the figure in the
-  manuscript (`image_5.png`) still shows the old counts.
-* `reports/sec41_m1_vs_m0/numbers.json` now also records the dissimilarity quintiles (Fig. 5b-c),
-  the hydrograph examples (Fig. 8) and the share of gauges inside the grid cells of Fig. 6; the
-  keys of figures not in the manuscript are gone. Text numbers of Appendix C come from
-  `fig2_text_numbers.csv`, as before.
-* `scripts/figures/fig_protocol.py` is the main-line version (`~/global_mtslstm`), which the
-  manuscript's Fig. 3 was drawn with: it has the "outside the CV (Africa only)" ERA5-Land item
-  that the development branch's copy lacks. The only change is "held-out period" -> "test
-  period" in the Step 3 and evaluate boxes.
-* `scripts/numbers/fold_balance.py` saves its Spearman correlations
-  (`fold_balance_spearman.json`) instead of only printing them.
-* Table files are named `search.tex`, `objective.tex`, `ft_lr.csv`, `seeds.csv`,
-  `pretrain_budget.json` (formerly with an `_aligned` suffix).
+The scripts were checked against those of the development repository on the same finished runs:
+all figures are pixel-identical and every table and number file is identical, apart from the
+file names. The CV-design distances, the dissimilarity index (with the recomputed scalers, see
+Data) and the two African summary tables were rebuilt and are identical to the files the
+figures read. `scripts/figures/fig_architecture.py` builds the model with the 3 dynamic inputs
+of the trained checkpoints (28 inputs: 3 forcings + 25 statics; 195,074 parameters, 114,178
+trainable, 80,896 frozen); the development copy used 4.
 
 ## Names
 
@@ -144,4 +123,4 @@ figure-aligned re-run (both branches end at the target hour, as in the architect
 `v2` the configuration after the hyperparameter check; `runB` is the random design. Analysis
 directories `outputs/v2_cv_designs`, `outputs/v2_design_daily` and the `v2_<design>` entries are
 links to or products of the aligned runs. The code and the outputs call the late 30 % of each
-gauge's record the "validation" split; the manuscript calls it the test period.
+gauge's record the "validation" split; it is the test period of every score.

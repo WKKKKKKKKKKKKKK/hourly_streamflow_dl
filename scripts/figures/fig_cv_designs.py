@@ -37,7 +37,7 @@ FONT_BOOST = 1.15
 def fs(size: float) -> float:
     return round(_fs(size) * FONT_BOOST, 2)
 
-OUT = Path("reports/figures/fig19_cv_designs.png")
+OUT = Path("reports/figures/cv_designs.png")
 
 # Okabe-Ito, which stays distinguishable in the common colour-vision deficiencies and
 # in greyscale. Five folds need five; the continental design uses the first four.

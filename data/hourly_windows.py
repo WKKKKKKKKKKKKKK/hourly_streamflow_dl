@@ -129,7 +129,7 @@ def window_bounds(t: int, k_h: int, alignment: str = "lagged", daily_shift: int 
     hourly one and the hand-off ~23 h early -- an off-by-one against the design, which
     the 100-station reference and Gauch et al. both align.
 
-    ``"figure"`` is the design as drawn in the manuscript's architecture figure: both
+    ``"figure"`` is the design as drawn in the architecture figure (fig_architecture.py): both
     branches end at the target hour. Hourly ``x[t-k_h+1 : t+1]``; daily ends with the last
     COMPLETE day at or before t, i.e. day d itself for a 23:00 target and day d-1 for any
     earlier hour, so no forcing after t is ever read. With k_h = 14 x 24 and a 23:00

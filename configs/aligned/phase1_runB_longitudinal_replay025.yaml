@@ -1,8 +1,8 @@
 # FIGURE-ALIGNED re-run (added 2026-10-19). Identical to configs/phase1_runB_longitudinal_replay025.yaml except three keys:
 #   data.window_alignment: figure  -- both branches end at the target hour, as in the
-#     manuscript's architecture figure (see data/hourly_windows.py window_bounds)
+#     architecture figure (scripts/figures/fig_architecture.py; see data/hourly_windows.py window_bounds)
 #   output_root: outputs/al_v2_longitudinal_replay025  (the original outputs/v2_longitudinal_replay025 is untouched)
-#   wandb.project: global_mtslstm_aligned  (kept out of the paper's W&B project)
+#   wandb.project: global_mtslstm_aligned  (kept apart from the earlier runs' W&B project)
 # Longitudinal split WITH source replay. Completes the replay sweep across all five
 # designs: the trade-off replay makes is not a constant, so measuring it on two easy
 # designs and one extreme one leaves the middle of the range unobserved.

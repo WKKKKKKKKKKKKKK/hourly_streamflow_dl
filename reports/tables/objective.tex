@@ -1,5 +1,5 @@
 \begin{table}[H]
-\caption{Terms of the fine-tuning objective, Eq.~(\ref{eq:loss-finetune}). $w_D$ weights the daily head, $w_H$ the aggregated hourly output, both against the same daily observation. All arms start from identical pretrained weights and differ only in the objective. $M_1$ is median hourly KGE over the 8,709 target gauges of the random design; the last column is the median per-gauge difference from the adopted arm, not a difference of medians. With $w_H = 0$ the state handoff is the only route to the hourly branch.}
+\caption{Terms of the fine-tuning objective L2. $w_D$ weights the daily head, $w_H$ the aggregated hourly output, both against the same daily observation. All arms start from identical pretrained weights and differ only in the objective. $M_1$ is median hourly KGE over the 8,709 target gauges of the random design; the last column is the median per-gauge difference from the adopted arm, not a difference of medians. With $w_H = 0$ the state handoff is the only route to the hourly branch.}
 \label{tab:objective}
 \centering
 \begin{tabular}{rrl rr}

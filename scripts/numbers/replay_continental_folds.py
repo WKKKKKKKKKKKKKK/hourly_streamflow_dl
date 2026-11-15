@@ -1,15 +1,15 @@
-"""Appendix C continental numbers per held-out continent: median hourly KGE (23:00) of the target
+"""Replay in the continental design, per held-out continent: median hourly KGE (23:00) of the target
 gauges of each fold, M1 fine-tuned without and with source replay, per seed, and the paired change.
 
-    python -m scripts.numbers.sec42_continental_folds     # -> reports/sec42_forgetting_replay/continental_per_fold.csv
+    python -m scripts.numbers.replay_continental_folds     # -> reports/forgetting_replay/continental_per_fold.csv
 """
 
 from __future__ import annotations
 
 import pandas as pd
 
-from scripts.figures.sec41_figures import SEED_RUNS
-from scripts.figures.sec42_figures import OUT, REPLAY_RUNS, scores
+from scripts.figures.m1_vs_m0_figures import SEED_RUNS
+from scripts.figures.replay_figures import OUT, REPLAY_RUNS, scores
 
 CONTINENTS = ["North America", "Oceania", "Europe", "Asia"]   # continental fold 0..3
 

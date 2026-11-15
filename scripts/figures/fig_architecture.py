@@ -14,13 +14,6 @@ exactly what a 24-hour total constrains.
 
     python -m scripts.figures.fig_architecture
 
-Suggested caption:
-    sMTS-LSTM during Step 2. The daily branch runs the full 365-day lookback; at day 351
-    its hidden and cell states pass through two linear layers to initialise the hourly
-    branch, which runs the final 336 hours. During the daily-only adaptation the hourly
-    LSTM is frozen (hatched) and all other modules are trained. Both output heads are
-    supervised by the same daily observation: the daily head directly, and the hourly
-    head through the 24-hour mean of its output. No hourly observation enters the loss.
 """
 
 from __future__ import annotations
@@ -43,7 +36,7 @@ plt.rcParams.update({
     "mathtext.default": "it",
 })
 
-OUT = Path("reports/figures/fig26_architecture.png")
+OUT = Path("reports/figures/architecture.png")
 LINE, TEXT, MUTED = "#222222", "#111111", "#555555"
 TRAIN_FILL, FROZEN_FILL = "#ffffff", "#c9d2da"
 BASE = 8.6
@@ -184,10 +177,10 @@ def legend(ax, counts):
                 linespacing=1.55)
 
     # NSE and the subscripts stay outside math mode: \mathrm sends mathtext to its
-    # Computer Modern fallback, which puts a second font family in the PDF and breaks
-    # the journal's one-family rule. Only the symbols themselves are math.
+    # Computer Modern fallback, which puts a second font family in the PDF.
+   # Only the symbols themselves are math.
     # A pointer, not the algebra: the definition and the weights belong in the text,
-    # where they can be stated once and cited, rather than ageing inside a figure.
+    # where they can be stated once, rather than ageing inside a figure.
     ax.text(0.045, 0.772,
             "Step 2 loss: both heads are supervised by the same daily observation, "
             "through the same function; no hourly observation enters.",
@@ -222,8 +215,7 @@ def main() -> None:
     args.out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(args.out, dpi=400)
     # Drop the PDF creation timestamp so two runs of this script are byte-identical:
-    # a figure that changes checksum without changing content cannot be diffed, and a
-    # reviewer asking "is this the same figure" deserves a one-command answer.
+    # a figure that changes checksum without changing content cannot be diffed.
     fig.savefig(args.out.with_suffix(".pdf"), metadata={"CreationDate": None})
     plt.close(fig)
     print(f"wrote {args.out} and {args.out.with_suffix('.pdf')}")

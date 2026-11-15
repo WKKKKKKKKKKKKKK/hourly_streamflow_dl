@@ -1,26 +1,26 @@
-"""Figure and numbers of Appendix C (source-domain forgetting and replay).
+"""Figure and summary numbers of source-domain forgetting and replay.
 
-Writes into reports/sec42_forgetting_replay/:
+Writes into reports/forgetting_replay/:
 
-  fig2_cdf_replay         Fig. C1: distributions of hourly KGE over gauges, source row and target
+  cdf_replay              distributions of hourly KGE over gauges, source row and target
                           row, one column per CV design, for M0, M1 fine-tuned without replay and
                           M1 fine-tuned with source replay (ratio 0.25). The line is the pointwise
                           median of the three seeds' ECDFs (it crosses 0.5 at the median of the
                           seed medians), the band their envelope. A source gauge carries one
                           value, the median over the folds in which it is a source gauge.
-  fig2_text_numbers.csv   every number of the appendix text on the basis of the figure: levels,
+  replay_summary.csv      summary numbers on the basis of the figure: levels,
                           share of KGE < 0, |ln alpha|, |ln beta|, |alpha - 1|, |beta - 1|, r, the
                           paired per-gauge changes and the share of gauges that improve; per seed
-                          (fig2_text_numbers_per_seed.csv), then median and range over seeds
+                          (replay_summary_per_seed.csv), then median and range over seeds
   numbers.json            the medians annotated on the figure
 
 Source scores are the source gauges' own test period, re-evaluated hourly with M0 and with the
 fine-tuned M1 of the same fold. Every replay run starts from the pretrained weights of the plain
 run of the same seed (M0 is identical), so replay against no replay is paired within a seed. A
 seed counts only when all its folds are done. Per-continent numbers of the continental design:
-scripts/numbers/sec42_continental_folds.py.
+scripts/numbers/replay_continental_folds.py.
 
-    python -m scripts.figures.sec42_figures
+    python -m scripts.figures.replay_figures
 """
 
 from __future__ import annotations
@@ -32,9 +32,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from scripts.figures.sec41_figures import BLUE, DESIGNS, ORANGE_, SEED_RUNS, W, fs, plt, style
+from scripts.figures.m1_vs_m0_figures import BLUE, DESIGNS, ORANGE_, SEED_RUNS, W, fs, plt, style
 
-OUT = Path("reports/sec42_forgetting_replay")
+OUT = Path("reports/forgetting_replay")
 REPLAY_RUNS = {  # design -> output roots of the replay runs (ratio 0.25), seeds 42, 43, 44
     "random": ["al_v2_replay025", "var_al_random_replay025_s43", "var_al_random_replay025_s44"],
     "blocked": ["al_v2_blocked_replay025", "var_al_blocked_replay025_s43", "var_al_blocked_replay025_s44"],
@@ -66,9 +66,9 @@ def signed(x: float) -> str:
     return f"{x:+.2f}".replace("-", "\u2212")
 
 
-# ---------------------------------------------------------------- Fig. C1: CDFs
+# ---------------------------------------------------------------- CDFs
 LABEL = {k: lab for k, lab, _ in DESIGNS}
-# colours as Sect. 3 (M1 blue, replay orange)
+# colours as in m1_vs_m0_figures (M1 blue, replay orange)
 REFERENCE, PLAIN, REPLAY = "#3a3a3a", BLUE, ORANGE_
 INK, MUTED, GRID = "#16202b", "#5a6672", "#e3e7ea"
 BASE = 10.0
@@ -97,10 +97,10 @@ def draw_ecdf(ax, curves: np.ndarray, colour: str, dashes=None, lw: float = 1.3,
 
 def seed_median_text(runs: list[str], model: str, domain: str, keep: pd.Index) -> tuple[str, list[float]]:
     m = [float(per_gauge(r, model, domain).reindex(keep).median()) for r in runs]
-    return signed(np.median(m)), m   # bare number: "median" ran into the curves of (e) and (j); the caption says it
+    return signed(np.median(m)), m   # bare number: "median" ran into the curves of (e) and (j)
 
 
-def fig2_cdf_replay(numbers: dict) -> None:
+def cdf_replay(numbers: dict) -> None:
     from matplotlib.lines import Line2D
 
     keys = [k for k, _, _ in DESIGNS]
@@ -110,7 +110,7 @@ def fig2_cdf_replay(numbers: dict) -> None:
     rows, height = {"source": 0.560, "target": 0.200}, 0.330
     numbers["cdf"] = {}
     n_rep = []
-    sep = {k: v["separation_km"]["median"] for k, v in   # as the x axis of Sect. 3.1
+    sep = {k: v["separation_km"]["median"] for k, v in   # as the x axis of distance_and_dissimilarity
            json.load(open("outputs/v2_cv_designs/cv_designs.json"))["designs"].items()}
     for row, y0 in rows.items():
         for i, design in enumerate(keys):
@@ -160,7 +160,7 @@ def fig2_cdf_replay(numbers: dict) -> None:
             if row == "source":
                 ax.set_title(f"{LABEL[design]}\n{sep[design]:,.0f} km", fontsize=BASE - 1.6,
                              fontweight="bold", color=INK, loc="left", pad=3, linespacing=1.3)
-            # every panel numbered, (a)-(e) source, (f)-(j) target, so the text can cite each one
+            # every panel numbered, (a)-(e) source, (f)-(j) target
             letter = "abcdefghij"[i + (5 if row == "target" else 0)]
             ax.text(0.04, 0.96, f"({letter})", transform=ax.transAxes, ha="left", va="top",
                     fontsize=BASE - 1.6, fontweight="bold", color=INK)
@@ -174,10 +174,10 @@ def fig2_cdf_replay(numbers: dict) -> None:
     if min(n_rep) < 3:
         fig.text(0.99, 0.082, f"DRAFT: replay with {min(n_rep)} seed(s), no replay with 3", ha="right",
                  fontsize=fs(7), color="#b2182b")
-    fig.savefig(OUT / "fig2_cdf_replay.png", dpi=300)   # fixed axes positions: no tight bbox, as fig36
-    fig.savefig(OUT / "fig2_cdf_replay.pdf")
+    fig.savefig(OUT / "cdf_replay.png", dpi=300)   # fixed axes positions: no tight bbox
+    fig.savefig(OUT / "cdf_replay.pdf")
     plt.close(fig)
-    print("wrote", OUT / "fig2_cdf_replay.png")
+    print("wrote", OUT / "cdf_replay.png")
 
 
 # ---------------------------------------------------------------- what is forgotten
@@ -198,8 +198,8 @@ def components(root: str, model: str, domain: str) -> pd.DataFrame:
                          "abs_alpha_m1": (f.kge_alpha - 1).abs(), "abs_beta_m1": (f.kge_beta - 1).abs()})
 
 
-def fig2_text_numbers() -> None:
-    """Numbers for the text of Sect. 3.2 on the basis of fig2: one value per gauge (a source gauge,
+def replay_summary() -> None:
+    """Summary numbers on the basis of cdf_replay: one value per gauge (a source gauge,
     the median over the folds it is a source gauge in), the same gauges for every model of a panel;
     per seed, then the median and range over seeds. Levels and KGE components of M0, M1 and M1 with
     replay, and the paired per-gauge changes."""
@@ -221,10 +221,10 @@ def fig2_text_numbers() -> None:
                     rec[f"frac_{x}_gt_{y}"] = float((kge[x] > kge[y]).mean())
                 rows.append(rec)
     t = pd.DataFrame(rows)
-    t.to_csv(OUT / "fig2_text_numbers_per_seed.csv", index=False)
+    t.to_csv(OUT / "replay_summary_per_seed.csv", index=False)
     g = t.drop(columns="seed").groupby(["domain", "design"], sort=False)
-    pd.concat({"median": g.median(), "min": g.min(), "max": g.max()}, axis=1).to_csv(OUT / "fig2_text_numbers.csv")
-    print("wrote", OUT / "fig2_text_numbers.csv")
+    pd.concat({"median": g.median(), "min": g.min(), "max": g.max()}, axis=1).to_csv(OUT / "replay_summary.csv")
+    print("wrote", OUT / "replay_summary.csv")
 
 
 def save(fig, name: str) -> None:
@@ -237,8 +237,8 @@ def save(fig, name: str) -> None:
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     numbers: dict = {}
-    fig2_cdf_replay(numbers)
-    fig2_text_numbers()
+    cdf_replay(numbers)
+    replay_summary()
     (OUT / "numbers.json").write_text(json.dumps(numbers, indent=1, default=float))
     print("wrote", OUT / "numbers.json")
 

@@ -5,13 +5,13 @@
 #   SUBMIT=1 bash slurm/submit_4_evaluation.sh   # submit
 #
 #   70_score_daily        daily KGE of every target gauge (M1 of every seed, daily LSTM)
-#                         -> outputs/v2_design_daily/<run>/                       (Fig. D1)
+#                         -> outputs/v2_design_daily/<run>/
 #   92_full_series        continuous hourly series of every test day, M0 and M1, all seeds
-#                         -> <run>/full_series/                                    (Figs. 7, 8)
+#                         -> <run>/full_series/
 #   95_correction_baseline  quantile mapping of M0 and M1 on the daily observations, all seeds
-#                         -> <run>/correction_baseline_v3/                         (QM paragraph)
+#                         -> <run>/correction_baseline_v3/
 #   43_africa_ensemble    African M0/M1 daily predictions of the five members -> al_v2_africa_m1b_summary
-#   94_africa_examples    daily and hourly series of the African example catchments (Fig. D3);
+#   94_africa_examples    daily and hourly series of the African example catchments;
 #                         needs the CPU steps africa_daily_three_way and africa_four_way first (README)
 set -euo pipefail
 cd "$(dirname "$0")/.."

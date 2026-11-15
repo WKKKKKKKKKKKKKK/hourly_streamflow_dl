@@ -1,11 +1,11 @@
-"""Tables B2 and B4: the Step-2 learning rate (tab:ft-lr) and run-to-run variability
-(tab:seeds), with the pretraining-budget sentence of the tab:seeds caption.
+"""Two tables: the Step-2 learning rate and run-to-run variability across seeds, plus the
+pretraining budget (epochs, best epoch) of the seed-42 folds.
 
-Target-domain hourly KGE (23:00) pooled over the 8,709 target gauges of a design, as everywhere
-in Sect. 3. Seeds: per seed the pooled median of M1 and the paired median M1 - M0; "largest fold
+Target-domain hourly KGE (23:00) pooled over the 8,709 target gauges of a design, as in the
+other results scripts. Seeds: per seed the pooled median of M1 and the paired median M1 - M0; "largest fold
 range" is, over the folds of a design, the largest range across seeds of the fold's median M1.
 
-    python -m scripts.tables.table_appendix     # -> reports/tables/{ft_lr.csv, seeds.csv, pretrain_budget.json}
+    python -m scripts.tables.table_lr_seeds     # -> reports/tables/{ft_lr.csv, seeds.csv, pretrain_budget.json}
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from scripts.figures.sec41_figures import SEED_RUNS
+from scripts.figures.m1_vs_m0_figures import SEED_RUNS
 
 OUT = Path("reports/tables")
 LR_RUNS = {  # design -> Step-2 learning rate -> output root

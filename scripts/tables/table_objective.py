@@ -1,8 +1,7 @@
-"""Table B3: what each term of the fine-tuning objective is worth (random design).
+"""Table: what each term of the fine-tuning objective is worth (random design).
 
-Equation (4) weights two terms, one per output head, against the same daily observation.
-Which of them carries the adaptation is not obvious from the equation, and the answer
-turns out to matter for how the method is described: removing the daily-branch term
+The fine-tuning loss L2 weights two terms, one per output head, against the same daily observation.
+Which of them carries the adaptation is not obvious from the loss: removing the daily-branch term
 costs almost nothing, while removing the aggregate term costs about 0.07 in median KGE.
 
 All arms start from the SAME pretrained weights -- their M0 agrees to six decimals --
@@ -105,7 +104,7 @@ def fmt_latex(rows: list[dict], m0: float) -> str:  # m0 checked, not printed
                     f"{mark}{r['median']:.4f} & {mark}{paired} \\\\")
     return "\n".join([
         r"\begin{table}[H]",
-        r"\caption{Terms of the fine-tuning objective, Eq.~(\ref{eq:loss-finetune}). "
+        r"\caption{Terms of the fine-tuning objective L2. "
         r"$w_D$ weights the daily head, $w_H$ the aggregated hourly output, both against "
         r"the same daily observation. All arms start from identical pretrained weights "
         r"and differ only in the objective. $M_1$ is median hourly KGE over the "

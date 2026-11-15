@@ -1,5 +1,5 @@
-"""Hourly hydrographs before and after fine-tuning, one gauge per CV design (Fig. 8 of the
-manuscript, fig7a_hydrographs_main.png; drawn through scripts.figures.sec41_figures).
+"""Hourly hydrographs before and after fine-tuning, one gauge per CV design
+(hydrographs.png; drawn through scripts.figures.m1_vs_m0_figures).
 
 The gauges are chosen by rule, not by eye: in each design, among the 8,709 scored gauges with
 at least three observed peaks and a positive M1 KGE, the gauge whose whole-hydrograph KGE gain
@@ -38,7 +38,7 @@ DESIGNS = [  # label, config, output root
     ("Longitudinal", "configs/aligned/phase1_runB_longitudinal.yaml", "al_v2_longitudinal"),
     ("Continental", "configs/aligned/phase1_runB_continental.yaml", "al_v2_continental"),
 ]
-OUT = "reports/sec41_m1_vs_m0/fig7a_hydrographs_main.png"
+OUT = "reports/m1_vs_m0/hydrographs.png"
 LONG = 30 * 24         # hours either side of the event, left panel
 SHORT = 2 * 24         # hours either side of the event, right panel
 WINDOW = 12            # peak-timing search window (Gauch et al., 2021)

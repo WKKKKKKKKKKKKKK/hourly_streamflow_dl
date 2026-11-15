@@ -1,8 +1,8 @@
 # FIGURE-ALIGNED re-run (added 2026-10-19). Identical to configs/phase1_runB_blocked_replay_v2.yaml except three keys:
 #   data.window_alignment: figure  -- both branches end at the target hour, as in the
-#     manuscript's architecture figure (see data/hourly_windows.py window_bounds)
+#     architecture figure (scripts/figures/fig_architecture.py; see data/hourly_windows.py window_bounds)
 #   output_root: outputs/al_v2_blocked_replay025  (the original outputs/v2_blocked_replay025 is untouched)
-#   wandb.project: global_mtslstm_aligned  (kept out of the paper's W&B project)
+#   wandb.project: global_mtslstm_aligned  (kept apart from the earlier runs' W&B project)
 # Blocked split WITH source replay. The replay result was only ever measured under a
 # random split, and this project's own conclusion is that a random split overstates
 # both the level and the precision of a result. Whether replay's protection of the

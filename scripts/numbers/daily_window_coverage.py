@@ -1,4 +1,4 @@
-"""How complete are the 24-hour windows behind the daily targets? (Sect. 2.1 and the loss paragraph)
+"""How complete are the 24-hour windows behind the daily targets?
 
 A sample of the hourly cache is a gauge and a target hour t (23:00) whose forcing is complete over
 the look-back and whose discharge is finite at t. Its daily observation is the mean of the finite
@@ -7,12 +7,10 @@ least 18 of them are finite (transfer.min_daily_hours). This script counts the f
 randomly drawn windows:
 
   windows_20k   20,000 samples (rng seed 0): per archive, the share of windows with fewer than 18
-                finite hours  -> "fewer than 1 % ... in every archive except CAMELS-AUS (21.8 %)"
+                finite hours
   targets_60k   60,000 samples (rng seed 1): share of windows with 24, 18-23 and < 18 finite hours
-                -> "about 2.7 % of the daily targets were computed from 18 to 23 valid hours"
 
-Both draw from all samples of the cache (training and test period), as the numbers were first
-computed; the same statistics restricted to the training period are written alongside.
+Both draw from all samples of the cache (training and test period); the same statistics restricted to the training period are written alongside.
 
     python -m scripts.numbers.daily_window_coverage     # -> reports/methods/daily_window_coverage.json
 """

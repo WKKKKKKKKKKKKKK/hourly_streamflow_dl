@@ -1,6 +1,6 @@
 #!/bin/bash
 # Stage 2: seeds 43 and 44 of every design (pretraining and fine-tuning repeated), and their
-# replay arms. With the seed-42 runs of stage 1 every design has three seeds (Table B4).
+# replay arms. With the seed-42 runs of stage 1 every design has three seeds.
 #
 #   bash slurm/submit_2_seed_runs.sh            # dry run
 #   SUBMIT=1 bash slurm/submit_2_seed_runs.sh   # submit

@@ -1,5 +1,5 @@
-"""Pretraining cost (Appendix B, Reproducibility): "a fold takes a median of 7.6 h and the five
-cross-validation designs together about 175 GPU-hours".
+"""Pretraining cost: median GPU hours per fold, and the total over the five cross-validation
+designs.
 
 Per fold, the sum of the per-epoch training time (`train_secs` in fold*/pretrain/
 training_history.csv: the training pass only, without the per-epoch validation, checkpointing
@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from scripts.figures.sec41_figures import DESIGNS, SEED_RUNS
+from scripts.figures.m1_vs_m0_figures import DESIGNS, SEED_RUNS
 
 OUT = Path("reports/methods/pretrain_compute.json")
 

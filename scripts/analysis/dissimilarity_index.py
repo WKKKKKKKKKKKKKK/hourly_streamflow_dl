@@ -10,10 +10,10 @@ source gauges of that fold (estimated from 20,000 random pairs, seed 0). Two ver
   DI_all    all continuous static attributes; coordinates and categorical attributes
             (Koeppen zones, land-cover, lake/wetland and lithology classes) are excluded
 
-M0, M1 and gain are per-gauge medians over the three seeds of scripts.figures.sec41_figures.SEED_RUNS.
+M0, M1 and gain are per-gauge medians over the three seeds of scripts.figures.m1_vs_m0_figures.SEED_RUNS.
 One row per gauge and design (each gauge is a target once per design).
 
-    python -m scripts.analysis.dissimilarity_index      # -> reports/sec41_m1_vs_m0/dissimilarity_per_gauge.csv
+    python -m scripts.analysis.dissimilarity_index      # -> reports/m1_vs_m0/dissimilarity_per_gauge.csv
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ from data.dataset import load_scalers
 from data.hourly_windows import build_static_matrix, load_cache
 
 CONFIG = "configs/aligned/phase1_runB_blocked_v2.yaml"   # any aligned config: same data and statics
-OUT = "reports/sec41_m1_vs_m0/dissimilarity_per_gauge.csv"
+OUT = "reports/m1_vs_m0/dissimilarity_per_gauge.csv"
 CLIMATE = ["WorldClim_V21_Pmean", "WorldClim_V21_Tmean", "CGIAR_PET_V2", "WorldClim_V2_snowfall_fraction_P.mat"]
 NOT_CONTINUOUS = ("long", "lat", "KGZ", "GlobCover", "GLWD", "UMD_1km", "GLiM")
 DESIGN_FOLDS = ("random", "blocked", "climate", "longitudinal", "continental")
@@ -59,7 +59,7 @@ def main() -> None:
     ap.add_argument("--data-root", default=None,
                     help="directory holding scalers.json, if not the config's data.root")
     args = ap.parse_args()
-    import scripts.figures.sec41_figures as m
+    import scripts.figures.m1_vs_m0_figures as m
 
     s = statics(args.data_root)
     cont = [c for c in s.columns if not any(k in c for k in NOT_CONTINUOUS)]

@@ -5,9 +5,9 @@
 # measure variability, never as a main result.
 # FIGURE-ALIGNED re-run (added 2026-10-19). Identical to configs/phase1_runB_blocked_v2.yaml except three keys:
 #   data.window_alignment: figure  -- both branches end at the target hour, as in the
-#     manuscript's architecture figure (see data/hourly_windows.py window_bounds)
+#     architecture figure (scripts/figures/fig_architecture.py; see data/hourly_windows.py window_bounds)
 #   output_root: outputs/al_v2_blocked  (the original outputs/v2_blocked is untouched)
-#   wandb.project: global_mtslstm_aligned  (kept out of the paper's W&B project)
+#   wandb.project: global_mtslstm_aligned  (kept apart from the earlier runs' W&B project)
 # v2 = the frozen configuration plus the search conclusions. Against configs/phase1_runB_blocked.yaml:
 #   lookback_hourly 336 (was 72) -- the one fold-1 search result that cleared
 #     between-fold noise (sigma 0.017). In the search's only strictly paired triple,

@@ -1,13 +1,13 @@
-"""Numbers of the quantile-mapping paragraph (Results Sect. 3): the daily-observation correction baseline (scripts/analysis/correction_baseline.py, v3).
+"""Summary of the quantile-mapping baseline: the daily-observation correction baseline (scripts/analysis/correction_baseline.py, v3).
 
 Per design and seed, the median over target gauges of the full-series hourly metrics of M0, M0
 corrected (QM, variance scaling), M1, and M1 corrected; then the median over the three seeds and
 the seed range. Every statistic is taken within a seed first (a per-gauge seed median would narrow
 the spread). The paired differences are per gauge within a seed, then the median over gauges.
 Second table: the five designs pooled and binned into fifths of the climate dissimilarity index
-(reports/sec41_m1_vs_m0/dissimilarity_per_gauge.csv).
+(reports/m1_vs_m0/dissimilarity_per_gauge.csv).
 
-    python -m scripts.numbers.sec41_correction_table     # -> reports/sec41_correction_baseline/
+    python -m scripts.numbers.quantile_mapping_table     # -> reports/quantile_mapping/
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import wilcoxon
 
-OUT = Path("reports/sec41_correction_baseline")
+OUT = Path("reports/quantile_mapping")
 RUNS = {"random": ["al_v2_runB", "var_al_random_s43", "var_al_random_s44"],
         "blocked": ["al_v2_blocked", "var_al_blocked_s43", "var_al_blocked_s44"],
         "climate": ["al_v2_climate", "var_al_climate_s43", "var_al_climate_s44"],
@@ -38,7 +38,7 @@ def load() -> pd.DataFrame:
             assert len(files) == (4 if design == "continental" else 5), (run, len(files))
             parts.append(pd.concat(map(pd.read_csv, files)).assign(design=design, seed=seed))
     t = pd.concat(parts, ignore_index=True)
-    di = pd.read_csv("reports/sec41_m1_vs_m0/dissimilarity_per_gauge.csv").rename(columns={"Unnamed: 0": "station_id"})
+    di = pd.read_csv("reports/m1_vs_m0/dissimilarity_per_gauge.csv").rename(columns={"Unnamed: 0": "station_id"})
     return t.merge(di[["station_id", "design", "DI_clim"]], on=["station_id", "design"], how="left")
 
 

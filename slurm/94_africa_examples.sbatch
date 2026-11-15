@@ -1,5 +1,5 @@
 #!/bin/bash
-# Daily series of every African catchment (5 members x 2 arms) and hourly ones of a few, for Appendix D
+# Daily series of every African catchment (5 members x 2 arms) and hourly ones of a few, for the African examples
 # (scripts/analysis/africa_example_series.py). Inference only, all 294 basins x 5 members x 2 arms; too slow on a login node.
 #   sbatch slurm/94_africa_examples.sbatch            # hourly kept for the M1 KGE percentile candidates
 #   STATIONS=a,b,c sbatch slurm/94_africa_examples.sbatch

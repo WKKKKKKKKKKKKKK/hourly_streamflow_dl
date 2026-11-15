@@ -2,13 +2,13 @@
 
 The in-situ experiment reports M0 and M1 per basin over its own validation window
 (``v2_africa_insitu_summary/ensemble_per_basin_M{0,1}.csv``). ERA5-Land's per-basin scores
-that already exist come from a different experiment path -- the temperate-transfer Africa
-run of section 3.1 -- over a different period. Printing one beside the other would compare
+that already exist come from a different experiment path -- the earlier temperate-transfer
+Africa run -- over a different period. Printing one beside the other would compare
 scores computed on different days and call it a three-way comparison.
 
 So this re-scores all three on exactly the basin-days the in-situ ensemble was scored on,
 with the same ``score()`` the in-situ ensemble used, and writes one table. The pooled
-ERA5-Land median it reports is therefore not the -0.3336 quoted elsewhere in the report:
+ERA5-Land median it reports is therefore not the -0.3336 that run reports:
 that number is correct for its own run and window, and this one is correct for this one.
 
     python -m scripts.analysis.africa_daily_three_way

@@ -2,8 +2,7 @@
 colour classes of the gain maps.
 
 Collected here from the original repository's global_map.py, fig_map_adaptation.py and
-fig_full_series.py, which drew figures that are not in the manuscript. Only the pieces the
-manuscript figures use are kept, unchanged. Importing this module has no side effect on
+fig_full_series.py. Only the pieces the figure scripts here use are kept, unchanged. Importing this module has no side effect on
 matplotlib's rcParams; the figure scripts set their own fonts.
 """
 
@@ -17,8 +16,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Explicit font sizes are multiplied by FONT_SCALE. The section figures (sec41/42/43) set it
-# to 1.0 (drawn at the 177 mm HESS text width); the Methods maps keep the default.
+# Explicit font sizes are multiplied by FONT_SCALE. The results figures (m1_vs_m0, replay,
+# daily_scale) set it to 1.0 (drawn at a 177 mm print width); the maps keep the default.
 FONT_SCALE = 1.3
 
 

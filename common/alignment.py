@@ -1,8 +1,8 @@
 """Which input-window layout a checkpoint was trained with, and a refusal when it differs.
 
 Two layouts exist (see data.hourly_windows.window_bounds). ``"lagged"`` is every run
-recorded before 2026-10-18; ``"figure"`` is the design as drawn in the manuscript's
-architecture figure. A model trained on one layout and evaluated on the other does not
+recorded before 2026-10-18; ``"figure"`` is the design as drawn in the architecture figure
+(scripts/figures/fig_architecture.py). A model trained on one layout and evaluated on the other does not
 fail: it predicts, it scores, and the score is simply wrong. So every place that loads a
 checkpoint and builds inputs from a config calls ``assert_same_alignment``.
 

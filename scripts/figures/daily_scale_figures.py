@@ -1,19 +1,19 @@
-"""Figures and numbers of Appendix D (daily-scale evaluation: daily LSTM and ERA5-Land).
+"""Figures and summary numbers of the daily-scale evaluation (daily LSTM and ERA5-Land).
 
-Writes into reports/sec43_daily_scale/:
+Writes into reports/daily_scale/:
 
-  fig4_maps              Fig. D1: daily KGE of M1 (24-h mean of its hourly output) minus that of
+  daily_lstm_maps        daily KGE of M1 (24-h mean of its hourly output) minus that of
                          a daily LSTM trained from scratch on the same target gauges, period and
                          daily observations; one map per CV design and one for the 282 African
                          catchments, each with the histogram of the differences and bars of the
                          two models' median daily KGE
-  fig2_africa_era5       Fig. D2: the 282 African catchments, daily LSTM, M1 and ERA5-Land:
+  africa_era5            the 282 African catchments, daily LSTM, M1 and ERA5-Land:
                          (a) distribution of daily KGE, (b-d) of r, alpha and beta
-  fig3_africa_examples   Fig. D3: (a-f) three African catchments at the 25th/50th/75th percentile
+  africa_examples        (a-f) three African catchments at the 25th/50th/75th percentile
                          of M1's daily KGE, the season around the largest observed flood of the
                          test period and a 15-day zoom with M1's (unscored) hourly output;
                          (g-i) daily FHV, peak-MAPE and peak timing over every catchment
-  numbers.json           every number quoted from these figures
+  numbers.json           summary numbers of these figures
 
 Design scores come from scripts/analysis/score_daily_target.py (outputs/v2_design_daily/<run>);
 each gauge is a target once per design, so the folds pool (8,574 gauges with all arms scored).
@@ -21,7 +21,7 @@ Statistics are taken per M1 seed (each against the one daily LSTM) and then the 
 seeds; numbers.json keeps every seed's values. Africa is outputs/al_v2_africa_five_way (per basin,
 the median over the five members; scripts/analysis/africa_four_way.py --prefix al_v2).
 
-    python -m scripts.figures.sec43_figures
+    python -m scripts.figures.daily_scale_figures
 """
 
 from __future__ import annotations
@@ -33,13 +33,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from scripts.figures.sec41_figures import BLUE, DESIGNS, SEED_RUNS, W, fs, plt, style
-from scripts.figures.sec42_figures import N_FOLDS, signed
+from scripts.figures.m1_vs_m0_figures import BLUE, DESIGNS, SEED_RUNS, W, fs, plt, style
+from scripts.figures.replay_figures import N_FOLDS, signed
 
-OUT = Path("reports/sec43_daily_scale")
+OUT = Path("reports/daily_scale")
 DAILY = Path("outputs/v2_design_daily")
 GREEN, ERA5 = "#11a579", "#b2182b"   # daily LSTM, ERA5-Land
-TEXT_UP = 1.2   # fig2-4 go in the main text: their labels one step larger than the other sec43 figures
+TEXT_UP = 1.2   # labels of the three figures one step larger than the default
 
 
 def fb(size: float) -> float:
@@ -96,7 +96,7 @@ def paired_stats(t: pd.DataFrame) -> dict:
 
 def m1_vs_daily_lstm(numbers: dict) -> None:
     """Paired daily KGE, M1 against the daily LSTM, per design and for Africa (printed on
-    fig4_maps). Every number is taken within a seed (one M1 seed against the one daily LSTM),
+    daily_lstm_maps). Every number is taken within a seed (one M1 seed against the one daily LSTM),
     then the median over seeds."""
     g = groups()
     numbers["m1_vs_daily_lstm"] = {}
@@ -111,7 +111,7 @@ def m1_vs_daily_lstm(numbers: dict) -> None:
         numbers["m1_vs_daily_lstm"][k] = st
 
 
-# ---------------------------------------------------------------- Fig. D1: maps
+# ---------------------------------------------------------------- daily_lstm_maps
 # The global gauges sit in North America and Europe (lon -125..19, lat 25..66) and in Japan and
 # Australia (lon 121..154, lat -39..44); nothing between. Each global map is therefore two pieces at
 # one scale: the Americas-Europe band (a short strip) and the western Pacific (tall). The space under
@@ -121,7 +121,7 @@ PACIFIC = ((108, 156), (-45, 46))
 AFRICA = ((-20, 55), (-36, 38))
 
 
-def fig4_maps(numbers: dict) -> None:
+def daily_lstm_maps(numbers: dict) -> None:
     """M1 - daily LSTM per gauge, one map per design and Africa (3 x 2). Under each map's
     Americas-Europe strip: the histogram of the differences, and two bars with the median daily KGE
     of M1 and of the daily LSTM, so the absolute level is read off the same panel. A gauge's value
@@ -242,13 +242,13 @@ def fig4_maps(numbers: dict) -> None:
     if n_seed < 3:
         fig.text((W - 0.05) / W, (H - 0.03) / H, f"DRAFT: designs' M1 with {n_seed} seed(s) at least", ha="right",
                  va="top", fontsize=fb(6.5), color="#b2182b")
-    fig.savefig(OUT / "fig4_maps.png", dpi=300)   # placed by hand: no tight bbox
-    fig.savefig(OUT / "fig4_maps.pdf")
+    fig.savefig(OUT / "daily_lstm_maps.png", dpi=300)   # placed by hand: no tight bbox
+    fig.savefig(OUT / "daily_lstm_maps.pdf")
     plt.close(fig)
-    print("wrote", OUT / "fig4_maps.png")
+    print("wrote", OUT / "daily_lstm_maps.png")
 
 
-# ---------------------------------------------------------------- Fig. D2: Africa and ERA5-Land
+# ---------------------------------------------------------------- africa_era5
 def africa_arms() -> dict[str, pd.DataFrame]:
     """Per basin KGE, r, alpha, beta for the daily LSTM, M1 and ERA5-Land on identical basins."""
     basins = pd.read_csv("outputs/al_v2_africa_five_way/per_basin_four_way.csv").set_index("station_id").dropna().index
@@ -264,7 +264,7 @@ def africa_arms() -> dict[str, pd.DataFrame]:
             "M1": members("outputs/al_v2_africa_m1b_fold*"), "era5_land": era5}
 
 
-def fig2_africa_era5(numbers: dict) -> None:
+def africa_era5(numbers: dict) -> None:
     from matplotlib.patches import Rectangle
 
     arms = africa_arms()
@@ -325,10 +325,10 @@ def fig2_africa_era5(numbers: dict) -> None:
         ax.set_title(title, loc="left", fontsize=fb(8), weight="bold")
         style(ax)
         ax.grid(axis="x", visible=False)
-    save(fig, "fig2_africa_era5")
+    save(fig, "africa_era5")
 
 
-# ---------------------------------------------------------------- fig3 African examples
+# ---------------------------------------------------------------- africa_examples
 EX = Path("outputs/al_v2_africa_examples")
 OBS = "#222222"
 
@@ -397,7 +397,7 @@ def africa_peaks() -> dict[str, pd.DataFrame]:
             for arm, g in t.groupby("arm")}
 
 
-def fig3_africa_examples(numbers: dict) -> None:
+def africa_examples(numbers: dict) -> None:
     import geopandas as gpd
     import matplotlib.dates as mdates
     from matplotlib.patches import ConnectionPatch, Rectangle
@@ -508,7 +508,7 @@ def fig3_africa_examples(numbers: dict) -> None:
         ax.set_title(title, loc="left", fontsize=fb(8), weight="bold")
         style(ax)
         ax.grid(axis="x", visible=False)
-    save(fig, "fig3_africa_examples")
+    save(fig, "africa_examples")
 
 
 def save(fig, name: str) -> None:
@@ -522,10 +522,10 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     numbers: dict = {}
     m1_vs_daily_lstm(numbers)
-    fig4_maps(numbers)
-    fig2_africa_era5(numbers)
+    daily_lstm_maps(numbers)
+    africa_era5(numbers)
     if (EX / "daily_series.csv").exists():
-        fig3_africa_examples(numbers)
+        africa_examples(numbers)
     (OUT / "numbers.json").write_text(json.dumps(numbers, indent=1, default=float))
     print("wrote", OUT / "numbers.json")
 

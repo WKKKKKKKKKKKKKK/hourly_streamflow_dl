@@ -1,13 +1,12 @@
-"""Rain-gauge density of the African catchments against the training gauges (Appendix D):
-"The median rain gauge density is 0.027 for the African basins against 0.787 for the training
-sites, and every African basin falls below the training median."
+"""Rain-gauge density of the African catchments against the training gauges: the medians
+of both groups and the share of African catchments below the training median.
 
 Density is the archive's `rain_gauge_density` static attribute (GHCN-Daily gauges, after Abbas et
 al.; see the header of the static tables), from the same 20250630 archive the model inputs come
 from (data/africa.py):
 
   training   the 9,181 gauges of the hourly cache, hourly static table
-  africa     the African catchments scored in Appendix D (the union of the gauges in
+  africa     the scored African catchments (the union of the gauges in
              outputs/al_v2_africa_m1b_fold*/paired_M0_M1.csv), daily static table;
              all 294 catchments of africa/africa_basins.csv are reported alongside
 

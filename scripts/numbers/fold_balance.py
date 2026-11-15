@@ -5,7 +5,7 @@ medians over the fold's scored target gauges, then the median over three seeds (
 range). Station counts come from the fold files, which match the counts recorded in every
 run's run_meta.json.
 
-    python -m scripts.numbers.fold_balance     # -> reports/sec41_m1_vs_m0/fold_balance.csv, fold_balance_spearman.json
+    python -m scripts.numbers.fold_balance     # -> reports/m1_vs_m0/fold_balance.csv, fold_balance_spearman.json
 """
 
 from __future__ import annotations
@@ -18,8 +18,8 @@ import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
 
-OUT = "reports/sec41_m1_vs_m0/fold_balance.csv"
-OUT_RHO = "reports/sec41_m1_vs_m0/fold_balance_spearman.json"
+OUT = "reports/m1_vs_m0/fold_balance.csv"
+OUT_RHO = "reports/m1_vs_m0/fold_balance_spearman.json"
 DESIGN_FOLDS = ("random", "blocked", "climate", "longitudinal", "continental")
 
 
@@ -32,7 +32,7 @@ def fold_stats(root: str, k: int) -> tuple[float, float, float, int]:
 
 
 def main() -> None:
-    import scripts.figures.sec41_figures as m
+    import scripts.figures.m1_vs_m0_figures as m
 
     rows = []
     for name in DESIGN_FOLDS:

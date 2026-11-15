@@ -1,7 +1,6 @@
 """How much of the world has daily streamflow but no hourly record?
 
-The paper's whole premise is that hourly labels are scarce, and until now that premise
-was asserted rather than counted. It is also the one claim a physics-embedded CONUS
+The approach assumes that hourly labels are scarce; this script counts it. It is also the one claim a physics-embedded CONUS
 model (Yang et al. 2026, arXiv:2609.06794) cannot answer, because its route needs a
 river-network dataset that does not exist globally. So the number is worth getting right.
 
@@ -17,8 +16,7 @@ since 1980, and a catchment area of at most 10,000 km2.
 
 What this measures is PUBLICLY ASSEMBLED availability, not what agencies hold. Many
 record sub-daily and publish only daily. That is the right denominator for a data-driven
-modelling paper -- a model can only be trained on what can be obtained -- but the
-distinction belongs in the caption, not in a footnote.
+modelling study -- a model can only be trained on what can be obtained.
 
     python -m scripts.figures.label_availability
 """
@@ -99,8 +97,8 @@ def hourly_gauges(logger) -> pd.DataFrame:
     The correspondence table is the right tool for COUNTING what share of daily gauges
     carry an hourly record, and the wrong tool for drawing a map. In the June snapshot it
     omits one network entirely (Germany, 494 gauges), which would put on the map the claim
-    that German rivers have no hourly data while the results of this very paper are scored
-    on 458 German hourly gauges. Plotting the hourly stations at their own coordinates
+    that German rivers have no hourly data while 458 German hourly gauges are among
+    the training and target gauges here. Plotting the hourly stations at their own coordinates
     needs no correspondence at all.
     """
     from aqua_fetch import rr
@@ -224,8 +222,8 @@ def figure(table: pd.DataFrame, hourly: pd.DataFrame, payload: dict, out: Path) 
     # anywhere else is a gauge that is not.
     ax.scatter(hourly["long"], hourly["lat"], c=C_HOURLY, s=4.0, linewidths=0,
                alpha=0.85, rasterized=True, zorder=3)
-    # The African evaluation basins, on top of both layers. They are the reason the map is
-    # in the paper: every one of them sits in the orange, and the experiment asks what can
+    # The African evaluation basins, on top of both layers. Every one of them sits in the
+    # orange, and the experiment asks what can
     # be done there. Drawn larger with a dark edge because 294 basins against 25,075 gauges
     # would otherwise be invisible, and because they are a different kind of site -- scored
     # on daily observations, since the hourly ones the other markers stand for do not exist.
@@ -295,7 +293,7 @@ def figure(table: pd.DataFrame, hourly: pd.DataFrame, payload: dict, out: Path) 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out-dir", default="outputs/v2_label_availability", type=Path)
-    parser.add_argument("--figure", default="reports/figures/fig17_label_availability.png",
+    parser.add_argument("--figure", default="reports/figures/label_availability.png",
                         type=Path)
     args = parser.parse_args()
     args.out_dir.mkdir(parents=True, exist_ok=True)

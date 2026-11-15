@@ -6,7 +6,7 @@ __pycache__/
 *.pyc
 
 # Not distributed: the inventory of every daily-only gauge in the archive (station ids,
-# coordinates and record lengths, including non-public national networks). The paper needs
+# coordinates and record lengths, including non-public national networks). The analysis needs
 # only its counts (label_availability.json); the file is written locally by
 # scripts/figures/label_availability.py.
 reports/label_availability/daily_only_gauges.csv

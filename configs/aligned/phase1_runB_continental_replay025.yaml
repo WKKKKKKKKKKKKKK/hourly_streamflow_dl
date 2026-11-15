@@ -1,8 +1,8 @@
 # FIGURE-ALIGNED re-run (added 2026-10-19). Identical to configs/phase1_runB_continental_replay025.yaml except three keys:
 #   data.window_alignment: figure  -- both branches end at the target hour, as in the
-#     manuscript's architecture figure (see data/hourly_windows.py window_bounds)
+#     architecture figure (scripts/figures/fig_architecture.py; see data/hourly_windows.py window_bounds)
 #   output_root: outputs/al_v2_continental_replay025  (the original outputs/v2_continental_replay025 is untouched)
-#   wandb.project: global_mtslstm_aligned  (kept out of the paper's W&B project)
+#   wandb.project: global_mtslstm_aligned  (kept apart from the earlier runs' W&B project)
 # Continental split WITH source replay. Replay was only ever measured under the random
 # and blocked splits, where plain transfer costs the source domain 0.054 and 0.119 median
 # KGE. Under the continental split it costs 0.702 -- the source domain falls from +0.612
