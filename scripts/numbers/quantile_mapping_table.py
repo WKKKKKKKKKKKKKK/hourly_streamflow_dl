@@ -1,5 +1,7 @@
 """Summary of the quantile-mapping baseline: the daily-observation correction baseline (scripts/analysis/correction_baseline.py, v3).
 
+Gauges: the scored target gauges (score_status ok, obs_std >= 1e-3: the 8,709 of every other
+hourly statistic) that have a correction, i.e. 365 or more training days to fit it (8,468).
 Per design and seed, the median over target gauges of the full-series hourly metrics of M0, M0
 corrected (QM, variance scaling), M1, and M1 corrected; then the median over the three seeds and
 the seed range. Every statistic is taken within a seed first (a per-gauge seed median would narrow
@@ -31,12 +33,18 @@ ARMS = ("M0", "qm", "linear", "M1", "M1_qm", "M1_linear")
 
 
 def load() -> pd.DataFrame:
+    """Correction results of the scored target gauges (the 8,709 of every other hourly statistic,
+    scripts.figures.m1_vs_m0_figures.scored_gauges) that have a correction: 365 or more training
+    days to fit it (scripts/analysis/correction_baseline.py)."""
+    from scripts.figures.m1_vs_m0_figures import scored_gauges
     parts = []
     for design, runs in RUNS.items():
         for seed, run in zip(SEEDS, runs):
             files = sorted(glob.glob(f"outputs/{run}/correction_baseline_v3/correction_fold*.csv"))
             assert len(files) == (4 if design == "continental" else 5), (run, len(files))
-            parts.append(pd.concat(map(pd.read_csv, files)).assign(design=design, seed=seed))
+            c = pd.concat(map(pd.read_csv, files))
+            c = c[c.station_id.isin(scored_gauges(run))]
+            parts.append(c.assign(design=design, seed=seed))
     t = pd.concat(parts, ignore_index=True)
     di = pd.read_csv("reports/m1_vs_m0/dissimilarity_per_gauge.csv").rename(columns={"Unnamed: 0": "station_id"})
     return t.merge(di[["station_id", "design", "DI_clim"]], on=["station_id", "design"], how="left")
@@ -66,6 +74,42 @@ def tex(v: float) -> str:
     return f"{v:.2f}".replace("-", "$-$")
 
 
+LABEL = {"random": "Random", "blocked": "Blocked", "climate": "Climate zone",
+         "longitudinal": "Longitudinal", "continental": "Continental"}
+PANELS = (("kge", "(a) KGE"), ("r", "(b) Correlation $r$"), ("alpha", r"(c) Variability ratio $\alpha$"))
+
+
+def qm_table(by_design: pd.DataFrame, n_gauges: int) -> str:
+    """The full quantile-mapping table, with caption: KGE, r and alpha of the four models per design,
+    median over the target gauges per seed, then the median over the three seeds; the seed range
+    is given where it spans 0.05 or more."""
+    med, lo, hi = by_design["median"], by_design["min"], by_design["max"]
+    rows = []
+    for key, title in PANELS:
+        rows += [r"\midrule", rf"\multicolumn{{5}}{{l}}{{{title}}} \\"]
+        for d in RUNS:
+            cells = []
+            for m in ("M0", "qm", "M1", "M1_qm"):
+                c = f"{m}_{key}"
+                cells.append(tex(med.loc[d, c]) + (f" ({tex(lo.loc[d, c])} to {tex(hi.loc[d, c])})"
+                                                   if hi.loc[d, c] - lo.loc[d, c] >= 0.05 else ""))
+            rows.append(f"\\quad {LABEL[d]} & " + " & ".join(cells) + r" \\")
+    caption = (
+        r"\caption{Daily fine-tuning against quantile mapping (QM) of the same daily observations. "
+        r"QM is fitted, at each target gauge, between the simulated and observed daily discharge "
+        r"of the training period and transferred to the hourly series through the daily ratio. "
+        r"Values are hourly metrics of the continuous series of the whole test period: per seed, "
+        rf"the median over the {n_gauges:,} of the 8{{,}}709 target gauges that have at least 365 "
+        r"days of daily observations in the training period to fit the mapping, then "
+        r"the median over the three seeds; the range over the seeds is given in parentheses where "
+        r"it spans 0.05 or more. These whole-period scores differ slightly from the transfer-stage "
+        r"scores (per_station_*_target_hourly.csv).}").replace(f"{n_gauges:,}", f"{n_gauges:,}".replace(",", "{,}"))
+    return "\n".join([r"\begin{table}[H]", caption, r"\label{tab:qm}", r"\centering", r"\small",
+                      r"\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}l cccc}", r"\toprule",
+                      r"Design & $M_0$ & $M_0$ + QM & $M_1$ & $M_1$ + QM \\"] + rows
+                     + [r"\bottomrule", r"\end{tabular*}", r"\end{table}"]) + "\n"
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     t = load()
@@ -89,8 +133,13 @@ def main() -> None:
         lines.append(f"{d.capitalize().replace('Climate', 'Climate zone')} & " + " & ".join(cells) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}"]
     (OUT / "table_kge.tex").write_text("\n".join(lines) + "\n")
+    n_gauges = int(t.groupby(["design", "seed"]).station_id.nunique().max())
+    (OUT / "table_qm.tex").write_text(qm_table(by_design, n_gauges))
     (OUT / "numbers.json").write_text(json.dumps(
-        {"n_rows": len(t), "by_design_median": med.round(4).to_dict(orient="index"),
+        {"n_rows": len(t),
+         "n_gauges_per_design_seed": {f"{d}_{s}": int(n) for (d, s), n in
+                                      t.groupby(["design", "seed"]).station_id.nunique().items()},
+         "by_design_median": med.round(4).to_dict(orient="index"),
          "by_dissimilarity_median": by_di["median"].round(4).to_dict(orient="index"),
          "by_dissimilarity_min": by_di["min"].round(4).to_dict(orient="index"),
          "by_dissimilarity_max": by_di["max"].round(4).to_dict(orient="index")}, indent=1))

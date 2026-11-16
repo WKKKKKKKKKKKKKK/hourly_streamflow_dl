@@ -1,0 +1,32 @@
+\begin{table}[H]
+\caption{Daily fine-tuning against quantile mapping (QM) of the same daily observations. QM is fitted, at each target gauge, between the simulated and observed daily discharge of the training period and transferred to the hourly series through the daily ratio. Values are hourly metrics of the continuous series of the whole test period: per seed, the median over the 8{,}468 of the 8{,}709 target gauges that have at least 365 days of daily observations in the training period to fit the mapping, then the median over the three seeds; the range over the seeds is given in parentheses where it spans 0.05 or more. These whole-period scores differ slightly from the transfer-stage scores (per_station_*_target_hourly.csv).}
+\label{tab:qm}
+\centering
+\small
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}l cccc}
+\toprule
+Design & $M_0$ & $M_0$ + QM & $M_1$ & $M_1$ + QM \\
+\midrule
+\multicolumn{5}{l}{(a) KGE} \\
+\quad Random & 0.54 & 0.67 & 0.64 & 0.69 \\
+\quad Blocked & 0.44 & 0.64 & 0.64 & 0.68 \\
+\quad Climate zone & 0.31 (0.25 to 0.32) & 0.58 & 0.57 & 0.65 \\
+\quad Longitudinal & 0.31 (0.28 to 0.33) & 0.58 & 0.62 & 0.67 \\
+\quad Continental & $-$0.29 ($-$0.33 to $-$0.16) & 0.30 (0.20 to 0.36) & 0.06 ($-$0.04 to 0.37) & 0.42 (0.35 to 0.53) \\
+\midrule
+\multicolumn{5}{l}{(b) Correlation $r$} \\
+\quad Random & 0.80 & 0.80 & 0.82 & 0.81 \\
+\quad Blocked & 0.78 & 0.78 & 0.81 & 0.81 \\
+\quad Climate zone & 0.71 & 0.71 & 0.78 & 0.77 \\
+\quad Longitudinal & 0.72 & 0.72 & 0.80 & 0.80 \\
+\quad Continental & 0.51 & 0.49 (0.43 to 0.54) & 0.54 (0.40 to 0.68) & 0.58 (0.46 to 0.67) \\
+\midrule
+\multicolumn{5}{l}{(c) Variability ratio $\alpha$} \\
+\quad Random & 0.83 & 1.01 & 0.87 & 1.02 \\
+\quad Blocked & 0.83 & 1.02 & 0.86 & 1.02 \\
+\quad Climate zone & 0.86 (0.85 to 0.98) & 1.04 & 0.84 & 1.03 \\
+\quad Longitudinal & 0.83 & 1.03 & 0.85 & 1.02 \\
+\quad Continental & 1.12 (1.07 to 1.21) & 1.15 (1.15 to 1.29) & 0.48 (0.38 to 0.70) & 1.07 \\
+\bottomrule
+\end{tabular*}
+\end{table}

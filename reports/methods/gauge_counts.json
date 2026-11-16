@@ -1,0 +1,44 @@
+{
+ "dataset": 9181,
+ "indexed": 9062,
+ "not_indexed": 119,
+ "in_folds": 8990,
+ "dropped_no_training_batches": 56,
+ "dropped_no_test_batches": 16,
+ "source_plus_target_per_fold": 8990,
+ "target_results": 8988,
+ "excluded": {
+  "obs_std_zero": 13,
+  "too_few_samples": 126
+ },
+ "min_test_days": 100,
+ "near_constant_obs_std_below_1e-3": 140,
+ "scored": 8709,
+ "quantile_mapping": 8468,
+ "by_archive": {
+  "dataset": {
+   "CAMELSH": 5278,
+   "BOMAustralia": 1840,
+   "LamaHCE": 835,
+   "Japan": 690,
+   "Germany": 463,
+   "LamaHIce": 75
+  },
+  "in_folds": {
+   "CAMELSH": 5115,
+   "BOMAustralia": 1815,
+   "LamaHCE": 834,
+   "Japan": 690,
+   "Germany": 463,
+   "LamaHIce": 73
+  },
+  "scored": {
+   "CAMELSH": 5047,
+   "BOMAustralia": 1607,
+   "LamaHCE": 834,
+   "Japan": 690,
+   "Germany": 458,
+   "LamaHIce": 73
+  }
+ }
+}
