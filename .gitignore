@@ -1,6 +1,7 @@
 # finished runs live outside the repository; link them as `outputs`
 outputs
 logs/
+dcgm/
 wandb/
 __pycache__/
 *.pyc

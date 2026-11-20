@@ -182,16 +182,33 @@ def full_series_levels(tables, numbers) -> None:
 # ---------------------------------------------------------------- hydrographs
 def plot_hydrographs(numbers) -> None:
     """Hydrograph examples, and their numbers: which gauge, the share of gauges eligible
-    (positive M1 KGE among those with >= 3 peaks), and each model's whole-period metrics."""
+    (positive M1 KGE and >= MIN_TEST_DAYS among those with >= 3 peaks), each model's whole-period
+    metrics, and their summary over the five examples (ranges, formatted in "quoted")."""
     import scripts.figures.fig_hydrograph_examples as m
     picks = m.collect_picks("main")
     m.plot(picks, str(OUT / "hydrographs.png"))
-    numbers["hydrograph_examples"] = {
-        label: {"station_id": p.station_id, "fold": int(p.fold), "gain_quantile": float(p.q),
-                "share_of_gauges_eligible": float(p.kept),
-                **{f"{tag}_{c}": float(p[f"{tag}_{c}"]) for tag in ("M0", "M1")
-                   for c in ("kge_full", "fhv_pct", "peak_timing_h")}}
-        for label, _, p in picks}
+    ex = {label: {"station_id": p.station_id, "fold": int(p.fold), "gain_quantile": float(p.q),
+                  "share_of_gauges_eligible": float(p.kept), "test_days": int(p.n_days),
+                  **{f"{tag}_{c}": float(p[f"{tag}_{c}"]) for tag in ("M0", "M1")
+                     for c in ("kge_full", "fhv_pct", "peak_timing_h")}}
+          for label, _, p in picks}
+    v = list(ex.values())
+    absf = {tag: [abs(e[f"{tag}_fhv_pct"]) for e in v] for tag in ("M0", "M1")}
+    shift = [abs(e["M1_peak_timing_h"] - e["M0_peak_timing_h"]) for e in v]
+    elig = [e["share_of_gauges_eligible"] for e in v]
+    ex["summary"] = {
+        "abs_fhv_M0_range_pct": [min(absf["M0"]), max(absf["M0"])],
+        "abs_fhv_M1_range_pct": [min(absf["M1"]), max(absf["M1"])],
+        "abs_fhv_decreases_at_every_example": all(b < a for a, b in zip(absf["M0"], absf["M1"])),
+        "largest_abs_timing_change_h": max(shift),
+        "share_of_gauges_eligible_range": [min(elig), max(elig)],
+        "min_test_days_rule": m.MIN_TEST_DAYS,
+        "quoted": {"abs_fhv": f"{min(absf['M0']):.0f}-{max(absf['M0']):.0f} % -> "
+                              f"{min(absf['M1']):.0f}-{max(absf['M1']):.0f} %",
+                   "largest_timing_change": f"{max(shift):.1f} h",
+                   "eligible": f"{100 * min(elig):.0f}-{100 * max(elig):.0f} %",
+                   "climate_zone_M1_fhv": f"{ex['Climate zone']['M1_fhv_pct']:+.0f} %"}}
+    numbers["hydrograph_examples"] = ex
 
 
 SEED_RUNS = {  # design -> output roots of seeds 42, 43, 44 (aligned)

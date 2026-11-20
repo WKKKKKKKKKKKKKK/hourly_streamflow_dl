@@ -32,7 +32,8 @@ Files in `reports/m1_vs_m0/` unless named otherwise.
 | robustness of the gain over seeds, per 4 degree cell | `m1_vs_m0_figures` | `gain_robustness_cells.png`; `numbers.json` -> `gain_robustness_cells` |
 | KGE gain split into r, alpha, beta; flood-peak errors | `m1_vs_m0_figures` | `amount_not_timing.png`; `numbers.json` -> `amount_not_timing` |
 | whole-hydrograph levels (KGE parts, FHV, peak magnitude and timing) | `m1_vs_m0_figures` | `numbers.json` -> `kge_decomposition`, `flood_peaks` |
-| hydrograph examples, one gauge per design | `m1_vs_m0_figures` (`scripts.figures.fig_hydrograph_examples`) | `hydrographs.png`; `numbers.json` -> `hydrograph_examples` |
+| distributions over the target gauges of KGE, \|FHV\| and peak-timing error, M0 and M1, and their summary numbers | `scripts.figures.magnitude_timing_cdf` | `magnitude_timing_cdf.png`; `magnitude_timing_cdf.json` -> `text` (`quoted`: as printed) |
+| hydrograph examples, one gauge per design (>= 3 peaks, test period >= 2 years, M1 KGE > 0; gain nearest the 75th percentile) | `m1_vs_m0_figures` (`scripts.figures.fig_hydrograph_examples`; series of new gauges: GPU `slurm/96_hydrograph_examples.sbatch`) | `hydrographs.png`; `numbers.json` -> `hydrograph_examples` (`summary` -> `quoted`) |
 | quantile-mapping baseline (M0+QM, M1+QM) | GPU: `slurm/95_correction_baseline.sbatch`; then `scripts.numbers.quantile_mapping_table` | `reports/quantile_mapping/{by_design,by_dissimilarity}.csv`, `numbers.json`, `table_kge.tex`, `table_qm.tex` (KGE, r, alpha with caption); scored target gauges with 365 or more training days only |
 
 ## Forgetting and replay

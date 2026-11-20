@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import glob
+import os
 from pathlib import Path
 
 import matplotlib
@@ -45,13 +46,19 @@ WINDOW = 12            # peak-timing search window (Gauch et al., 2021)
 GREY, BLUE = "#8d99a6", "#2a78d6"
 
 
+MIN_TEST_DAYS = 730   # two years of evaluated test-period days (n_days in full_series.csv)
+
+
 def pick(root: str, q: float = 0.5, skilful: bool = False) -> pd.Series:
     """The gauge whose whole-hydrograph KGE gain is nearest the design's q-quantile gain.
 
     KGE is unbounded below, so the upper quantiles of the raw gain are gauges where M0
     collapsed and M1 is still poor (-1.06 -> -0.70): a large number, a useless picture.
     ``skilful`` ranks only the gauges where M1 has positive skill, which is what an
-    example of a working model should show; the fraction kept is reported.
+    example of a working model should show, and whose test period spans at least
+    MIN_TEST_DAYS, so that the whole-period metrics printed on the figure rest on several
+    years of record (a gauge with half a year and nine peaks was picked otherwise); the
+    fraction kept is reported.
     """
     t = pd.read_csv(f"outputs/{root}/full_series/full_series.csv")
     f = pd.concat([pd.read_csv(p) for p in glob.glob(
@@ -60,7 +67,7 @@ def pick(root: str, q: float = 0.5, skilful: bool = False) -> pd.Series:
     t = t[t.station_id.isin(ok) & (t.M1_n_peaks >= 3)].dropna(subset=["M0_kge_full", "M1_kge_full"])
     n_all = len(t)
     if skilful:
-        t = t[t.M1_kge_full > 0]
+        t = t[(t.M1_kge_full > 0) & (t.n_days >= MIN_TEST_DAYS)]
     gain = t.M1_kge_full - t.M0_kge_full
     row = t.loc[(gain - gain.quantile(q)).abs().idxmin()].copy()
     row["q"], row["q_gain"], row["kept"] = q, float(gain.quantile(q)), len(t) / n_all
@@ -72,8 +79,12 @@ def pick(root: str, q: float = 0.5, skilful: bool = False) -> pd.Series:
 LAYOUTS = {"main": [(label, 0.75, True) for label, _, _ in DESIGNS]}
 
 
-def predict(config: str, root: str, station: str, fold: int, cache_dir: Path) -> None:
-    """Write series_<station>.csv (hour index, obs, M0, M1) unless it is cached."""
+def predict(config: str, root: str, station: str, fold: int, cache_dir: Path,
+            data_root: str | None = None) -> None:
+    """Write series_<station>.csv (hour index, obs, M0, M1) unless it is cached.
+
+    data_root replaces the config's data.root (the directory with scalers.json and config.json);
+    the original one is gone from ibex, see README.md, "Data". Defaults to $DATA_ROOT."""
     target = cache_dir / f"series_{station}.csv"
     if target.exists():
         return
@@ -87,8 +98,10 @@ def predict(config: str, root: str, station: str, fold: int, cache_dir: Path) ->
     from models.mtslstm import build_model
     from scripts.analysis.full_series_eval import DAY, collect
 
-    cfg = load_config(config, ["eval.max_batches_per_station=0"])
+    data_root = data_root or os.environ.get("DATA_ROOT")
+    cfg = load_config(config, ["eval.max_batches_per_station=0"] + ([f"data.root={data_root}"] if data_root else []))
     logger = setup_logging(cache_dir / "examples.log")
+    logger.info("data.root %s", cfg.data.root)
     device = get_device()
     scalers = load_scalers(cfg.data.root)
     y_mean, y_std = float(scalers["y_mean"]), float(scalers["y_std"])

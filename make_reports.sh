@@ -12,7 +12,7 @@
 # (static part). The config's data.root no longer exists on ibex; see README.md, "Data".
 set -euo pipefail
 cd "$(dirname "$0")"
-DATA_ROOT="${DATA_ROOT:-/ibex/user/kongw0a/dec_track/data/june_check}"
+export DATA_ROOT="${DATA_ROOT:-/ibex/user/kongw0a/dec_track/data/june_check}"   # also used to predict missing example series
 run() { echo "== python -m $*"; python -m "$@"; }
 
 if [[ "${1:-figures}" == all ]]; then
@@ -30,6 +30,7 @@ run scripts.figures.fig_architecture                     # architecture (and the
 # 4. Results
 run scripts.analysis.dissimilarity_index --data-root "$DATA_ROOT"   # input of distance_and_dissimilarity and the QM table
 run scripts.figures.m1_vs_m0_figures                     # M1 vs M0 figures + reports/m1_vs_m0/numbers.json
+run scripts.figures.magnitude_timing_cdf                 # distributions of KGE, |FHV|, peak timing (+ text numbers)
 run scripts.numbers.fold_balance                         # pretraining share vs fold skill (Spearman)
 run scripts.numbers.test_period_length                   # median test-period length
 run scripts.numbers.gauge_counts                         # dataset -> cross-validation -> scored gauges

@@ -1293,64 +1293,92 @@
  },
  "hydrograph_examples": {
   "Random": {
-   "station_id": "CAMELSH__12013500",
-   "fold": 0,
-   "gain_quantile": 0.75,
-   "share_of_gauges_eligible": 0.907212843820092,
-   "M0_kge_full": 0.7142492843633241,
-   "M0_fhv_pct": 11.2665172936673,
-   "M0_peak_timing_h": 3.734042553191489,
-   "M1_kge_full": 0.90844845448878,
-   "M1_fhv_pct": -6.172069600546032,
-   "M1_peak_timing_h": 3.617021276595745
-  },
-  "Blocked": {
-   "station_id": "CAMELSH__01386000",
-   "fold": 4,
-   "gain_quantile": 0.75,
-   "share_of_gauges_eligible": 0.8917483177901074,
-   "M0_kge_full": 0.3031645918373663,
-   "M0_fhv_pct": -53.99511824795546,
-   "M0_peak_timing_h": 6.940476190476191,
-   "M1_kge_full": 0.6490571259743643,
-   "M1_fhv_pct": -18.24388141252299,
-   "M1_peak_timing_h": 5.857142857142857
-  },
-  "Climate zone": {
-   "station_id": "CAMELSH__01109090",
+   "station_id": "LamaHIce__104",
    "fold": 2,
    "gain_quantile": 0.75,
-   "share_of_gauges_eligible": 0.8771101404792823,
-   "M0_kge_full": -0.0745076515115414,
-   "M0_fhv_pct": 80.56116162092988,
-   "M0_peak_timing_h": 3.7777777777777777,
-   "M1_kge_full": 0.4144978860909211,
-   "M1_fhv_pct": -3.809724419415344,
-   "M1_peak_timing_h": 6.777777777777778
+   "share_of_gauges_eligible": 0.8493684334789281,
+   "test_days": 2182,
+   "M0_kge_full": 0.6031296524890672,
+   "M0_fhv_pct": -36.88868339120901,
+   "M0_peak_timing_h": 7.21875,
+   "M1_kge_full": 0.7978786897325669,
+   "M1_fhv_pct": 3.3602992404567504,
+   "M1_peak_timing_h": 7.1875
+  },
+  "Blocked": {
+   "station_id": "CAMELSH__11092450",
+   "fold": 4,
+   "gain_quantile": 0.75,
+   "share_of_gauges_eligible": 0.8350844056191713,
+   "test_days": 2298,
+   "M0_kge_full": 0.3558591464641618,
+   "M0_fhv_pct": -36.79389372136618,
+   "M0_peak_timing_h": 2.830508474576271,
+   "M1_kge_full": 0.7093107658707432,
+   "M1_fhv_pct": 9.372388486791134,
+   "M1_peak_timing_h": 3.0
+  },
+  "Climate zone": {
+   "station_id": "BOMAustralia__210146",
+   "fold": 2,
+   "gain_quantile": 0.75,
+   "share_of_gauges_eligible": 0.8204462283083461,
+   "test_days": 1388,
+   "M0_kge_full": -0.168571526886589,
+   "M0_fhv_pct": 33.783602896446084,
+   "M0_peak_timing_h": 3.5789473684210527,
+   "M1_kge_full": 0.3197360433556997,
+   "M1_fhv_pct": 8.948068091059246,
+   "M1_peak_timing_h": 2.9473684210526314
   },
   "Longitudinal": {
-   "station_id": "LamaHIce__12",
-   "fold": 0,
+   "station_id": "Japan__302121282215070",
+   "fold": 1,
    "gain_quantile": 0.75,
-   "share_of_gauges_eligible": 0.8988313068114745,
-   "M0_kge_full": 0.2177867555562013,
-   "M0_fhv_pct": -56.47915182304449,
-   "M0_peak_timing_h": 5.366666666666666,
-   "M1_kge_full": 0.7456248044475051,
-   "M1_fhv_pct": 7.977463630859621,
-   "M1_peak_timing_h": 4.45
+   "share_of_gauges_eligible": 0.84181324518947,
+   "test_days": 4559,
+   "M0_kge_full": 0.1586792090502687,
+   "M0_fhv_pct": -50.33903527016147,
+   "M0_peak_timing_h": 5.18,
+   "M1_kge_full": 0.6879511426347024,
+   "M1_fhv_pct": -16.836892435252373,
+   "M1_peak_timing_h": 5.12
   },
   "Continental": {
-   "station_id": "CAMELSH__07010094",
-   "fold": 0,
+   "station_id": "BOMAustralia__145011A",
+   "fold": 1,
    "gain_quantile": 0.75,
-   "share_of_gauges_eligible": 0.7909337740526502,
-   "M0_kge_full": -2.504123409895565,
-   "M0_fhv_pct": 32.18336205861985,
-   "M0_peak_timing_h": 2.088050314465409,
-   "M1_kge_full": 0.2273714291244387,
-   "M1_fhv_pct": -59.43159670455766,
-   "M1_peak_timing_h": 2.2264150943396226
+   "share_of_gauges_eligible": 0.7444221461456735,
+   "test_days": 2149,
+   "M0_kge_full": -2.1440730261135874,
+   "M0_fhv_pct": 119.8909689742024,
+   "M0_peak_timing_h": 7.888888888888889,
+   "M1_kge_full": 0.494091822160644,
+   "M1_fhv_pct": -14.186218404489969,
+   "M1_peak_timing_h": 7.777777777777778
+  },
+  "summary": {
+   "abs_fhv_M0_range_pct": [
+    33.783602896446084,
+    119.8909689742024
+   ],
+   "abs_fhv_M1_range_pct": [
+    3.3602992404567504,
+    16.836892435252373
+   ],
+   "abs_fhv_decreases_at_every_example": true,
+   "largest_abs_timing_change_h": 0.6315789473684212,
+   "share_of_gauges_eligible_range": [
+    0.7444221461456735,
+    0.8493684334789281
+   ],
+   "min_test_days_rule": 730,
+   "quoted": {
+    "abs_fhv": "34-120 % -> 3-17 %",
+    "largest_timing_change": "0.6 h",
+    "eligible": "74-85 %",
+    "climate_zone_M1_fhv": "+9 %"
+   }
   }
  }
 }
