@@ -15,7 +15,7 @@ are taken per seed, then the median over the three seeds.
 | protocol schematic | `scripts.figures.fig_protocol` | `reports/figures/protocol.png` |
 | architecture schematic; total, trainable and frozen parameters | `scripts.figures.fig_architecture` (prints the counts) | `reports/figures/architecture.png` |
 | temporal split, model and training settings | the configs (`data`, `model`, `train`, `transfer` blocks) | `configs/aligned/phase1_runB_v2.yaml` |
-| gauges from the dataset (9,181) to the cross-validation (8,990), the scored targets (8,709) and the quantile-mapping table (8,468) | `scripts.numbers.gauge_counts` | `reports/methods/gauge_counts.json` |
+| gauges from the dataset (9,181) to the cross-validation (8,990), the scored targets (8,709) and the quantile-mapping table (8,468); whole-period metrics (8,697 KGE/FHV, 8,620 peak timing), daily scale (8,574), Africa (294 -> 284 -> 282), archive map vs dataset (9,755 vs 9,181) | `scripts.numbers.gauge_counts` | `reports/methods/gauge_counts.json` |
 | median length of the test period | `scripts.numbers.test_period_length` | `reports/m1_vs_m0/test_period_length.json` |
 | completeness of the 24-hour windows behind the daily targets | `scripts.numbers.daily_window_coverage` | `reports/methods/daily_window_coverage.json` |
 | pretraining time per fold, GPU hours per seed | `scripts.numbers.pretrain_compute` | `reports/methods/pretrain_compute.json` |

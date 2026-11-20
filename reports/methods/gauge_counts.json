@@ -15,6 +15,62 @@
  "near_constant_obs_std_below_1e-3": 140,
  "scored": 8709,
  "quantile_mapping": 8468,
+ "whole_period": {
+  "kge_fhv": 8697,
+  "peak_timing": 8620,
+  "min_valid_test_hours": 1000,
+  "cdf_figure_n": 8620
+ },
+ "daily_scale": {
+  "rows": 8972,
+  "excluded": {
+   "obs_std_zero": 11,
+   "too_few_samples": 258
+  },
+  "near_constant_obs_std_below_1e-3": 129,
+  "scored_M1_and_daily_lstm": 8574,
+  "of_which_hourly_scored": 8562
+ },
+ "africa": {
+  "study_catchments": 294,
+  "with_test_period_days": 284,
+  "scored": 282,
+  "min_test_days": 100
+ },
+ "archive_hourly": {
+  "archive_map": 9755,
+  "dataset": 9181,
+  "per_network": {
+   "BOMAustralia": {
+    "archive_map": 1888,
+    "dataset": 1840
+   },
+   "CAMELSH": {
+    "archive_map": 5327,
+    "dataset": 5278
+   },
+   "CzechRepublic": {
+    "archive_map": 429,
+    "dataset": 0
+   },
+   "Germany": {
+    "archive_map": 473,
+    "dataset": 463
+   },
+   "Japan": {
+    "archive_map": 692,
+    "dataset": 690
+   },
+   "LamaHCE": {
+    "archive_map": 835,
+    "dataset": 835
+   },
+   "LamaHIce": {
+    "archive_map": 111,
+    "dataset": 75
+   }
+  }
+ },
  "by_archive": {
   "dataset": {
    "CAMELSH": 5278,
