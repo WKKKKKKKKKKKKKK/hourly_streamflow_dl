@@ -31,6 +31,7 @@ run scripts.figures.fig_architecture                     # architecture (and the
 run scripts.analysis.dissimilarity_index --data-root "$DATA_ROOT"   # input of distance_and_dissimilarity and the QM table
 run scripts.figures.m1_vs_m0_figures                     # M1 vs M0 figures + reports/m1_vs_m0/numbers.json
 run scripts.figures.magnitude_timing_cdf                 # distributions of KGE, |FHV|, peak timing (+ text numbers)
+run scripts.numbers.kge_2012_sensitivity                 # the KGE results under KGE' (Kling et al., 2012)
 run scripts.numbers.fold_balance                         # pretraining share vs fold skill (Spearman)
 run scripts.numbers.test_period_length                   # median test-period length
 run scripts.numbers.gauge_counts                         # dataset -> cross-validation -> scored gauges
